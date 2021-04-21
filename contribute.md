@@ -13,7 +13,7 @@
 ### Summary Guide
 
 commits look like this:
-> do details | make other details & this
+> do details, make other details & this
 
 #### Category
 | mark     | means   |
