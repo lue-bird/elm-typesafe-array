@@ -58,16 +58,15 @@ If you want, take a look at both packages to get a feel why they are useful.
 - [linear-direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
 ```elm
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
-    --In, Only, N, Is, And, To, ValueMin, ValueIn, ValueOnly
+import Nat exposing (Nat, Only, In, ValueIn, ValueMin)
 import MinNat
 import InNat
 import NNat
-import NNats exposing (..) --nat0 to nat168
+import NNats exposing (..)
+    --nat0 to nat160
 
-import Nat.Type exposing (..)
-    --Nat0 to Nat192 & Nat0Plus to Nat192Plus
+import TypeNats exposing (..)
+    --Nat0 to Nat160 & Nat0Plus to Nat160Plus
 
 import LinearDirection exposing (LinearDirection(..))
 
