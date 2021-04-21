@@ -1,6 +1,6 @@
 # elm-typesafe-array
 
-A `Arr length` is like an `Array`, but you know more about the amount of elements at compile-time.
+An `Arr length` is like an `Array`, but you know more about the amount of elements at compile-time which can help you access elements safely.
 
 ```elm
 startChessBoard =
