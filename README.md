@@ -133,3 +133,20 @@ tag (Arr.repeat nat100 EmptyTag)
 --> compile-time error
 ```
 
+## specify an exact length
+
+```elm
+type alias TicTacToeBoard rowsMaybeN columnsMaybeN =
+    Arr (Only Nat3 rowsMaybeN)
+        (Arr (Only Nat3 columnsMaybeN) TicTacToeField)
+
+initialTicTacToeBoard : TicTacToeBoard --...
+initialTicTacToeBoard =
+    Arr.repeat nat3
+        (Arr.repeat nat3 FieldEmpty)
+
+type Field =
+    FieldEmpty
+    | X
+    | O
+```
