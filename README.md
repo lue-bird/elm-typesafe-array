@@ -21,13 +21,13 @@ initialChessBoard =
         |> NArr.push (pawnRow Black)
         |> NArr.push (firstRow Black)
 
-type Color
-    = Black
-    | White
-
 type Field
     = Empty
     | Piece PieceKind Color
+
+type Color
+    = Black
+    | White
 
 type PieceKind
     = Pawn
