@@ -1,4 +1,4 @@
-# elm-bounded-array
+# elm-typesafe-array
 
 A `Arr length` is like an `Array`, but you know more about the amount of elements at compile-time.
 
@@ -38,8 +38,8 @@ You can then easily ask:
 
 ```elm
 startChessBoard
-    |> InArr.at nat1 FirstToLast
-    |> InArr.at nat6 FirstToLast
+    |> Arr.at nat1 FirstToLast
+    |> Arr.at nat6 FirstToLast
 --> Piece Pawn White
 ```
 
@@ -48,14 +48,14 @@ You get a _value, not a `Maybe`_.
 Setup
 
 ```noformatingplease
-elm install indique/elm-bounded-nat
-elm install indique/elm-linear-direction
-elm install indique/elm-bounded-array
+elm install lue-bird/elm-bounded-nat
+elm install lue-bird/elm-linear-direction
+elm install lue-bird/elm-typesafe-array
 ```
 
 If you want, take a look at both packages to get a feel why they are useful.
-- [bounded-nat](https://package.elm-lang.org/packages/indique/elm-bounded-nat/latest/)
-- [linear-direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/)
+- [bounded-nat](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/)
+- [linear-direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
 ```elm
 import Nat exposing (Nat)
@@ -91,7 +91,7 @@ christmasArray =
         |> Array.append (Array.fromList [ "it's", "christmas" ])
 
 christmas
-    |> InArr.at nat4 FirstToLast
+    |> Arr.at nat4 FirstToLast
 --> "christmas"
 
 christmasArray
@@ -115,7 +115,7 @@ shout words =
         ++ "!"
 ```
 
-And as you see, if we know, that it has at least `Nat5` elements, we also know that it has more than 1 element.
+Is as you see, if we know, that it has at least `Nat5` elements, we also know that it has more than 1 element.
 
 - You can define & use operations for `Arr`s with a certain amount
     ```elm
@@ -132,17 +132,17 @@ And as you see, if we know, that it has at least `Nat5` elements, we also know t
 
 ### set a maximum length
   
-    ```elm
-    --the max tag count should be 53
-    tag : Arr (In min Nat53 maybeExact) Tag -> a -> Tagged a
-    tag tags toTag = --...
+```elm
+--the max tag count should be 53
+tag : Arr (In min Nat53 maybeExact) Tag -> a -> Tagged a
+tag tags toTag = --...
 
-    tag
-        ([ ( nat0 |> NNat.toIn, "fun" ), ( nat1, "easy" ), ( nat2, "fresh" ) ]
-            |> List.map2 
-            |> List.foldr
-                (\( i, tag )-> Arr.replaceAt (i (Tag tag))
-                (Arr.repeat nat53 EmptyTag)
-        )
-    ```
+tag
+    ([ ( nat0 |> NNat.toIn, "fun" ), ( nat1, "easy" ), ( nat2, "fresh" ) ]
+        |> List.map2 
+        |> List.foldr
+            (\( i, tag )-> Arr.replaceAt (i (Tag tag))
+            (Arr.repeat nat53 EmptyTag)
+    )
+```
 

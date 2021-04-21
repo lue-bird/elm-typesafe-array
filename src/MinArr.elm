@@ -1,9 +1,16 @@
 module MinArr exposing
     ( push, removeAt, insertAt, extend, extendN
-    , isLength
+    , isLength, isLengthAtLeast
+    , group
     )
 
-{-| An `Arr` with at least a minimum amount of elements.
+{-| If the maximum length is a type variable,
+
+    first :
+        Arr (In (Nat1Plus minMinus1) max maybeN) element
+        -> element
+
+use these operations instead of the ones in `Arr` or `InArr`
 
 
 ## modify
@@ -11,12 +18,14 @@ module MinArr exposing
 @docs push, removeAt, insertAt, extend, extendN
 
 
-## scan
+## scan length
+
+@docs isLength, isLengthAtLeast
 
 
-### compare
+## transform
 
-@docs isLength
+@docs group
 
 -}
 
@@ -35,6 +44,13 @@ import TypeNats exposing (..)
 -- ## modify
 
 
+{-| Put a new element after the others.
+
+    arrWithAtLeast5Elements
+        |> MinArr.push "becomes the last"
+    --> is of type Arr (ValueMin Nat6) String
+
+-}
 push :
     element
     -> Arr (In min max maybeN) element
@@ -43,6 +59,14 @@ push element =
     Internal.push element
 
 
+{-| Put a new element at an index in a direction.
+
+    arrWithAtLeast5Elements
+        |> MinArr.insertAt nat0 FirstToLast
+            "becomes the first"
+    --> is of type Arr (ValueMin Nat6) String
+
+-}
 insertAt :
     Nat (In indexMin minLengthMinus1 indexMaybeN)
     -> LinearDirection
@@ -53,6 +77,13 @@ insertAt index direction inserted =
     Internal.insertAt index direction inserted
 
 
+{-| Kick out the element at an index in a direction.
+
+    removeLast arrWithAtLeast1Element =
+        arrWithAtLeast1Element
+            |> MinArr.removeAt nat0 LastToFirst
+
+-}
 removeAt :
     Nat (In indexMin minLengthMinus1 indexMaybeExact)
     -> LinearDirection
@@ -62,6 +93,14 @@ removeAt index direction =
     Internal.removeAt index direction
 
 
+{-| Append an `Arr (In ...)`.
+
+    Arr.from4 1 2 3 4
+        |> NArr.toMin
+        |> MinArr.extendN (Arr.from3 5 6 7)
+    --> Arr [ 1, 2, 3, 4, 5, 6, 7 ]
+
+-}
 extend :
     Arr (In extensionMin extensionMax extensionMaybeN) element
     -> Nat (N extensionMin (Is min To extendedMin) x)
@@ -71,7 +110,7 @@ extend extension extensionMin =
     Internal.extend extension extensionMin
 
 
-{-| Extend the `Arr (Min ...)` with a fixed length `Arr (N ...)`.
+{-| Append a fixed length `Arr (N ...)`.
 
     Arr.from4 1 2 3 4
         |> NArr.toMin
@@ -83,18 +122,8 @@ extendN :
     Arr (N added (Is min To sumMin) x) element
     -> Arr (In min max maybeN) element
     -> Arr (ValueMin sumMin) element
-extendN nArrayExtension =
-    Internal.extendN nArrayExtension
-
-
-replaceAt :
-    Nat (In indexMin minLengthMinus1 indexMaybeN)
-    -> LinearDirection
-    -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) max maybeN) element
-    -> Arr (In (Nat1Plus minLengthMinus1) max maybeN) element
-replaceAt index direction new =
-    Internal.Arr.replaceAt index direction new
+extendN arrExtension =
+    Internal.extendN arrExtension
 
 
 
@@ -103,27 +132,24 @@ replaceAt index direction new =
 
 
 isLength :
-    Nat
-        (N
-            (Nat1Plus triedMinus1)
-            (Is (Nat1Plus aMinus1) To (Nat1Plus triedMinus1PlusA))
-            x
-        )
-    -> { min : Nat (N min (Is lessRange To triedMinus1) y) }
+    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) maybeN)
+    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
     ->
         { equal :
             Arr
-                (N
+                (In
                     (Nat1Plus triedMinus1)
-                    (Is (Nat1Plus aMinus1) To (Nat1Plus triedMinus1PlusA))
-                    x
+                    (Nat1Plus atLeastTriedMinus1)
+                    maybeN
                 )
                 element
             -> result
-        , greater : Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
-        , less : Arr (ValueIn min triedMinus1PlusA) element -> result
+        , greater :
+            Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
+        , less :
+            Arr (In min atLeastTriedMinus1 e) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max e) element
     -> result
 isLength length =
     Internal.isLength length
@@ -133,8 +159,8 @@ isLengthAtLeast :
     Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMin To tried) x) }
     ->
-        { equalOrGreater : Arr (ValueIn tried max) element -> result
-        , less : Arr (ValueIn min triedMinus1PlusA) element -> result
+        { equalOrGreater : Arr (ValueMin tried) element -> result
+        , less : Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
@@ -146,36 +172,34 @@ isLengthAtLeast tried min cases =
 -- ## extra
 
 
-{-| **group TODO not implemented**
+{-| Split
 
-    { groups : --the List divided into equal-sized InArrays
-    , less : --values to the _right_ which aren't enough
+    { groups : the Arr divided into equal-sized Arrs
+    , less : values to one side which aren't enough
     }
 
-    [ 1, 2, 3, 4, 5, 6, 7 ]
-        |> InArray.group nat5 FirstToLast
-    --> { groups = [ InArray.from5 1 2 3 4 5 ]
-    --> , less = [ 6, 7 ]
+    Arr.from7 1 2 3 4 5 6 7
+        |> MinArr.group nat5 FirstToLast
+    --> { groups = Arr.from1 (Arr.from5 1 2 3 4 5)
+    --> , less = Arr.from2 6 7
     --> }
+
+The type of the result isn't as accurate as in the example, though!
 
 -}
 group :
-    Nat (In (Nat1Plus minMinus1) max groupSizeMaybeN)
+    Nat (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
     -> LinearDirection
     -> Arr (In min max maybeN) element
     ->
-        { groups : Arr (In (Nat1Plus minMinus1) max groupSizeMaybeN) element
-        , less : Arr (ValueIn min max) element
+        { groups :
+            Arr
+                (ValueIn Nat0 max)
+                (Arr
+                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    element
+                )
+        , less : Arr (ValueIn Nat0 max) element
         }
 group groupSize direction =
-    \arr ->
-        arr
-            |> isLengthAtLeast groupSize
-                { equalOrGreater =
-                    \egArr ->
-                        egArr
-                            |> Arr.take groupSize xs
-                            :: group groupSize (drop k xs)
-                , less =
-                    \lessArr -> { groups = Arr.empty, less = lessArr }
-                }
+    Internal.group groupSize direction

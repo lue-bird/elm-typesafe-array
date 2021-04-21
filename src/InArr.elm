@@ -1,16 +1,11 @@
-module InArr exposing
-    ( push, extend, extendN, removeAt
-    , dropN
-    , toMin
-    , insertAt
-    )
+module InArr exposing (push, extend, extendN, removeAt, insertAt)
 
-{-| A `Array (In ...)` describes an array where you know a minimum & maximum amount of elements.
+{-| A `Arr (In ...)` describes an array where you know a minimum & maximum amount of elements.
 
     Array.empty |> Array.get 0
     --> Nothing
 
-    InArr.empty |> InArr.at (nat0 |> NNat.toIn) FirstToLast
+    Arr.empty |> Arr.at nat0 FirstToLast
     --> compile time error
 
 Is this any useful? Let's look at an example:
@@ -28,30 +23,15 @@ Is this any useful? Let's look at an example:
     Array.foldl (joinBy " ") "0" intStringsAfter
     --> "0 1 2 3 4 5 ..."
 
-    InArr.range ( nat0, nat0 ) (nat100 |> NNat.toIn)
-        |> InArr.map (InNat.toInt >> String.fromInt)
-        |> InArr.foldWithFirst (joinBy " ")
+    Arr.nats nat100
+        |> Arr.map (Nat.toInt >> String.fromInt)
+        |> Arr.foldWithFirst (joinBy " ")
     --> "0 1 2 3 4 5 ..."
 
 
 ## modify
 
-@docs push, extend, extendN, removeAt, replaceAt, take
-
-
-## part
-
-@docs takeIn, takeN, dropN
-
-
-## drop information
-
-@docs toMin
-
-
-## create
-
-@docs range
+@docs push, extend, extendN, removeAt, insertAt
 
 -}
 
@@ -68,7 +48,12 @@ import TypeNats exposing (..)
 -- ## modify
 
 
-{-| Use `MinArr.push`, if the `max` isn't known to be a certain value.
+{-| Put a new element after the others.
+
+    arrWith5To10Elements
+        |> InArr.push "becomes the last"
+    --> is of type Arr (ValueIn Nat6 Nat11) String
+
 -}
 push :
     element
@@ -90,7 +75,7 @@ insertAt index direction element =
     Internal.insertAt index direction element
 
 
-{-| Append the elements in another `Arr (In ...)`.
+{-| Append the elements of another `Arr (In ...)`.
 -}
 extend :
     Arr (In extensionMin extensionMax extensionMaybeN) element
@@ -102,14 +87,18 @@ extend extension extensionMin extensionMax =
     Internal.extend extension extensionMin extensionMax
 
 
+{-| Append the elements of a `Arr (N ...)`.
+-}
 extendN :
     Arr (N added (Is min To sumMin) (Is max To sumMax)) element
     -> Arr (In min max maybeN) element
     -> Arr (ValueIn sumMin sumMax) element
-extendN nArrayExtension =
-    Internal.extendN nArrayExtension
+extendN arrExtension =
+    Internal.extendN arrExtension
 
 
+{-| Kick an element out of an Arr at a given index in a direction.
+-}
 removeAt :
     Nat (In indexMin minMinus1 indexMaybeN)
     -> LinearDirection
@@ -117,25 +106,3 @@ removeAt :
     -> Arr (ValueIn minMinus1 maxMinus1) element
 removeAt index direction =
     Internal.removeAt index direction
-
-
-
--- ## part
-
-
-dropN :
-    Nat (N dropped (Is minTaken To min) (Is maxTaken To max))
-    -> LinearDirection
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn minTaken maxTaken) element
-dropN droppedAmount direction =
-    Internal.dropN droppedAmount direction
-
-
-
--- ## drop information
-
-
-toMin : Arr (In min max maybeN) element -> Arr (ValueMin min) element
-toMin =
-    Internal.toMin

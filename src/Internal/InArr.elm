@@ -1,11 +1,9 @@
 module Internal.InArr exposing
-    ( dropN
-    , extend
+    ( extend
     , extendN
     , insertAt
     , push
     , removeAt
-    , toMin
     )
 
 {-| All functions must be tested a lot, especially the type signatures.
@@ -20,13 +18,6 @@ import NNats exposing (..)
 import Nat exposing (Nat)
 import Nat.Bound exposing (..)
 import TypeNats exposing (..)
-
-
-toMin :
-    Arr (In min max maybeN) element
-    -> Arr (ValueMin min) element
-toMin =
-    Internal.mapLength InNat.toMin
 
 
 push :
@@ -61,8 +52,8 @@ removeAt index direction =
 
 extend :
     Arr (In extensionMin extensionMax extensionMaybeN) element
-    -> Nat (N extensionMin (Is min To) extendedMin x)
-    -> Nat (N extensionMax (Is max To) extendedMax y)
+    -> Nat (N extensionMin (Is min To extendedMin) x)
+    -> Nat (N extensionMax (Is max To extendedMax) y)
     -> Arr (In min max maybeN) element
     -> Arr (ValueIn extendedMin extendedMax) element
 extend extension extensionMin extensionMax =
@@ -73,21 +64,8 @@ extend extension extensionMin extensionMax =
 
 
 extendN :
-    Arr (N added (Is min To) sumMin (And max To sumMax)) element
+    Arr (N added (Is min To sumMin) (Is max To sumMax)) element
     -> Arr (In min max maybeN) element
     -> Arr (ValueIn sumMin sumMax) element
 extendN nArrExtension =
     Internal.extend nArrExtension InNat.addN
-
-
-dropN :
-    Nat (N dropped (Is minTaken To) min (And maxTaken To max))
-    -> LinearDirection
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn minTaken maxTaken) element
-dropN droppedAmount direction =
-    \arr ->
-        arr
-            |> Internal.take
-                (length arr |> InNat.subN droppedAmount)
-                (LinearDirection.opposite direction)
