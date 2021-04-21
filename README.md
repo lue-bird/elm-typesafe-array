@@ -3,7 +3,7 @@
 An `Arr length` is like an `Array`, but you know more about the amount of elements at compile-time which can help you access elements safely.
 
 ```elm
-startChessBoard =
+initialChessBoard =
     let
         emptyRow =
             Arr.repeat nat8 Empty
@@ -37,7 +37,7 @@ type PieceKind
 You can then easily ask:
 
 ```elm
-startChessBoard
+initialChessBoard
     |> Arr.at nat1 FirstToLast
     |> Arr.at nat6 FirstToLast
 --> Piece Pawn White
