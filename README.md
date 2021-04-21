@@ -83,7 +83,7 @@ We will compare an `Arr` to an `Array`.
 ```elm
 christmas =
     Arr.repeat nat3 "Ho"
-        |> NArr.extendN nat2 (Arr.from2 "it's" "christmas")
+        |> NArr.extend nat2 (Arr.from2 "it's" "christmas")
 
 christmasArray =
     Array.repeat 3 "Ho"
