@@ -86,62 +86,50 @@ christmas =
         |> NArr.extend nat2 (Arr.from2 "it's" "christmas")
 
 christmasArray =
-    Array.repeat 3 "Ho"
-        |> Array.append (Array.fromList [ "it's", "christmas" ])
+    Array.append
+        (Array.repeat 3 "Ho")
+        (Array.fromList [ "it's", "christmas" ])
 
-christmas
-    |> Arr.at nat4 FirstToLast
+christmas |> Arr.at nat4 FirstToLast
 --> "christmas"
 
-christmasArray
-    |> Array.get 4
+christmasArray |> Array.get 4
 --> Just "christmas"
 ```
 
-_This_ is what this package is all about. Making these operations safe.
-We _know_ there are `Nat5` elements there.
+_This_ is what this package is all about: Making these operations safe.
+We _know_ there are 5 elements there.
+
+→ You can define & use operations for `Arr`s with a certain amount
+
+## specify a minimum length
 
 ```elm
-shout christmas
---> HO HO HO IT'S CHRISTMAS!
+first : Arr (In (Nat1Plus orLonger) max maybeN) element -> element
+first =
+    Arr.at nat0 FirstToLast
 
-shout words =
-    words
-        |> Arr.map String.toUpper
-        --map takes an Arr of any size
-        |> Arr.foldWith FirstToLast (\soFar word -> soFar ++ " " + word)
-        --foldWithFirst takes an Arr with at least 1 element
-        ++ "!"
+biggest :
+    Arr (In (Nat1Plus orLonger) max maybeN) comparable
+    -> comparable
+biggest =
+    Arr.foldWith FirstToLast max
+
+first Arr.empty --> compile-time error
+biggest Arr.empty --> compile-time error
 ```
 
-Is as you see, if we know, that it has at least `Nat5` elements, we also know that it has more than 1 element.
-
-- You can define & use operations for `Arr`s with a certain amount
-    ```elm
-    first : Arr (In (Nat1Plus more) max maybeExact) element -> element
-    first =
-        MinArr.at nat0 FirstToLast
-
-    biggestInRow :
-        Arr (In (Nat1Plus minMinus1) max maybeExact) comparable
-        -> comparable
-    biggestInRow =
-        Arr.foldWith FirstToLast max
-    ```
-
-### set a maximum length
+### specify a maximum length
   
 ```elm
---the max tag count should be 53
-tag : Arr (In min Nat53 maybeExact) Tag -> a -> Tagged a
+-- the max tag count should be 53
+tag : Arr (In min Nat53 maybeN) Tag -> a -> Tagged a
 tag tags toTag = --...
 
-tag
-    ([ ( nat0 |> NNat.toIn, "fun" ), ( nat1, "easy" ), ( nat2, "fresh" ) ]
-        |> List.map2 
-        |> List.foldr
-            (\( i, tag )-> Arr.replaceAt (i (Tag tag))
-            (Arr.repeat nat53 EmptyTag)
-    )
+tag (Arr.from3 "fun" "easy" "fresh")
+--> valid
+
+tag (Arr.repeat nat100 EmptyTag)
+--> compile-time error
 ```
 
