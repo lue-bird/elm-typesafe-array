@@ -24,7 +24,7 @@ Is this any useful? Let's look at an example:
     --> "0 1 2 3 4 5 ..."
 
     Arr.nats nat100
-        |> Arr.map (Nat.toInt >> String.fromInt)
+        |> Arr.map (val >> String.fromInt)
         |> Arr.foldWithFirst (joinBy " ")
     --> "0 1 2 3 4 5 ..."
 
@@ -39,8 +39,7 @@ import Arr exposing (Arr)
 import Internal.InArr as Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn)
 import TypeNats exposing (..)
 
 

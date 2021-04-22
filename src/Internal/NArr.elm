@@ -5,8 +5,7 @@ import Internal.Arr as Internal exposing (mapLength)
 import LinearDirection exposing (LinearDirection)
 import NNat
 import NNats exposing (nat1)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueN)
 import TypeNats exposing (..)
 import Typed exposing (isChecked)
 

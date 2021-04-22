@@ -35,8 +35,7 @@ import Internal.MinArr as Internal
 import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNats exposing (..)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
 import TypeNats exposing (..)
 
 
@@ -95,10 +94,9 @@ removeAt index direction =
 
 {-| Append an `Arr (In ...)`.
 
-    Arr.from4 1 2 3 4
-        |> NArr.toMin
-        |> MinArr.extendN (Arr.from3 5 6 7)
-    --> Arr [ 1, 2, 3, 4, 5, 6, 7 ]
+    Arr.from3 1 2 3
+        |> MinArr.extend nat3 arrWithAtLeast3Elements
+    --> is of type Arr (ValueMin Nat6) ...
 
 -}
 extend :
@@ -112,10 +110,9 @@ extend extension extensionMin =
 
 {-| Append a fixed length `Arr (N ...)`.
 
-    Arr.from4 1 2 3 4
-        |> NArr.toMin
+    arrWithAtLeast3Elements
         |> MinArr.extendN (Arr.from3 5 6 7)
-    --> Arr [ 1, 2, 3, 4, 5, 6, 7 ]
+    --> is of type Arr (ValueMin Nat6) ...
 
 -}
 extendN :
@@ -131,6 +128,38 @@ extendN arrExtension =
 -- ### compare
 
 
+{-| Compare the length to an exact `Nat (N ...)`.
+Are there `more`, `less` or an `equal` amount of elements?
+
+`min` ensures that the `Nat (N ...)` is bigger than the minimum length.
+
+    convertUserArguments :
+        String
+        -> Result String (Arr (ValueN Nat3 {- ... -}))
+    convertUserArguments =
+        String.words
+            >> Array.fromList
+            >> Arr.fromArray
+            >> MinArr.isLength nat3
+                { min = nat0 }
+                { equal = Ok
+                , less =
+                    \less ->
+                        Err
+                            ("I need 3 arguments, but there are only "
+                                ++ String.fromInt (val (Arr.length less))
+                                ++ "."
+                            )
+                , more =
+                    \more ->
+                        Err
+                            ("I need exact 3 arguments, so "
+                                ++ String.fromInt (val (Arr.length less))
+                                ++ " is too much."
+                            )
+                }
+
+-}
 isLength :
     Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) maybeN)
     -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
@@ -144,7 +173,7 @@ isLength :
                 )
                 element
             -> result
-        , greater :
+        , more :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
             Arr (In min atLeastTriedMinus1 e) element -> result
@@ -155,11 +184,36 @@ isLength length =
     Internal.isLength length
 
 
+{-| Compare the length to an exact `Nat (N ...)`.
+Are there `equalOrMore` or `less` elements?
+
+`min` ensures that the `Nat (N ...)` is bigger than the minimum length.
+
+    convertUserArguments :
+        String
+        -> Result String (Arr (ValueMin Nat3))
+    convertUserArguments =
+        String.words
+            >> Array.fromList
+            >> Arr.fromArray
+            >> MinArr.isLengthAtLeast nat3
+                { min = nat0 }
+                { equalOrMore = Ok
+                , less =
+                    \less ->
+                        Err
+                            ("I need at least 3 arguments, but there are only "
+                                ++ String.fromInt (val (Arr.length less))
+                                ++ "."
+                            )
+                }
+
+-}
 isLengthAtLeast :
     Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMin To tried) x) }
     ->
-        { equalOrGreater : Arr (ValueMin tried) element -> result
+        { equalOrMore : Arr (ValueMin tried) element -> result
         , less : Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element

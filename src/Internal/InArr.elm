@@ -15,8 +15,7 @@ import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn)
 import TypeNats exposing (..)
 
 

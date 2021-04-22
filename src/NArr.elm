@@ -20,8 +20,7 @@ module NArr exposing
 import Arr exposing (Arr)
 import Internal.NArr as Internal
 import LinearDirection exposing (LinearDirection)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueN)
 import TypeNats exposing (..)
 
 

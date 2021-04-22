@@ -34,11 +34,11 @@ Is this any useful? Let's look at an example:
     --> "0 1 2 3 4 5 ..."
 
     Arr.nats nat100
-        |> Arr.map (Nat.toInt >> String.fromInt)
+        |> Arr.map (val >> String.fromInt)
         |> Arr.foldWith FirstToLast (joinBy " ")
     --> "0 1 2 3 4 5 ..."
 
-The `Array` version just seems hacky and is less readable. You simply know more about the length at compile time, so you can e.g. call `foldWith` without a worry.
+The `Array` version just seems hacky and is less readable. `Arr` simply knows more about the length at compile time, so you can e.g. call `foldWith` without a worry.
 
 @docs Arr
 
@@ -91,8 +91,7 @@ import LinearDirection exposing (LinearDirection(..))
 import LinearDirection.Array as Array
 import NNat exposing (..)
 import NNats exposing (nat0)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueN)
 import Random
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Typed, isChecked)
@@ -164,7 +163,7 @@ type alias Arr length element =
 
 {-| Convert the `Arr` to an `Array`. Just do this in the end; try to keep the extra information about the length as long as you can.
 
-    Arr.nats nat5 |> Arr.map Nat.toInt
+    Arr.nats nat5 |> Arr.map val
         |> Arr.toArray
         |> Array.toList
     --> [ 0, 1, 2, 3, 4 ]

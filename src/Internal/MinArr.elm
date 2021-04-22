@@ -17,10 +17,9 @@ import LinearDirection.Array as Array
 import MinNat
 import NNat
 import NNats exposing (..)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
 import TypeNats exposing (..)
-import Typed exposing (isChecked, tag)
+import Typed exposing (isChecked, tag, val)
 
 
 push :
@@ -88,7 +87,7 @@ isLength :
                 )
                 element
             -> result
-        , greater :
+        , more :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
             Arr (In min atLeastTriedMinus1 e) element -> result
@@ -108,7 +107,7 @@ isLength amount min cases =
                 min
                 { equal =
                     \() -> .equal cases (withLength amount)
-                , greater = withLength >> .greater cases
+                , greater = withLength >> .more cases
                 , less = withLength >> .less cases
                 }
 
@@ -117,7 +116,7 @@ isLengthAtLeast :
     Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMin To tried) x) }
     ->
-        { equalOrGreater : Arr (ValueMin tried) element -> result
+        { equalOrMore : Arr (ValueMin tried) element -> result
         , less : Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
@@ -138,7 +137,7 @@ isLengthAtLeast tried min cases =
                         .less cases (withLength len)
                 , equalOrGreater =
                     \len ->
-                        .equalOrGreater cases (withLength len)
+                        .equalOrMore cases (withLength len)
                 }
 
 
@@ -161,7 +160,7 @@ group groupSize direction =
         let
             { groups, less } =
                 toArray arr
-                    |> Array.group (Nat.toInt groupSize) direction
+                    |> Array.group (val groupSize) direction
         in
         { groups =
             { array =

@@ -12,11 +12,10 @@ import LinearDirection.Array as Array
 import MinNat
 import NNat
 import NNats exposing (..)
-import Nat exposing (Nat)
-import Nat.Bound exposing (..)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueN)
 import Random
 import TypeNats exposing (..)
-import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag)
+import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
 
 
 type alias Arr length element =
@@ -42,7 +41,7 @@ at :
     -> element
 at index direction =
     \arr ->
-        case Array.at (Nat.toInt index) direction (toArray arr) of
+        case Array.at (val index) direction (toArray arr) of
             Just element ->
                 --succeeds for every correct typed Arr (should be)
                 element
@@ -147,7 +146,7 @@ empty =
 
 repeat : Nat amount -> element -> Arr amount element
 repeat amount element =
-    { array = Array.repeat (Nat.toInt amount) element
+    { array = Array.repeat (val amount) element
     , length = amount
     }
         |> tag
@@ -174,7 +173,7 @@ nats :
             (Nat (ValueIn Nat0 maxLengthMinus1))
 nats length_ =
     { array =
-        List.range 0 (Nat.toInt length_ - 1)
+        List.range 0 (val length_ - 1)
             |> List.map
                 (Nat.intInRange nat0 (length_ |> InNat.subN nat1))
             |> Array.fromList
@@ -189,7 +188,7 @@ random :
     -> Random.Generator element
     -> Random.Generator (Arr length element)
 random amount generateElement =
-    Random.list (Nat.toInt amount) generateElement
+    Random.list (val amount) generateElement
         |> Random.map
             (\list ->
                 { array = Array.fromList list, length = amount }
@@ -226,7 +225,7 @@ replaceAt :
     -> Arr (In (Nat1Plus minLengthMinus1) max maybeN) element
 replaceAt index direction replacingElement =
     mapArray
-        (Array.replaceAt (index |> Nat.toInt) direction replacingElement)
+        (Array.replaceAt (index |> val) direction replacingElement)
         >> isChecked Arr
 
 
@@ -242,7 +241,7 @@ take :
     -> Arr (In minTaken atLeastMaxTaken takenMaybeN) element
 take amount maxTakenAmount direction =
     mapArrayAndLength
-        (Array.take (amount |> Nat.toInt) direction)
+        (Array.take (amount |> val) direction)
         (\_ -> amount |> Nat.maxIs maxTakenAmount)
         >> isChecked Arr
 
@@ -254,7 +253,7 @@ drop :
     -> Arr (ValueIn minTaken maxTaken) element
 drop droppedAmount direction =
     mapArrayAndLength
-        (Array.drop (droppedAmount |> Nat.toInt) direction)
+        (Array.drop (droppedAmount |> val) direction)
         (\len -> len |> InNat.subN droppedAmount)
         >> isChecked Arr
 
@@ -300,7 +299,7 @@ removeAt :
     -> Arr resultLengthMinus1 element
 removeAt index direction sub1 =
     mapArrayAndLength
-        (Array.removeAt (Nat.toInt index) direction)
+        (Array.removeAt (val index) direction)
         sub1
         >> isChecked Arr
 
@@ -314,7 +313,7 @@ insertAt :
     -> Arr lengthPlus1 element
 insertAt index direction inserted add1 =
     mapArrayAndLength
-        (Array.insertAt (index |> Nat.toInt) direction inserted)
+        (Array.insertAt (index |> val) direction inserted)
         add1
         >> isChecked Arr
 

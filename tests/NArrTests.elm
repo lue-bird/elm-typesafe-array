@@ -4,7 +4,7 @@ import Arr exposing (Arr)
 import Expect
 import NArr
 import NNats exposing (..)
-import Nat.Bound exposing (..)
+import Nat exposing (ValueOnly)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
