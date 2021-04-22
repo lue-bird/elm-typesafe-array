@@ -55,9 +55,9 @@ elm install lue-bird/elm-typed-value
 ```
 
 If you want, take a 👀 to get a feel why they are useful.
-- [bounded-nat](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/)
+- most importantly: [bounded-nat](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/)
+    - which uses [typed-value](https://package.elm-lang.org/packages/lue-bird/typed-value/latest/)
 - [linear-direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-- [typed-value](https://package.elm-lang.org/packages/lue-bird/typed-value/latest/)
 
 ```elm
 import Nat exposing (Nat, Only, In, ValueIn, ValueMin)
@@ -65,10 +65,10 @@ import MinNat
 import InNat
 import NNat
 import NNats exposing (..)
-    --nat0 to nat160
+    -- nat0 to nat160
 
 import TypeNats exposing (..)
-    --Nat0 to Nat160 & Nat0Plus to Nat160Plus
+    -- Nat0 to Nat160 & Nat0Plus to Nat160Plus
 
 import Arr exposing (Arr)
 import NArr
