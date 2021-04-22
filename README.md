@@ -48,14 +48,16 @@ You get a _value, not a `Maybe`_.
 Setup
 
 ```noformatingplease
+elm install lue-bird/elm-typesafe-array
 elm install lue-bird/elm-bounded-nat
 elm install lue-bird/elm-linear-direction
-elm install lue-bird/elm-typesafe-array
+elm install lue-bird/elm-typed-value
 ```
 
-If you want, take a look at both packages to get a feel why they are useful.
+If you want, take a 👀 to get a feel why they are useful.
 - [bounded-nat](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/)
 - [linear-direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+- [typed-value](https://package.elm-lang.org/packages/lue-bird/typed-value/latest/)
 
 ```elm
 import Nat exposing (Nat, Only, In, ValueIn, ValueMin)
@@ -68,17 +70,17 @@ import NNats exposing (..)
 import TypeNats exposing (..)
     --Nat0 to Nat160 & Nat0Plus to Nat160Plus
 
-import LinearDirection exposing (LinearDirection(..))
-
 import Arr exposing (Arr)
 import NArr
 import InArr
 import MinArr
+
+import LinearDirection exposing (LinearDirection(..))
+
+import Typed exposing (val, val2)
 ```
 
-## How does that look like?
-
-We will compare an `Arr` to an `Array`.
+## comparing `Arr` to `Array`.
 
 ```elm
 christmas =
