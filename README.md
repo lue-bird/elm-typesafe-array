@@ -138,17 +138,20 @@ tag (Arr.repeat nat100 EmptyTag)
 ## specify an exact length
 
 ```elm
-type alias TicTacToeBoard rowsMaybeN columnsMaybeN =
-    Arr (Only Nat3 rowsMaybeN)
-        (Arr (Only Nat3 columnsMaybeN) TicTacToeField)
+type alias TicTacToeBoard =
+    Arr (ValueOnly Nat3)
+        (Arr (ValueOnly Nat3) TicTacToeField)
 
-initialTicTacToeBoard : TicTacToeBoard --...
+initialTicTacToeBoard : TicTacToeBoard
 initialTicTacToeBoard =
     Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty)
+        (Arr.repeat nat3 FieldEmpty |> NArr.toIn)
+        |> NArr.toIn
 
-type Field =
+type TicTacToeField =
     FieldEmpty
     | X
     | O
 ```
+
+Why the `NArr.toIn`? It's because in situations like these, the type is more precise than a `ValueOnly`: It's a `ValueN`. So you have to _explicitly drop type information_.

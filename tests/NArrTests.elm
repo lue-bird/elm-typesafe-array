@@ -4,7 +4,7 @@ import Arr exposing (Arr)
 import Expect
 import NArr
 import NNats exposing (..)
-import Nat exposing (ValueOnly)
+import Nat exposing (Only, ValueOnly)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
@@ -50,3 +50,22 @@ type Field
 type Piece
     = Pawn
     | Other
+
+
+type alias TicTacToeBoard =
+    Arr
+        (ValueOnly Nat3)
+        (Arr (ValueOnly Nat3) TicTacToeField)
+
+
+initialTicTacToeBoard : TicTacToeBoard
+initialTicTacToeBoard =
+    Arr.repeat nat3
+        (Arr.repeat nat3 FieldEmpty |> NArr.toIn)
+        |> NArr.toIn
+
+
+type TicTacToeField
+    = FieldEmpty
+    | X
+    | O
