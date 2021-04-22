@@ -17,7 +17,7 @@
         "elm/core": "1.0.5 <= v < 2.0.0",
         "elm/random": "1.0.0 <= v < 2.0.0",
         "elm-community/array-extra": "2.3.0 <= v < 3.0.0",
-        "lue-bird/elm-bounded-nat": "5.0.0 <= v < 6.0.0",
+        "lue-bird/elm-bounded-nat": "6.0.0 <= v < 7.0.0",
         "lue-bird/elm-linear-direction": "1.0.0 <= v < 2.0.0",
         "lue-bird/elm-typed-value": "4.0.0 <= v < 5.0.0"
     },
