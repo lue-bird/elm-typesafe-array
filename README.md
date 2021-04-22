@@ -43,7 +43,8 @@ initialChessBoard
 --> Piece Pawn White
 ```
 
-You get a _value, not a `Maybe`_.
+You get a _value, not a `Maybe`_. _This_ package is all about making these operations safe.
+**We know** there are enough elements.
 
 Setup
 
@@ -80,31 +81,9 @@ import LinearDirection exposing (LinearDirection(..))
 import Typed exposing (val, val2)
 ```
 
-## comparing `Arr` to `Array`.
+You can define & use operations for `Arr`s with a certain amount.
 
-```elm
-christmas =
-    Arr.repeat nat3 "Ho"
-        |> NArr.extend nat2 (Arr.from2 "it's" "christmas")
-
-christmasArray =
-    Array.append
-        (Array.repeat 3 "Ho")
-        (Array.fromList [ "it's", "christmas" ])
-
-christmas |> Arr.at nat4 FirstToLast
---> "christmas"
-
-christmasArray |> Array.get 4
---> Just "christmas"
-```
-
-_This_ is what this package is all about: Making these operations safe.
-We _know_ there are 5 elements there.
-
-→ You can define & use operations for `Arr`s with a certain amount
-
-## specify a minimum length
+## a minimum length?
 
 ```elm
 first : Arr (In (Nat1Plus orLonger) max maybeN) element -> element
@@ -121,7 +100,29 @@ first Arr.empty --> compile-time error
 biggest Arr.empty --> compile-time error
 ```
 
-### specify a maximum length
+## an exact length?
+
+```elm
+type alias TicTacToeBoard =
+    Arr (ValueOnly Nat3)
+        (Arr (ValueOnly Nat3) TicTacToeField)
+
+type TicTacToeField =
+    FieldEmpty
+    | X
+    | O
+
+initialTicTacToeBoard : TicTacToeBoard
+initialTicTacToeBoard =
+    Arr.repeat nat3
+        (Arr.repeat nat3 FieldEmpty |> NArr.toIn)
+        |> NArr.toIn
+```
+
+Why the `NArr.toIn`? It's because in situations like these, the type is more precise than a `ValueOnly`: It's a `ValueN`. So you have to _explicitly drop type information_.
+
+
+## a maximum length?
   
 ```elm
 -- the max tag count should be 53
@@ -134,24 +135,3 @@ tag (Arr.from3 "fun" "easy" "fresh")
 tag (Arr.repeat nat100 EmptyTag)
 --> compile-time error
 ```
-
-## specify an exact length
-
-```elm
-type alias TicTacToeBoard =
-    Arr (ValueOnly Nat3)
-        (Arr (ValueOnly Nat3) TicTacToeField)
-
-initialTicTacToeBoard : TicTacToeBoard
-initialTicTacToeBoard =
-    Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty |> NArr.toIn)
-        |> NArr.toIn
-
-type TicTacToeField =
-    FieldEmpty
-    | X
-    | O
-```
-
-Why the `NArr.toIn`? It's because in situations like these, the type is more precise than a `ValueOnly`: It's a `ValueN`. So you have to _explicitly drop type information_.
