@@ -1,20 +1,15 @@
-module Internal.NArr exposing (extend, push, removeAt, toIn)
+module Internal.NArr exposing (extend, push, removeAt, serialize)
 
 import Arr exposing (Arr)
-import Internal.Arr as Internal exposing (mapLength)
+import Array
+import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNat
 import NNats exposing (nat1)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueN)
+import Nat exposing (In, Is, N, Nat, To, ValueN)
+import Serialize
 import TypeNats exposing (..)
-import Typed exposing (isChecked)
-
-
-toIn :
-    Arr (In min max maybeExact) element
-    -> Arr (ValueIn min max) element
-toIn =
-    mapLength NNat.toIn >> isChecked Internal.Arr
+import Typed exposing (val)
 
 
 push :
@@ -75,3 +70,22 @@ removeAt index direction =
     Internal.removeAt index
         direction
         (NNat.sub ( nat1, nat1 ))
+
+
+{-| Just a draft, will be updated like bounded-nat
+-}
+serialize :
+    Nat length
+    -> Serialize.Codec String a
+    -> Serialize.Codec String (Arr length a)
+serialize length_ serializeElement =
+    Serialize.array serializeElement
+        |> Typed.serializeChecked Internal.Arr
+            (\array ->
+                if Array.length array == val length_ then
+                    Ok { array = array, length = length_ }
+
+                else
+                    Err "The decoded Array wasn't of the expected size"
+            )
+            .array
