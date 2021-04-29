@@ -1,13 +1,13 @@
 module Arr exposing
     ( Arr
+    , fromArray, repeat, nats, random
+    , empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
     , length, at
     , take, drop
-    , fromArray, repeat, nats
-    , empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
-    , map, fold, toArray, combine2, combine3, combine4, foldWith, reverse
+    , map, fold, toArray, map2, map3, map4, foldWith, reverse
     , replaceAt
-    , toMin
-    , random, SerializeError(..)
+    , lowerMinLength
+    , maxLengthIs
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -43,6 +43,16 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs Arr
 
 
+## create
+
+@docs fromArray, repeat, nats, random
+
+
+### exact
+
+@docs empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
+
+
 ## scan
 
 @docs length, at
@@ -53,19 +63,9 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs take, drop
 
 
-## create
-
-@docs fromArray, repeat, nats
-
-
-### exact
-
-@docs empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
-
-
 ## transform
 
-@docs map, fold, toArray, combine2, combine3, combine4, foldWith, reverse
+@docs map, fold, toArray, map2, map3, map4, foldWith, reverse
 
 
 ### modify
@@ -75,26 +75,26 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## drop information
 
-@docs toMin
+@docs lowerMinLength
 
 
-## extra
+## restore information
 
-@docs random, SerializeError
+@docs maxLengthIs
 
 -}
 
 import Arguments exposing (..)
 import Array exposing (Array)
+import Array.LinearDirection as Array
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection(..))
-import LinearDirection.Array as Array
 import NNat exposing (..)
 import NNats exposing (nat0)
 import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueN)
 import Random
 import TypeNats exposing (..)
-import Typed exposing (Checked, Internal, Typed, isChecked)
+import Typed exposing (Checked, Internal, Typed)
 
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -112,6 +112,12 @@ Arr (ValueMin Nat5) ...
 
 ```
 Arr (ValueIn Nat2 Nat12) ...
+```
+
+  - = 4
+
+```
+Arr (ValueOnly Nat4) ...
 ```
 
   - the exact amount 3, also described as the difference between 2 numbers
@@ -158,15 +164,17 @@ type alias Arr length element =
         Checked
         Internal.ArrTag
         Internal
-        (Internal.Value length element)
+        (Internal.Content length element)
 
 
-{-| Convert the `Arr` to an `Array`. Just do this in the end; try to keep the extra information about the length as long as you can.
+{-| Convert the `Arr` to an `Array`.
+Just do this in the end.
+Try to keep extra information as long as you can.
 
-    Arr.nats nat5 |> Arr.map val
+    Arr.nats nat5
+        |> Arr.map val
         |> Arr.toArray
-        |> Array.toList
-    --> [ 0, 1, 2, 3, 4 ]
+    --> Array.fromList [ 0, 1, 2, 3, 4 ]
 
 -}
 toArray : Arr length element -> Array element
@@ -178,15 +186,15 @@ toArray =
 -- ## create
 
 
-{-| A `Arr` with a given amount of same elements.
+{-| An `Arr` with a given amount of same elements.
 
     Arr.repeat nat4 'L'
     --> Arr.from4 'L' 'L' 'L' 'L'
-    --> of type Arr (N Nat4 ...) Char
+    --> : Arr (ValueN Nat4 ...) Char
 
 
     Arr.repeat atLeast3 'L'
-    --> is of type Arr (Min Nat3) Char
+    --> : Arr (ValueMin Nat3) Char
 
 -}
 repeat :
@@ -197,15 +205,10 @@ repeat amount element =
     Internal.repeat amount element
 
 
-{-| Create an `Arr` from an `Array`.
+{-| Create an `Arr` from an `Array`. As every `Array` has `>= 0` elements:
 
-    arrayIGotFromALibrary
-        |> Arr.fromArray
-    --> is of type Arr (ValueMin Nat0)
-
-As every `Array` has `>= 0` elements.
-
-Please use `from1/2/...` if you know the amount of elements.
+    Arr.fromArray arrayFromSomewhere
+    --> : Arr (ValueMin Nat0)
 
     Arr.fromArray
         (Array.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
@@ -217,6 +220,8 @@ Please use `from1/2/...` if you know the amount of elements.
     Arr.nats nat7
     --> big yes
 
+Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
+
 -}
 fromArray : Array element -> Arr (ValueMin Nat0) element
 fromArray =
@@ -226,9 +231,9 @@ fromArray =
 {-| No elements.
 
     Arr.empty
-    --> is of type Arr (In Nat0 max) element
-        |> Arr.push ":)"
-    --> is of type Arr (N Nat4 ...) String
+    --> : Arr (ValueN Nat0 ...) element
+        |> NArr.push ":)"
+    --> : Arr (ValueN Nat1 ...) String
 
 -}
 empty : Arr (ValueN Nat0 atLeast0 (Is a To a) (Is b To b)) element
@@ -545,15 +550,15 @@ replaceAt index direction replacingElement =
 -- ## part
 
 
-{-| This works somewhat magically for 2 situations:
+{-| This works for both
 
     Arr.from8 0 1 2 3 4 5 6 7
-        |> Arr.take nat3 nat3 FirstToLast
-    --> Arr.from3 0 1 2
+        |> Arr.take nat3 nat3 LastToFirst
+    --> Arr.from3 5 6 7
 
     Arr.from8 0 1 2 3 4 5 6 7
-        |> Arr.take natBetween3To7 nat7 LastToFirst
-    --> is of type Arr (ValueIn Nat3 Nat7) ...
+        |> Arr.take between3To7 nat7 FirstToLast
+    --> : Arr (ValueIn Nat3 Nat7) ...
 
 -}
 take :
@@ -568,9 +573,11 @@ take takenAmount maxAmount direction =
 
 {-| After a certain number of elements from one side.
 
-    Arr.from6 1 2 3 4 5 6
-        |> Arr.drop 2 LastToFirst
-    --> Arr.from4 1 2 3 4
+    with6To10Elements
+        |> Arr.drop nat2 LastToFirst
+    --> : Arr (In Nat4 (Nat10Plus a)) ...
+
+Use `take` `LastToFirst` if you know the exact amount of elements.
 
 -}
 drop :
@@ -604,52 +611,50 @@ map alter =
     Internal.map alter
 
 
-{-| At each index of 2 `InArr`s,
-map the elements into a new element.
+{-| Combine the elements of 2 `Arr`s to a new element.
 If one list is longer, the extra elements are dropped.
 
     teamLifes aBoard bBoard =
-        InArr.combine2
-            (\a b -> a.lifes + b.lifes)
+        Arr.map2 (\a b -> a.lifes + b.lifes)
             aBoard
             bBoard
 
 -}
-combine2 :
+map2 :
     (a -> b -> combined)
     -> Arr length a
     -> Arr length b
     -> Arr length combined
-combine2 combine aArr bArr =
-    Internal.combine2 combine aArr bArr
+map2 combine aArr bArr =
+    Internal.map2 combine aArr bArr
 
 
-{-| Works like [combine2](Arr#combine2).
+{-| Works like [map2](Arr#map2).
 -}
-combine3 :
+map3 :
     (a -> b -> c -> combinedElement)
     -> Arr length a
     -> Arr length b
     -> Arr length c
     -> Arr length combinedElement
-combine3 combine aArr bArr cArr =
-    combine2 (\f c -> f c)
-        (combine2 combine aArr bArr)
+map3 combine aArr bArr cArr =
+    map2 (\f c -> f c)
+        (map2 combine aArr bArr)
         cArr
 
 
-{-| Works like [combine2](Arr#combine2).
+{-| Works like [map2](Arr#map2).
 -}
-combine4 :
+map4 :
     (a -> b -> c -> d -> combinedElement)
     -> Arr length a
     -> Arr length b
     -> Arr length c
     -> Arr length d
     -> Arr length combinedElement
-combine4 combine aArr bArr cArr dArr =
-    combine2 (\f c -> f c)
-        (combine3 combine aArr bArr cArr)
+map4 combine aArr bArr cArr dArr =
+    map2 (\f c -> f c)
+        (map3 combine aArr bArr cArr)
         dArr
 
 
@@ -702,10 +707,6 @@ foldWith direction reduce =
 
 
 {-| The amount of elements.
-
-    lastIndex =
-        length >> NNat.sub1
-
 -}
 length : Arr length element -> Nat length
 length =
@@ -745,14 +746,70 @@ reverse =
 
 
 
+-- ## drop information
+
+
+{-| Use a lower minimum length in the type.
+
+    [ atLeast3Elements
+    , atLeast4Elements
+    ]
+
+Elm complains:
+
+> But all the previous elements in the list are
+> `Arr (ValueMin Nat3) ...`
+
+    [ atLeast3Elements
+    , atLeast4Elements
+        |> Arr.lowerMinLength nat3
+    ]
+
+-}
+lowerMinLength :
+    Nat (In lowerMin min lowerMaybeN)
+    -> Arr (In min max maybeN) element
+    -> Arr (ValueIn lowerMin max) element
+lowerMinLength =
+    Internal.lowerMinLength
+
+
+
+-- ## restore information
+
+
+{-| Make an `Arr` with a fixed maximum length fit into functions with require a higher maximum length.
+
+While designing argument annotations as general as possible:
+
+    atMost18Elements : Arr (In min Nat18 maybeN) ...
+
+The argument in `atMost18Elements` should also fit in `atMost19Elements`.
+
+    atMost19Elements theArgument
+    --> error :(
+
+    atMost19Elements
+        (theArgument |> Arr.maxLengthIs nat18)
+    --> works
+
+-}
+maxLengthIs :
+    Nat (N max (Is a To atLeastMax) x)
+    -> Arr (In min max maybeN) element
+    -> Arr (In min atLeastMax maybeN) element
+maxLengthIs maximumLength =
+    Internal.maxLengthIs maximumLength
+
+
+
 -- ## create
 
 
 {-| Increasing natural numbers. In the end, there are `length` numbers.
 
     Arr.nats nat10
-    --> is of type
-    --> Arr
+    --> : Arr
     -->     (ValueN Nat10 ...)
     -->     (Nat (ValueIn Nat0 (Nat9Plus a)))
 
@@ -788,44 +845,3 @@ random :
     -> Random.Generator (Arr length element)
 random amount generateElement =
     Internal.random amount generateElement
-
-
-
--- ## drop information
-
-
-{-| Convert an exact Arr (In min ...) to a Nat (ValueMin min).
-
-    between4And10Elements |> Arr.toMin
-    --> is of type Arr (ValueMin Nat4) ...
-
-There is only 1 situation you should use this.
-
-To make these the same type.
-
-    [ atLeast1Element, between1And10Elements ]
-
-Elm complains:
-
-But all the previous elements in the list are: Arr (ValueMin Nat1)
-
-    [ atLeast1Element
-    , between1And10Elements |> Arr.toMin
-    ]
-
--}
-toMin : Arr (In min max maybeN) element -> Arr (ValueMin min) element
-toMin =
-    Internal.mapLength Nat.toMin
-        >> isChecked Internal.Arr
-
-
-
--- ## extra
-
-
-{-| What could go wrong when decoding an `Arr`.
--}
-type SerializeError elementError
-    = ElementSerializeError elementError
-    | WrongAmountSerializeError
