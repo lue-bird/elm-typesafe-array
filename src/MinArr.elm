@@ -1,7 +1,8 @@
 module MinArr exposing
     ( push, removeAt, insertAt, extend, extendN
-    , isLength, isLengthAtLeast
+    , isLength, isLengthAtLeast, isLengthAtMost
     , group
+    , value
     )
 
 {-| If the maximum length is a type variable,
@@ -20,20 +21,23 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 ## scan length
 
-@docs isLength, isLengthAtLeast
+@docs isLength, isLengthAtLeast, isLengthAtMost
 
 
 ## transform
 
 @docs group
 
+
+## drop information
+
+@docs value
+
 -}
 
-import Arr exposing (Arr, SerializeError(..), length, toArray)
-import Internal.Arr
+import Arr exposing (Arr, length, toArray)
 import Internal.MinArr as Internal
 import LinearDirection exposing (LinearDirection)
-import MinNat
 import NNats exposing (..)
 import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
 import TypeNats exposing (..)
@@ -47,7 +51,7 @@ import TypeNats exposing (..)
 
     arrWithAtLeast5Elements
         |> MinArr.push "becomes the last"
-    --> is of type Arr (ValueMin Nat6) String
+    --> : Arr (ValueMin Nat6) String
 
 -}
 push :
@@ -63,7 +67,7 @@ push element =
     arrWithAtLeast5Elements
         |> MinArr.insertAt nat0 FirstToLast
             "becomes the first"
-    --> is of type Arr (ValueMin Nat6) String
+    --> : Arr (ValueMin Nat6) String
 
 -}
 insertAt :
@@ -96,7 +100,7 @@ removeAt index direction =
 
     Arr.from3 1 2 3
         |> MinArr.extend nat3 arrWithAtLeast3Elements
-    --> is of type Arr (ValueMin Nat6) ...
+    --> : Arr (ValueMin Nat6) ...
 
 -}
 extend :
@@ -112,7 +116,7 @@ extend extension extensionMin =
 
     arrWithAtLeast3Elements
         |> MinArr.extendN (Arr.from3 5 6 7)
-    --> is of type Arr (ValueMin Nat6) ...
+    --> : Arr (ValueMin Nat6) ...
 
 -}
 extendN :
@@ -125,11 +129,11 @@ extendN arrExtension =
 
 
 -- ## scan
--- ### compare
+-- ### scan length
 
 
 {-| Compare the length to an exact `Nat (N ...)`.
-Are there `more`, `less` or an `equal` amount of elements?
+Is it `greater`, `less` or `equal`?
 
 `min` ensures that the `Nat (N ...)` is bigger than the minimum length.
 
@@ -150,18 +154,18 @@ Are there `more`, `less` or an `equal` amount of elements?
                                 ++ String.fromInt (val (Arr.length less))
                                 ++ "."
                             )
-                , more =
+                , greater =
                     \more ->
                         Err
                             ("I need exact 3 arguments, so "
-                                ++ String.fromInt (val (Arr.length less))
+                                ++ String.fromInt (val (Arr.length more))
                                 ++ " is too much."
                             )
                 }
 
 -}
 isLength :
-    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) maybeN)
+    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
     ->
         { equal :
@@ -169,25 +173,25 @@ isLength :
                 (In
                     (Nat1Plus triedMinus1)
                     (Nat1Plus atLeastTriedMinus1)
-                    maybeN
+                    triedMaybeN
                 )
                 element
             -> result
-        , more :
+        , greater :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min atLeastTriedMinus1 e) element -> result
+            Arr (In min atLeastTriedMinus1 maybeN) element -> result
         }
-    -> Arr (In min max e) element
+    -> Arr (In min max maybeN) element
     -> result
 isLength length =
     Internal.isLength length
 
 
 {-| Compare the length to an exact `Nat (N ...)`.
-Are there `equalOrMore` or `less` elements?
+Is it `equalOrGreater` or `less`?
 
-`min` ensures that the `Nat (N ...)` is bigger than the minimum length.
+`min` ensures that the lower bound is bigger than the minimum length.
 
     convertUserArguments :
         String
@@ -198,7 +202,7 @@ Are there `equalOrMore` or `less` elements?
             >> Arr.fromArray
             >> MinArr.isLengthAtLeast nat3
                 { min = nat0 }
-                { equalOrMore = Ok
+                { equalOrGreater = Ok
                 , less =
                     \less ->
                         Err
@@ -210,16 +214,57 @@ Are there `equalOrMore` or `less` elements?
 
 -}
 isLengthAtLeast :
-    Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
-    -> { min : Nat (N min (Is minToTriedMin To tried) x) }
+    Nat (In lowerBound (Nat1Plus lowerBoundMinus1PlusA) lowerBoundMaybeN)
+    -> { min : Nat (N min (Is minToTriedMin To lowerBound) x) }
     ->
-        { equalOrMore : Arr (ValueMin tried) element -> result
-        , less : Arr (In min triedMinus1PlusA maybeN) element -> result
+        { equalOrGreater : Arr (ValueMin lowerBound) element -> result
+        , less : Arr (In min lowerBoundMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
-isLengthAtLeast tried min cases =
-    Internal.isLengthAtLeast tried min cases
+isLengthAtLeast lowerBound min cases =
+    Internal.isLengthAtLeast lowerBound min cases
+
+
+{-| Is the length
+
+  - `equalOrLess` than an upper bound or
+
+  - `greater`?
+
+`min` ensures that the upper bound is greater than the minimum length.
+
+    -- only up to 50 tags
+    tag :
+        Arr (In min Nat50 maybeN) String
+        -> a
+        -> Tagged a
+
+    tagIfValidTags : Array String -> a -> Maybe (Tagged a)
+    tagIfValidTags array value =
+        array
+            |> Arr.fromArray
+            |> MinArr.isLengthAtMost nat50
+                { equalOrLess = tag value >> Just
+                , greater = \_ -> Nothing
+                }
+
+-}
+isLengthAtMost :
+    Nat (In atMostMin atLeastAtMostMin atMostMaybeN)
+    -> { min : Nat (N min (Is minToAtMostMin To atMostMin) x) }
+    ->
+        { equalOrLess :
+            Arr (In min atLeastAtMostMin maybeN) element
+            -> result
+        , greater :
+            Arr (ValueMin (Nat1Plus atMostMin)) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtMost tried min cases =
+    Internal.isLengthAtMost tried min cases
 
 
 
@@ -257,3 +302,33 @@ group :
         }
 group groupSize direction =
     Internal.group groupSize direction
+
+
+
+-- ## drop information
+
+
+{-| Convert an exact Arr (In min ...) to a Nat (ValueMin min).
+
+    between4And10Elements |> MinArr.value
+    --> : Arr (ValueMin Nat4) ...
+
+There is only 1 situation you should use this.
+
+To make these the same type.
+
+    [ atLeast1Element, between1And10Elements ]
+
+Elm complains:
+
+> But all the previous elements in the list are
+> `Arr (ValueMin Nat1) ...`
+
+    [ atLeast1Element
+    , between1And10Elements |> MinArr.value
+    ]
+
+-}
+value : Arr (In min max maybeN) element -> Arr (ValueMin min) element
+value =
+    Internal.value
