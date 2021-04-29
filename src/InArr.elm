@@ -1,37 +1,33 @@
-module InArr exposing (push, extend, extendN, removeAt, insertAt)
+module InArr exposing
+    ( push, extend, extendN, removeAt, insertAt
+    , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
+    , value
+    )
 
-{-| A `Arr (In ...)` describes an array where you know a minimum & maximum amount of elements.
+{-| If the maximum length is set to a specific value,
 
-    Array.empty |> Array.get 0
-    --> Nothing
+    -- only up to 50 tags
+    tag :
+        Arr (In min Nat50 maybeN) String
+        -> a
+        -> Tagged a
 
-    Arr.empty |> Arr.at nat0 FirstToLast
-    --> compile time error
-
-Is this any useful? Let's look at an example:
-
-> 0 to 100 joined by a space
-
-    joinBy between =
-        \before after-> before ++ between ++ after
-
-    let
-        intStringsAfter =
-            Array.fromList (List.range 1 100)
-                |> Array.map String.fromInt
-    in
-    Array.foldl (joinBy " ") "0" intStringsAfter
-    --> "0 1 2 3 4 5 ..."
-
-    Arr.nats nat100
-        |> Arr.map (val >> String.fromInt)
-        |> Arr.foldWithFirst (joinBy " ")
-    --> "0 1 2 3 4 5 ..."
+use these operations instead of the ones in `Arr` or `MinArr`.
 
 
 ## modify
 
 @docs push, extend, extendN, removeAt, insertAt
+
+
+## scan length
+
+@docs isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
+
+
+## drop information
+
+@docs value
 
 -}
 
@@ -39,7 +35,7 @@ import Arr exposing (Arr)
 import Internal.InArr as Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueOnly)
 import TypeNats exposing (..)
 
 
@@ -51,7 +47,7 @@ import TypeNats exposing (..)
 
     arrWith5To10Elements
         |> InArr.push "becomes the last"
-    --> is of type Arr (ValueIn Nat6 Nat11) String
+    --> : Arr (ValueIn Nat6 Nat11) String
 
 -}
 push :
@@ -105,3 +101,223 @@ removeAt :
     -> Arr (ValueIn minMinus1 maxMinus1) element
 removeAt index direction =
     Internal.removeAt index direction
+
+
+{-| Convert it to an `Arr (ValueIn min max)`.
+
+    Arr.from3 1 2 3 |> InArr.value
+    --> : Nat (ValueIn Nat3 (Nat3Plus a))
+
+There is only 1 situation you should use this.
+
+To make these the same type.
+
+    [ arrWith3To10Elements
+    , Arr.repeat nat3 0
+    ]
+
+Elm complains:
+
+> But all the previous elements in the list are
+> `Arr (ValueIn Nat3 Nat10) ...`
+
+    [ arrWith3To10Elements
+    , Arr.repeat nat3 0 |> InArr.value
+    ]
+
+-}
+value : Arr (In min max maybeExact) element -> Arr (ValueIn min max) element
+value =
+    Internal.value
+
+
+
+-- ## scan length
+
+
+{-| Compare the length to an exact `Nat (N ...)` length.
+Are there `more`, `less` or an `equal` amount of elements?
+
+`min` ensures that the `Nat (N ...)` is greater than the minimum length.
+
+    chooseFormation :
+        Arr (ValueIn Nat0 Nat50) Character
+        -> Formation
+    chooseFormation characters =
+        characters
+            |> InArr.isLength nat7
+                { min = nat0 }
+                { equal = SpecialAttack
+                , less = Retreat
+                , more = Fight
+                }
+
+    type Formation
+        = SpecialAttack (Arr (ValueOnly Nat7) Character)
+        | Retreat (Arr (ValueIn Nat0 Nat6) Character)
+        | Fight (Arr (ValueIn Nat8 Nat50) Character)
+
+-}
+isLength :
+    Nat
+        (N
+            tried
+            (Is triedToMax To max)
+            (Is a To (Nat1Plus atLeastTriedMinus1))
+        )
+    -> { min : Nat (N min (Is minToTried To tried) x) }
+    ->
+        { equal :
+            Arr (ValueOnly tried) element
+            -> result
+        , greater :
+            Arr (In (Nat2Plus triedMinus1) max maybeN) element -> result
+        , less :
+            Arr (In min atLeastTriedMinus1 maybeN) element -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLength tried min cases =
+    Internal.isLength tried min cases
+
+
+{-| Compared to a range from a lower to an upper bound, is the length
+
+  - `inRange`
+
+  - `greater` than the upper bound or
+
+  - `less` than the lower bound?
+
+`min` ensures that the lower bound is greater than the minimum length.
+
+    chooseFormation :
+        Arr (ValueIn Nat0 Nat50) Character
+        -> Formation
+    chooseFormation characters =
+        characters
+            |> InArr.isLengthInRange nat10
+                nat20
+                { min = nat0 }
+                { equal = SpecialAttack
+                , less = Retreat
+                , more = Fight
+                }
+
+    type Formation
+        = SpecialAttack (Arr (ValueIn Nat10 Nat20) Character)
+        | Retreat (Arr (ValueIn Nat0 Nat9) Character)
+        | Fight (Arr (ValueIn Nat21 Nat50) Character)
+
+-}
+isLengthInRange :
+    Nat
+        (N
+            first
+            (Is firstToLast To last)
+            (Is firstA To (Nat1Plus atLeastFirstMinus1))
+        )
+    -> Nat (N last (Is lastToMax To max) (Is lastA To atLeastLast))
+    -> { min : Nat (N min (Is minToFirst To first) x) }
+    ->
+        { inRange :
+            Arr (In first atLeastLast maybeN) element
+            -> result
+        , less :
+            Arr (In min atLeastFirstMinus1 maybeN) element
+            -> result
+        , more :
+            Arr (In (Nat1Plus last) max maybeN) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthInRange lowerBound upperBound min cases =
+    Internal.isLengthInRange lowerBound upperBound min cases
+
+
+{-| Is the length
+
+  - `equalOrGreater` than a lower bound or
+
+  - `less`?
+
+`min` ensures that the lower bound is greater than the minimum length.
+
+    first5 :
+        Arr (In min max maybeN) element
+        -> Maybe (Arr (In Nat5 max maybeN) element)
+    first5 =
+        MinArr.lowerMinLength nat0
+            >> MinArr.isLengthAtLeast nat5
+                { min = nat0 }
+                { less = \_ -> Nothing
+                , equalOrGreater = Just
+                }
+
+-}
+isLengthAtLeast :
+    Nat
+        (N
+            lowerBound
+            (Is a To (Nat1Plus atLeastTriedMinus1))
+            (Is atLeastRange To max)
+        )
+    -> { min : Nat (N min (Is (Nat1Plus lessRange) To lowerBound) x) }
+    ->
+        { less :
+            Arr (In min atLeastTriedMinus1 maybeN) element
+            -> result
+        , equalOrMore :
+            Arr (In lowerBound max maybeN) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtLeast lowerBound cases =
+    Internal.isLengthAtLeast lowerBound cases
+
+
+{-| Is the length
+
+  - `equalOrLess` than a upper bound or
+
+  - `greater`?
+
+`min` ensures that the upper bound is greater than the minimum length.
+
+    -- at least 3 and only up to 50 tags
+    tag :
+        Arr (In (Nat3Plus orHigherMin) Nat50 maybeN) String
+        -> a
+        -> Tagged a
+
+    tagIfValidTags :
+        Arr (In (Nat3Plus orHigherMin) max maybeN)
+        -> a
+        -> Maybe (Tagged a)
+    tagIfValidTags array value =
+        array
+            |> Arr.fromArray
+            |> InArr.isLengthAtMost nat50
+                { equalOrLess = tag value >> Just
+                , greater = \_ -> Nothing
+                }
+
+-}
+isLengthAtMost :
+    Nat
+        (N
+            upperBound
+            (Is a To atLeastUpperBound)
+            (Is (Nat1Plus greaterRange) To max)
+        )
+    -> { min : Nat (N min (Is minToUpperBound To upperBound) x) }
+    ->
+        { equalOrLess : Arr (In min atLeastUpperBound maybeN) element -> result
+        , more : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtMost upperBound min cases =
+    Internal.isLengthAtMost upperBound min cases
