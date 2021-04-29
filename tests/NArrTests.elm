@@ -2,9 +2,10 @@ module NArrTests exposing (startBoard)
 
 import Arr exposing (Arr)
 import Expect
+import InArr
 import NArr
 import NNats exposing (..)
-import Nat exposing (Only, ValueOnly)
+import Nat exposing (ValueOnly)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
@@ -33,8 +34,8 @@ startBoard =
         |> NArr.extend nat4 (Arr.repeat nat4 emptyRow)
         |> NArr.push (pawnRow Black)
         |> NArr.push (firstRow Black)
-        |> NArr.toIn
-        |> Arr.map NArr.toIn
+        |> Arr.map InArr.value
+        |> InArr.value
 
 
 type Color
@@ -61,8 +62,8 @@ type alias TicTacToeBoard =
 initialTicTacToeBoard : TicTacToeBoard
 initialTicTacToeBoard =
     Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty |> NArr.toIn)
-        |> NArr.toIn
+        (Arr.repeat nat3 FieldEmpty |> InArr.value)
+        |> InArr.value
 
 
 type TicTacToeField
