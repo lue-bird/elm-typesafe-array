@@ -1,14 +1,14 @@
-module Internal.Arr exposing (ArrTag(..), Value, at, combine2, drop, empty, extend, fromArray, insertAt, length, map, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, reverse, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, maxLengthIs, nPush, nats, push, random, removeAt, repeat, replaceAt, reverse, take, toArray)
 
 {-| Only use it in `Internal.Arr. ...` modules.
 -}
 
 import Array exposing (Array)
 import Array.Extra
+import Array.LinearDirection as Array
 import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection)
-import LinearDirection.Array as Array
 import MinNat
 import NNat
 import NNats exposing (..)
@@ -19,10 +19,14 @@ import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVa
 
 
 type alias Arr length element =
-    Typed Checked ArrTag Internal (Value length element)
+    ArrAs Checked length element
 
 
-type alias Value length element =
+type alias ArrAs whoCanCreate length element =
+    Typed whoCanCreate ArrTag Internal (Content length element)
+
+
+type alias Content length element =
     { array : Array element, length : Nat length }
 
 
@@ -70,7 +74,7 @@ mapArrayAndLength :
     (Array element -> Array mappedElement)
     -> (Nat length -> Nat mappedLength)
     -> Arr length element
-    -> Typed Tagged ArrTag Internal (Value mappedLength mappedElement)
+    -> ArrAs Tagged mappedLength mappedElement
 mapArrayAndLength mapArray_ mapLength_ =
     Typed.map
         (\v ->
@@ -83,7 +87,7 @@ mapArrayAndLength mapArray_ mapLength_ =
 mapLength :
     (Nat length -> Nat mappedLength)
     -> Arr length element
-    -> Typed Tagged ArrTag Internal (Value mappedLength element)
+    -> ArrAs Tagged mappedLength element
 mapLength mapLength_ =
     Typed.map
         (\v ->
@@ -96,7 +100,7 @@ mapLength mapLength_ =
 mapArray :
     (Array element -> Array mappedElement)
     -> Arr length element
-    -> Typed Tagged ArrTag Internal (Value length mappedElement)
+    -> ArrAs Tagged length mappedElement
 mapArray mapArray_ =
     Typed.map
         (\v ->
@@ -115,12 +119,12 @@ map alter =
         >> isChecked Arr
 
 
-combine2 :
-    (a -> b -> combined)
-    -> Arr length a
-    -> Arr length b
+map2 :
+    (aElement -> bElement -> combined)
+    -> Arr length aElement
+    -> Arr length bElement
     -> Arr length combined
-combine2 combine aArr bArr =
+map2 combine aArr bArr =
     let
         map2Val a b =
             { array =
@@ -158,7 +162,7 @@ fromArray array =
     { array = array
     , length =
         Array.length array
-            |> Nat.intAtLeast (nat0 |> Nat.toMin)
+            |> Nat.intAtLeast (nat0 |> MinNat.value)
     }
         |> tag
         |> isChecked Arr
@@ -255,6 +259,28 @@ drop droppedAmount direction =
     mapArrayAndLength
         (Array.drop (droppedAmount |> val) direction)
         (\len -> len |> InNat.subN droppedAmount)
+        >> isChecked Arr
+
+
+
+-- ## drop information
+
+
+lowerMinLength :
+    Nat (In lowerMin min lowerMaybeN)
+    -> Arr (In min max maybeN) element
+    -> Arr (ValueIn lowerMin max) element
+lowerMinLength validMinimumLength =
+    mapLength (Nat.lowerMin validMinimumLength)
+        >> isChecked Arr
+
+
+maxLengthIs :
+    Nat (N max (Is a To atLeastMax) x)
+    -> Arr (In min max maybeN) element
+    -> Arr (In min atLeastMax maybeN) element
+maxLengthIs maximumLength =
+    mapLength (Nat.maxIs maximumLength)
         >> isChecked Arr
 
 
