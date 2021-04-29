@@ -1,14 +1,6 @@
-module NArr exposing
-    ( toIn
-    , push, extend, removeAt
-    )
+module NArr exposing (push, extend, removeAt)
 
 {-|
-
-
-## drop information
-
-@docs toIn
 
 
 ## modify
@@ -20,7 +12,7 @@ module NArr exposing
 import Arr exposing (Arr)
 import Internal.NArr as Internal
 import LinearDirection exposing (LinearDirection)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueN)
+import Nat exposing (In, Is, N, Nat, To, ValueN)
 import TypeNats exposing (..)
 
 
@@ -120,36 +112,3 @@ removeAt :
             element
 removeAt index direction =
     Internal.removeAt index direction
-
-
-
--- ## drop information
-
-
-{-| Convert it to an `Arr (ValueIn min max)`.
-
-    Arr.from3 1 2 3 |> NArr.toIn
-    --> is of type Nat (ValueIn Nat3 (Nat3Plus a))
-
-There is only 1 situation you should use this.
-
-To make these the same type.
-
-    [ arrWith3To10Elements
-    , Arr.repeat nat3 0
-    ]
-
-Elm complains:
-
-But all the previous elements in the list are: Arr (ValueIn Nat3 Nat10)
-
-    [ arrWith3To10Elements
-    , Arr.repeat nat3 0 |> Arr.toIn
-    ]
-
--}
-toIn :
-    Arr (In min max maybeExact) element
-    -> Arr (ValueIn min max) element
-toIn =
-    Internal.toIn
