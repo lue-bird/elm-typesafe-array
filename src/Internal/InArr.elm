@@ -1,22 +1,26 @@
 module Internal.InArr exposing
-    ( extend
-    , extendN
-    , insertAt
-    , push
-    , removeAt
+    ( isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
+    , extend, extendN, insertAt, push, removeAt, value
     )
 
 {-| All functions must be tested a lot, especially the type signatures.
 Try to reduce the amount of functions.
+
+
+## scan length
+
+@docs isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
+
 -}
 
-import Arr exposing (Arr, length)
+import Arr exposing (Arr, length, toArray)
 import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueOnly)
 import TypeNats exposing (..)
+import Typed exposing (isChecked, tag)
 
 
 push :
@@ -68,3 +72,158 @@ extendN :
     -> Arr (ValueIn sumMin sumMax) element
 extendN nArrExtension =
     Internal.extend nArrExtension InNat.addN
+
+
+value :
+    Arr (In min max maybeExact) element
+    -> Arr (ValueIn min max) element
+value =
+    Internal.mapLength InNat.value >> isChecked Internal.Arr
+
+
+
+-- ## scan length
+
+
+isLength :
+    Nat
+        (N
+            tried
+            (Is triedToMax To max)
+            (Is a To (Nat1Plus atLeastTriedMinus1))
+        )
+    -> { min : Nat (N min (Is minToTried To tried) x) }
+    ->
+        { equal :
+            Arr (ValueOnly tried) element
+            -> result
+        , greater :
+            Arr (In (Nat2Plus triedMinus1) max maybeN) element -> result
+        , less :
+            Arr (In min atLeastTriedMinus1 maybeN) element -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLength amount min cases =
+    \arr ->
+        let
+            withLength len =
+                { array = toArray arr, length = len }
+                    |> tag
+                    |> isChecked Internal.Arr
+        in
+        length arr
+            |> InNat.is amount
+                min
+                { equal =
+                    \() ->
+                        withLength (amount |> InNat.value)
+                            |> .equal cases
+                , greater = withLength >> .greater cases
+                , less = withLength >> .less cases
+                }
+
+
+isLengthInRange :
+    Nat
+        (N
+            lowerBound
+            (Is lowerBoundToLast To upperBound)
+            (Is lowerBoundA To (Nat1Plus atLeastFirstMinus1))
+        )
+    -> Nat (N upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastLast))
+    -> { min : Nat (N min (Is minToFirst To lowerBound) x) }
+    ->
+        { inRange :
+            Arr (In lowerBound atLeastLast maybeN) element
+            -> result
+        , less :
+            Arr (In min atLeastFirstMinus1 maybeN) element
+            -> result
+        , more :
+            Arr (In (Nat1Plus upperBound) max maybeN) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthInRange lowerBound upperBound min cases =
+    \arr ->
+        let
+            withLength len =
+                { array = toArray arr, length = len }
+                    |> tag
+                    |> isChecked Internal.Arr
+        in
+        length arr
+            |> InNat.isInRange { first = lowerBound, last = upperBound }
+                min
+                { inRange = withLength >> .inRange cases
+                , greater = withLength >> .more cases
+                , less = withLength >> .less cases
+                }
+
+
+isLengthAtLeast :
+    Nat
+        (N
+            lowerBound
+            (Is a To (Nat1Plus atLeastLowerBoundMinus1))
+            (Is atLeastRange To max)
+        )
+    -> { min : Nat (N min (Is (Nat1Plus lessRange) To lowerBound) x) }
+    ->
+        { less :
+            Arr (In min atLeastLowerBoundMinus1 maybeN) element
+            -> result
+        , equalOrMore :
+            Arr (In lowerBound max maybeN) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtLeast lowerBound min cases =
+    \arr ->
+        let
+            withLength len =
+                { array = toArray arr, length = len }
+                    |> tag
+                    |> isChecked Internal.Arr
+        in
+        length arr
+            |> InNat.isAtLeast lowerBound
+                min
+                { less = withLength >> .less cases
+                , equalOrGreater =
+                    withLength >> .equalOrMore cases
+                }
+
+
+isLengthAtMost :
+    Nat
+        (N
+            upperBound
+            (Is a To atLeastUpperBound)
+            (Is (Nat1Plus greaterRange) To max)
+        )
+    -> { min : Nat (N min (Is minToUpperBound To upperBound) x) }
+    ->
+        { equalOrLess : Arr (In min atLeastUpperBound maybeN) element -> result
+        , more : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtMost upperBound min cases =
+    \arr ->
+        let
+            withLength len =
+                { array = toArray arr, length = len }
+                    |> tag
+                    |> isChecked Internal.Arr
+        in
+        length arr
+            |> InNat.isAtMost upperBound
+                min
+                { equalOrLess = withLength >> .equalOrLess cases
+                , greater =
+                    withLength >> .more cases
+                }
