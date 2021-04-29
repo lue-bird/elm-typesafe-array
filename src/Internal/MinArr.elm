@@ -5,17 +5,19 @@ module Internal.MinArr exposing
     , insertAt
     , isLength
     , isLengthAtLeast
+    , isLengthAtMost
     , push
     , removeAt
+    , value
     )
 
 import Arr exposing (Arr, length, toArray)
 import Array
+import Array.LinearDirection as Array
+import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
-import LinearDirection.Array as Array
 import MinNat
-import NNat
 import NNats exposing (..)
 import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
 import TypeNats exposing (..)
@@ -71,11 +73,11 @@ extendN arrExtension =
 
 
 
--- ## compare
+-- ## scan length
 
 
 isLength :
-    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) maybeN)
+    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
     ->
         { equal :
@@ -83,16 +85,16 @@ isLength :
                 (In
                     (Nat1Plus triedMinus1)
                     (Nat1Plus atLeastTriedMinus1)
-                    maybeN
+                    triedMaybeN
                 )
                 element
             -> result
-        , more :
+        , greater :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min atLeastTriedMinus1 e) element -> result
+            Arr (In min atLeastTriedMinus1 maybeN) element -> result
         }
-    -> Arr (In min max e) element
+    -> Arr (In min max maybeN) element
     -> result
 isLength amount min cases =
     \arr ->
@@ -103,11 +105,11 @@ isLength amount min cases =
                     |> isChecked Internal.Arr
         in
         length arr
-            |> MinNat.is (amount |> NNat.toIn)
+            |> MinNat.is (amount |> InNat.value)
                 min
                 { equal =
                     \() -> .equal cases (withLength amount)
-                , greater = withLength >> .more cases
+                , greater = withLength >> .greater cases
                 , less = withLength >> .less cases
                 }
 
@@ -116,7 +118,7 @@ isLengthAtLeast :
     Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
     -> { min : Nat (N min (Is minToTriedMin To tried) x) }
     ->
-        { equalOrMore : Arr (ValueMin tried) element -> result
+        { equalOrGreater : Arr (ValueMin tried) element -> result
         , less : Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
@@ -133,11 +135,39 @@ isLengthAtLeast tried min cases =
             |> MinNat.isAtLeast tried
                 min
                 { less =
-                    \len ->
-                        .less cases (withLength len)
+                    withLength >> .less cases
                 , equalOrGreater =
-                    \len ->
-                        .equalOrMore cases (withLength len)
+                    withLength >> .equalOrGreater cases
+                }
+
+
+isLengthAtMost :
+    Nat (In atMostMin atLeastAtMostMin atMostMaybeN)
+    -> { min : Nat (N min (Is minToAtMostMin To atMostMin) x) }
+    ->
+        { equalOrLess :
+            Arr (In min atLeastAtMostMin maybeN) element
+            -> result
+        , greater :
+            Arr (ValueMin (Nat1Plus atMostMin)) element
+            -> result
+        }
+    -> Arr (In min max maybeN) element
+    -> result
+isLengthAtMost tried min cases =
+    \arr ->
+        let
+            withLength len =
+                { array = toArray arr, length = len }
+                    |> tag
+                    |> isChecked Internal.Arr
+        in
+        length arr
+            |> MinNat.isAtMost tried
+                min
+                { equalOrLess =
+                    withLength >> .equalOrLess cases
+                , greater = withLength >> .greater cases
                 }
 
 
@@ -182,3 +212,9 @@ group groupSize direction =
                 |> tag
                 |> isChecked Internal.Arr
         }
+
+
+value : Arr (In min max maybeN) element -> Arr (ValueMin min) element
+value =
+    Internal.mapLength MinNat.value
+        >> isChecked Internal.Arr
