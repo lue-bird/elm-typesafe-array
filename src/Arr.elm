@@ -7,7 +7,7 @@ module Arr exposing
     , map, fold, toArray, map2, map3, map4, foldWith, reverse
     , replaceAt
     , lowerMinLength
-    , maxLengthIs
+    , restoreMaxLength, restoreLength
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -80,7 +80,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## restore information
 
-@docs maxLengthIs
+@docs restoreMaxLength, restoreLength
 
 -}
 
@@ -91,7 +91,7 @@ import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNat exposing (..)
 import NNats exposing (nat0)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueN)
+import Nat exposing (In, Is, N, Nat, Only, To, ValueIn, ValueMin, ValueN)
 import Random
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Typed)
@@ -790,16 +790,36 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements`.
     --> error :(
 
     atMost19Elements
-        (theArgument |> Arr.maxLengthIs nat18)
+        (theArgument |> Arr.restoreMaxLength nat18)
     --> works
 
 -}
-maxLengthIs :
+restoreMaxLength :
     Nat (N max (Is a To atLeastMax) x)
     -> Arr (In min max maybeN) element
     -> Arr (In min atLeastMax maybeN) element
-maxLengthIs maximumLength =
-    Internal.maxLengthIs maximumLength
+restoreMaxLength maximumLength =
+    Internal.restoreMaxLength maximumLength
+
+
+{-| Transform a potential `ValueOnly` `Arr` to a `ValueN`.
+
+    append10s :
+        Arr (Only Nat10 aMaybeN) element
+        -> Arr (Only Nat10 bMaybeN) element
+        -> Arr (ValueN Nat20 (Nat20Plus a) ...)
+    append10s a10Elements b10Elements =
+        a10Elements
+            |> InArr.extend nat10 nat10 b10Elements
+            |> Arr.restoreLength nat20
+
+-}
+restoreLength :
+    Nat (ValueN n atLeastN aDifference bDifference)
+    -> Arr (Only n maybeN) element
+    -> Arr (ValueN n atLeastN aDifference bDifference) element
+restoreLength length_ =
+    Internal.restoreLength length_
 
 
 

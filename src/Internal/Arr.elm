@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, maxLengthIs, nPush, nats, push, random, removeAt, repeat, replaceAt, reverse, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreLength, restoreMaxLength, reverse, take, toArray)
 
 {-| Only use it in `Internal.Arr. ...` modules.
 -}
@@ -12,7 +12,7 @@ import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNat
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueN)
+import Nat exposing (In, Is, N, Nat, Only, To, ValueIn, ValueMin, ValueN)
 import Random
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
@@ -275,12 +275,21 @@ lowerMinLength validMinimumLength =
         >> isChecked Arr
 
 
-maxLengthIs :
+restoreMaxLength :
     Nat (N max (Is a To atLeastMax) x)
     -> Arr (In min max maybeN) element
     -> Arr (In min atLeastMax maybeN) element
-maxLengthIs maximumLength =
+restoreMaxLength maximumLength =
     mapLength (Nat.maxIs maximumLength)
+        >> isChecked Arr
+
+
+restoreLength :
+    Nat (ValueN n atLeastN aDifference bDifference)
+    -> Arr (Only n maybeN) element
+    -> Arr (ValueN n atLeastN aDifference bDifference) element
+restoreLength length_ =
+    mapLength (\_ -> length_)
         >> isChecked Arr
 
 
