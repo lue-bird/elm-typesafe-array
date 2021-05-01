@@ -1,5 +1,5 @@
 module MinArr exposing
-    ( push, removeAt, insertAt, extend, extendN
+    ( push, removeAt, insertAt, extend
     , isLength, isLengthAtLeast, isLengthAtMost
     , group
     , value
@@ -17,7 +17,7 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 ## modify
 
-@docs push, removeAt, insertAt, extend, extendN
+@docs push, removeAt, insertAt, extend
 
 
 ## scan length
@@ -45,7 +45,7 @@ import Arr exposing (Arr, fromArray, length, toArray)
 import Internal.MinArr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueOnly)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
 
@@ -58,13 +58,13 @@ import TypeNats exposing (..)
 
     arrWithAtLeast5Elements
         |> MinArr.push "becomes the last"
-    --> : Arr (ValueMin Nat6) String
+    --> : Arr (Min Nat6) String
 
 -}
 push :
     element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin (Nat1Plus min)) element
+    -> Arr (In min max) element
+    -> Arr (Min (Nat1Plus min)) element
 push element =
     Internal.push element
 
@@ -74,15 +74,15 @@ push element =
     arrWithAtLeast5Elements
         |> MinArr.insertAt nat0 FirstToLast
             "becomes the first"
-    --> : Arr (ValueMin Nat6) String
+    --> : Arr (Min Nat6) String
 
 -}
 insertAt :
-    Nat (In indexMin minLengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minLengthMinus1 indexMaybeN)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength maybeN) element
-    -> Arr (ValueMin (Nat2Plus minLengthMinus1)) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
+    -> Arr (Min (Nat2Plus minLengthMinus1)) element
 insertAt index direction inserted =
     Internal.insertAt index direction inserted
 
@@ -95,10 +95,10 @@ insertAt index direction inserted =
 
 -}
 removeAt :
-    Nat (In indexMin minLengthMinus1 indexMaybeExact)
+    Nat (ArgIn indexMin minLengthMinus1 indexMaybeExact)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength maybeN) element
-    -> Arr (ValueIn minLengthMinus1 maxLength) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
+    -> Arr (In minLengthMinus1 maxLength) element
 removeAt index direction =
     Internal.removeAt index direction
 
@@ -107,31 +107,16 @@ removeAt index direction =
 
     Arr.from3 1 2 3
         |> MinArr.extend nat3 arrWithAtLeast3Elements
-    --> : Arr (ValueMin Nat6) ...
+    --> : Arr (Min Nat6) ...
 
 -}
 extend :
-    Arr (In extensionMin extensionMax extensionMaybeN) element
-    -> Nat (N extensionMin (Is min To extendedMin) x)
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin extendedMin) element
+    Arr (In extensionMin extensionMax) element
+    -> Nat (ArgN extensionMin (Is min To extendedMin) x)
+    -> Arr (In min max) element
+    -> Arr (Min extendedMin) element
 extend extension extensionMin =
     Internal.extend extension extensionMin
-
-
-{-| Append a fixed length `Arr (N ...)`.
-
-    arrWithAtLeast3Elements
-        |> MinArr.extendN (Arr.from3 5 6 7)
-    --> : Arr (ValueMin Nat6) ...
-
--}
-extendN :
-    Arr (N added (Is min To sumMin) x) element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin sumMin) element
-extendN arrExtension =
-    Internal.extendN arrExtension
 
 
 
@@ -139,14 +124,14 @@ extendN arrExtension =
 -- ### scan length
 
 
-{-| Compare the length to an exact `Nat (N ...)`.
+{-| Compare the length to an exact `Nat (ArgN ...)`.
 Is it `greater`, `less` or `equal`?
 
-`min` ensures that the `Nat (N ...)` is bigger than the minimum length.
+`min` ensures that the `Nat (ArgN ...)` is bigger than the minimum length.
 
     convertUserArguments :
         String
-        -> Result String (Arr (ValueN Nat3 {- ... -}))
+        -> Result String (Arr (N Nat3 {- ... -}))
     convertUserArguments =
         String.words
             >> Array.fromList
@@ -172,33 +157,33 @@ Is it `greater`, `less` or `equal`?
 
 -}
 isLength :
-    Nat (N (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
-    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) y) }
+    Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
+    -> { min : Nat (ArgN min (Is minToTriedMinus1 To triedMinus1) y) }
     ->
         { equal :
             Arr
-                (ValueOnly (Nat1Plus triedMinus1))
+                (Only (Nat1Plus triedMinus1))
                 element
             -> result
         , greater :
-            Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
+            Arr (Min (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min triedMinus1PlusA maybeN) element -> result
+            Arr (In min triedMinus1PlusA) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLength length =
     Internal.isLength length
 
 
-{-| Compare the length to an exact `Nat (N ...)`.
+{-| Compare the length to an exact `Nat (ArgN ...)`.
 Is it `equalOrGreater` or `less`?
 
 `min` ensures that the lower bound is bigger than the minimum length.
 
     convertUserArguments :
         String
-        -> Result String (Arr (ValueMin Nat3))
+        -> Result String (Arr (Min Nat3))
     convertUserArguments =
         String.words
             >> Array.fromList
@@ -217,13 +202,13 @@ Is it `equalOrGreater` or `less`?
 
 -}
 isLengthAtLeast :
-    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
-    -> { min : Nat (N min (Is minToTriedMin To lowerBound) y) }
+    Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    -> { min : Nat (ArgN min (Is minToTriedMin To lowerBound) y) }
     ->
-        { equalOrGreater : Arr (ValueMin lowerBound) element -> result
-        , less : Arr (In min lowerBoundMinus1PlusA maybeN) element -> result
+        { equalOrGreater : Arr (Min lowerBound) element -> result
+        , less : Arr (In min lowerBoundMinus1PlusA) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtLeast lowerBound min cases =
     Internal.isLengthAtLeast lowerBound min cases
@@ -254,17 +239,17 @@ isLengthAtLeast lowerBound min cases =
 
 -}
 isLengthAtMost :
-    Nat (N upperBound (Is a To upperBoundPlusA) x)
-    -> { min : Nat (N min (Is minToAtMostMin To upperBound) y) }
+    Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
+    -> { min : Nat (ArgN min (Is minToAtMostMin To upperBound) y) }
     ->
         { equalOrLess :
-            Arr (In min upperBoundPlusA maybeN) element
+            Arr (In min upperBoundPlusA) element
             -> result
         , greater :
-            Arr (ValueMin (Nat1Plus upperBound)) element
+            Arr (Min (Nat1Plus upperBound)) element
             -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtMost upperBound min cases =
     Internal.isLengthAtMost upperBound min cases
@@ -290,18 +275,18 @@ The type of the result isn't as accurate as in the example, though!
 
 -}
 group :
-    Nat (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
     -> LinearDirection
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     ->
         { groups :
             Arr
-                (ValueIn Nat0 max)
+                (In Nat0 max)
                 (Arr
-                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
                     element
                 )
-        , less : Arr (ValueIn Nat0 max) element
+        , less : Arr (In Nat0 max) element
         }
 group groupSize direction =
     Internal.group groupSize direction
@@ -311,10 +296,10 @@ group groupSize direction =
 -- ## drop information
 
 
-{-| Convert an exact Arr (In min ...) to a Nat (ValueMin min).
+{-| Convert an exact Arr (In min ...) to a Nat (Min min).
 
     between4And10Elements |> MinArr.value
-    --> : Arr (ValueMin Nat4) ...
+    --> : Arr (Min Nat4) ...
 
 There is only 1 situation you should use this.
 
@@ -325,14 +310,14 @@ To make these the same type.
 Elm complains:
 
 > But all the previous elements in the list are
-> `Arr (ValueMin Nat1) ...`
+> `Arr (Min Nat1) ...`
 
     [ atLeast1Element
     , between1And10Elements |> MinArr.value
     ]
 
 -}
-value : Arr (In min max maybeN) element -> Arr (ValueMin min) element
+value : Arr (In min max) element -> Arr (Min min) element
 value =
     Internal.value
 
@@ -346,7 +331,7 @@ value =
     serializeSaves :
         Serialize.Codec
             String
-            (Arr (ValueMin Nat1) World)
+            (Arr (Min Nat1) World)
     serializeSaves =
         MinArr.serialize nat1 serializeWorld
 
@@ -362,15 +347,15 @@ value =
         ->
             Result
                 (Serialize.Error String)
-                (Arr (ValueMin Nat1) World)
+                (Arr (Min Nat1) World)
     decode =
         Serialize.decodeFromBytes serializeSaves
 
 -}
 serialize :
-    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
     -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (ValueMin lowerBound) element)
+    -> Serialize.Codec String (Arr (Min lowerBound) element)
 serialize lowerBound serializeElement =
     Serialize.array serializeElement
         |> Serialize.mapValid

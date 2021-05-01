@@ -1,6 +1,6 @@
 module GenerateForElmBoundedArray exposing (main)
 
-{-| Helps you generate the source code of `Arr.from1` to `from16` & the module `N.Arguments`.
+{-| Helps you generate the source code of `Arr.from1` to `from16` & the module `ArgN.Arguments`.
 
 Thanks to [`the-sett/elm-syntax-dsl`](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest/)!
 
@@ -216,7 +216,7 @@ natNAnn n =
 
 nAnn : Int -> Elm.CodeGen.TypeAnnotation
 nAnn n =
-    typed "ValueN"
+    typed "N"
         [ natXAnn n
         , natXPlusAnn n (typeVar "more")
         , isAnn n "a"
@@ -341,16 +341,20 @@ from1To16 =
             fromXPreset x implementation =
                 packageExposedFunDecl From1To16Tag
                     [ markdown
-                        ("Create an `Arr (ValueN Nat"
+                        ("Create an `Arr (Only Nat"
                             ++ String.fromInt x
-                            ++ " ...)` from exactly "
+                            ++ ")` from exactly "
                             ++ String.fromInt x
-                            ++ " element in this order."
+                            ++ " elements in this order."
                         )
                     ]
                     (funAnn
                         (List.repeat x (typeVar "element"))
-                        (typed "Arr" [ nAnn x, typeVar "element" ])
+                        (typed "Arr"
+                            [ typed "Only" [ natXAnn x ]
+                            , typeVar "element"
+                            ]
+                        )
                     )
                     ("from" ++ String.fromInt x)
                     []

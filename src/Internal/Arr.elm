@@ -1,6 +1,6 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreLength, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
 
-{-| Only use it in `Internal.Arr. ...` modules.
+{-| ArgOnly use it in `Internal.Arr. ...` modules.
 -}
 
 import Array exposing (Array)
@@ -12,7 +12,7 @@ import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNat
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, Only, To, ValueIn, ValueMin, ValueN)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
 import Random
 import Serialize
 import TypeNats exposing (..)
@@ -40,9 +40,9 @@ type ArrTag
 
 
 at :
-    Nat (In indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minMinus1 indexMaybeN)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) max maybeN) element
+    -> Arr (In (Nat1Plus minMinus1) max) element
     -> element
 at index direction =
     \arr ->
@@ -143,22 +143,28 @@ map2 combine aArr bArr =
 -- ## create
 
 
-empty : Arr (ValueN Nat0 atLeast0 (Is a To a) (Is b To b)) element
+empty : Arr (Only Nat0) element
 empty =
-    tag { array = Array.empty, length = nat0 }
-        |> isChecked Arr
-
-
-repeat : Nat amount -> element -> Arr amount element
-repeat amount element =
-    { array = Array.repeat (val amount) element
-    , length = amount
+    { array = Array.empty
+    , length = nat0 |> InNat.value
     }
         |> tag
         |> isChecked Arr
 
 
-fromArray : Array element -> Arr (ValueMin Nat0) element
+repeat :
+    Nat (ArgIn min max maybeN)
+    -> element
+    -> Arr (In min max) element
+repeat amount element =
+    { array = Array.repeat (val amount) element
+    , length = amount |> InNat.value
+    }
+        |> tag
+        |> isChecked Arr
+
+
+fromArray : Array element -> Arr (Min Nat0) element
 fromArray array =
     { array = array
     , length =
@@ -171,18 +177,18 @@ fromArray array =
 
 nats :
     Nat
-        (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1) lengthMaybeN)
+        (ArgIn (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1) lengthMaybeN)
     ->
         Arr
-            (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1) lengthMaybeN)
-            (Nat (ValueIn Nat0 maxLengthMinus1))
+            (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1))
+            (Nat (In Nat0 maxLengthMinus1))
 nats length_ =
     { array =
         List.range 0 (val length_ - 1)
             |> List.map
                 (Nat.intInRange nat0 (length_ |> InNat.subN nat1))
             |> Array.fromList
-    , length = length_
+    , length = length_ |> InNat.value
     }
         |> tag
         |> isChecked Arr
@@ -208,10 +214,10 @@ random amount generateElement =
 
 nPush :
     element
-    -> Arr (ValueN n atLeastN (Is a To nPlusA) (Is b To nPlusB)) element
+    -> Arr (N n atLeastN (Is a To nPlusA) (Is b To nPlusB)) element
     ->
         Arr
-            (ValueN
+            (N
                 (Nat1Plus n)
                 (Nat1Plus atLeastN)
                 (Is a To (Nat1Plus nPlusA))
@@ -223,11 +229,11 @@ nPush elementToPush =
 
 
 replaceAt :
-    Nat (In indexMin minLengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minLengthMinus1 indexMaybeN)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) max maybeN) element
-    -> Arr (In (Nat1Plus minLengthMinus1) max maybeN) element
+    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+    -> Arr (In (Nat1Plus minLengthMinus1) max) element
 replaceAt index direction replacingElement =
     mapArray
         (Array.replaceAt (index |> val) direction replacingElement)
@@ -239,23 +245,27 @@ replaceAt index direction replacingElement =
 
 
 take :
-    Nat (In minTaken maxTaken takenMaybeN)
-    -> Nat (N maxTaken (Is a To atLeastMaxTaken) (Is maxTakenToMin To min))
+    Nat (ArgIn minTaken maxTaken takenMaybeN)
+    -> Nat (ArgN maxTaken (Is a To atLeastMaxTaken) (Is maxTakenToMin To min))
     -> LinearDirection
-    -> Arr (In min max maybeN) element
-    -> Arr (In minTaken atLeastMaxTaken takenMaybeN) element
+    -> Arr (In min max) element
+    -> Arr (In minTaken atLeastMaxTaken) element
 take amount maxTakenAmount direction =
     mapArrayAndLength
         (Array.take (amount |> val) direction)
-        (\_ -> amount |> Nat.restoreMax maxTakenAmount)
+        (\_ ->
+            amount
+                |> Nat.restoreMax maxTakenAmount
+                |> InNat.value
+        )
         >> isChecked Arr
 
 
 drop :
-    Nat (N dropped (Is minTaken To min) (Is maxTaken To max))
+    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
     -> LinearDirection
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn minTaken maxTaken) element
+    -> Arr (In min max) element
+    -> Arr (In minTaken maxTaken) element
 drop droppedAmount direction =
     mapArrayAndLength
         (Array.drop (droppedAmount |> val) direction)
@@ -268,29 +278,20 @@ drop droppedAmount direction =
 
 
 lowerMinLength :
-    Nat (In lowerMin min lowerMaybeN)
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn lowerMin max) element
+    Nat (ArgIn lowerMin min lowerMaybeN)
+    -> Arr (In min max) element
+    -> Arr (In lowerMin max) element
 lowerMinLength validMinimumLength =
     mapLength (Nat.lowerMin validMinimumLength)
         >> isChecked Arr
 
 
 restoreMaxLength :
-    Nat (N max (Is a To atLeastMax) x)
-    -> Arr (In min max maybeN) element
-    -> Arr (In min atLeastMax maybeN) element
+    Nat (ArgN max (Is a To atLeastMax) x)
+    -> Arr (In min max) element
+    -> Arr (In min atLeastMax) element
 restoreMaxLength maximumLength =
     mapLength (Nat.restoreMax maximumLength)
-        >> isChecked Arr
-
-
-restoreLength :
-    Nat (ValueN n atLeastN aDifference bDifference)
-    -> Arr (Only n maybeN) element
-    -> Arr (ValueN n atLeastN aDifference bDifference) element
-restoreLength length_ =
-    mapLength (\_ -> length_)
         >> isChecked Arr
 
 
@@ -304,15 +305,18 @@ reverse =
 
 
 serialize :
-    Nat length
+    Nat (ArgIn min max maybeN)
     -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr length element)
+    -> Serialize.Codec String (Arr (In min max) element)
 serialize length_ serializeElement =
     Serialize.array serializeElement
         |> Serialize.mapValid
             (\array ->
                 if Array.length array == val length_ then
-                    tag { array = array, length = length_ }
+                    { array = array
+                    , length = length_ |> InNat.value
+                    }
+                        |> tag
                         |> isChecked Arr
                         |> Ok
 
@@ -346,13 +350,13 @@ extend extension addLength =
 
 
 removeAt :
-    Nat (In minIndex minLengthMinus1 indexMaybeN)
+    Nat (ArgIn minIndex minLengthMinus1 indexMaybeN)
     -> LinearDirection
     ->
-        (Nat (In (Nat1Plus minLengthMinus1) maxLength maybeN)
+        (Nat (In (Nat1Plus minLengthMinus1) maxLength)
          -> Nat resultLengthMinus1
         )
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength maybeN) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
     -> Arr resultLengthMinus1 element
 removeAt index direction sub1 =
     mapArrayAndLength

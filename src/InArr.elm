@@ -1,11 +1,10 @@
 module InArr exposing
-    ( push, extend, extendN, removeAt, insertAt
+    ( push, extend, extendOnly, removeAt, insertAt
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , value
     , serialize
     )
 
-{-| If the maximum length is set to a specific value (also in `Only`),
+{-| If the maximum length is set to a specific value (also in `ArgOnly`),
 
     -- only up to 50 tags
     tag :
@@ -18,17 +17,12 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 ## modify
 
-@docs push, extend, extendN, removeAt, insertAt
+@docs push, extend, extendOnly, removeAt, insertAt
 
 
 ## scan length
 
 @docs isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-
-
-## drop information
-
-@docs value
 
 
 ## extra
@@ -42,7 +36,7 @@ import Internal.InArr as Internal
 import LinearDirection exposing (LinearDirection(..))
 import MinArr
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueOnly)
+import Nat exposing (ArgIn, ArgN, In, Is, N, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
 
@@ -55,13 +49,13 @@ import TypeNats exposing (..)
 
     arrWith5To10Elements
         |> InArr.push "becomes the last"
-    --> : Arr (ValueIn Nat6 Nat11) String
+    --> : Arr (In Nat6 Nat11) String
 
 -}
 push :
     element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn (Nat1Plus min) (Nat1Plus max)) element
+    -> Arr (In min max) element
+    -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
     Internal.push element
 
@@ -69,11 +63,11 @@ push element =
 {-| Use `MinArr.push`, if the `max` isn't known to be a certain value.
 -}
 insertAt :
-    Nat (In indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minMinus1 indexMaybeN)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minMinus1) max maybeN) element
-    -> Arr (ValueIn (Nat2Plus minMinus1) (Nat1Plus max)) element
+    -> Arr (In (Nat1Plus minMinus1) max) element
+    -> Arr (In (Nat2Plus minMinus1) (Nat1Plus max)) element
 insertAt index direction element =
     Internal.insertAt index direction element
 
@@ -81,75 +75,48 @@ insertAt index direction element =
 {-| Append the elements of another `Arr (In ...)`.
 -}
 extend :
-    Arr (In extensionMin extensionMax extensionMaybeN) element
-    -> Nat (N extensionMin (Is min To extendedMin) x)
-    -> Nat (N extensionMax (Is max To extendedMax) y)
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn extendedMin extendedMax) element
+    Arr (In extensionMin extensionMax) element
+    -> Nat (ArgN extensionMin (Is min To extendedMin) x)
+    -> Nat (ArgN extensionMax (Is max To extendedMax) y)
+    -> Arr (In min max) element
+    -> Arr (In extendedMin extendedMax) element
 extend extension extensionMin extensionMax =
     Internal.extend extension extensionMin extensionMax
 
 
 {-| Append the elements of a `Arr (N ...)`.
 -}
-extendN :
-    Arr (N added (Is min To sumMin) (Is max To sumMax)) element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueIn sumMin sumMax) element
-extendN arrExtension =
-    Internal.extendN arrExtension
+extendOnly :
+    Nat (ArgN added (Is min To sumMin) (Is max To sumMax))
+    -> Arr (Only added) element
+    -> Arr (In min max) element
+    -> Arr (In sumMin sumMax) element
+extendOnly arrExtension =
+    Internal.extendOnly arrExtension
 
 
 {-| Kick an element out of an Arr at a given index in a direction.
 -}
 removeAt :
-    Nat (In indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minMinus1 indexMaybeN)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1) maybeN) element
-    -> Arr (ValueIn minMinus1 maxMinus1) element
+    -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
+    -> Arr (In minMinus1 maxMinus1) element
 removeAt index direction =
     Internal.removeAt index direction
-
-
-{-| Convert it to an `Arr (ValueIn min max)`.
-
-    Arr.from3 1 2 3 |> InArr.value
-    --> : Nat (ValueIn Nat3 (Nat3Plus a))
-
-There is only 1 situation you should use this.
-
-To make these the same type.
-
-    [ arrWith3To10Elements
-    , Arr.repeat nat3 0
-    ]
-
-Elm complains:
-
-> But all the previous elements in the list are
-> `Arr (ValueIn Nat3 Nat10) ...`
-
-    [ arrWith3To10Elements
-    , Arr.repeat nat3 0 |> InArr.value
-    ]
-
--}
-value : Arr (In min max maybeExact) element -> Arr (ValueIn min max) element
-value =
-    Internal.value
 
 
 
 -- ## scan length
 
 
-{-| Compare the length to an exact `Nat (N ...)` length.
+{-| Compare the length to an exact `Nat (ArgN ...)` length.
 Are there `more`, `less` or an `equal` amount of elements?
 
-`min` ensures that the `Nat (N ...)` is greater than the minimum length.
+`min` ensures that the `Nat (ArgN ...)` is greater than the minimum length.
 
     chooseFormation :
-        Arr (ValueIn Nat0 Nat50) Character
+        Arr (In Nat0 Nat50) Character
         -> Formation
     chooseFormation characters =
         characters
@@ -161,29 +128,29 @@ Are there `more`, `less` or an `equal` amount of elements?
                 }
 
     type Formation
-        = SpecialAttack (Arr (ValueOnly Nat7) Character)
-        | Retreat (Arr (ValueIn Nat0 Nat6) Character)
-        | Fight (Arr (ValueIn Nat8 Nat50) Character)
+        = SpecialAttack (Arr (Only Nat7) Character)
+        | Retreat (Arr (In Nat0 Nat6) Character)
+        | Fight (Arr (In Nat8 Nat50) Character)
 
 -}
 isLength :
     Nat
-        (N
+        (ArgN
             tried
             (Is triedToMax To max)
             (Is a To (Nat1Plus atLeastTriedMinus1))
         )
-    -> { min : Nat (N min (Is minToTried To tried) x) }
+    -> { min : Nat (ArgN min (Is minToTried To tried) x) }
     ->
         { equal :
-            Arr (ValueOnly tried) element
+            Arr (Only tried) element
             -> result
         , greater :
-            Arr (In (Nat2Plus triedMinus1) max maybeN) element -> result
+            Arr (In (Nat2Plus triedMinus1) max) element -> result
         , less :
-            Arr (In min atLeastTriedMinus1 maybeN) element -> result
+            Arr (In min atLeastTriedMinus1) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLength tried min cases =
     Internal.isLength tried min cases
@@ -200,7 +167,7 @@ isLength tried min cases =
 `min` ensures that the lower bound is greater than the minimum length.
 
     chooseFormation :
-        Arr (ValueIn Nat0 Nat50) Character
+        Arr (In Nat0 Nat50) Character
         -> Formation
     chooseFormation characters =
         characters
@@ -213,32 +180,32 @@ isLength tried min cases =
                 }
 
     type Formation
-        = SpecialAttack (Arr (ValueIn Nat10 Nat20) Character)
-        | Retreat (Arr (ValueIn Nat0 Nat9) Character)
-        | Fight (Arr (ValueIn Nat21 Nat50) Character)
+        = SpecialAttack (Arr (In Nat10 Nat20) Character)
+        | Retreat (Arr (In Nat0 Nat9) Character)
+        | Fight (Arr (In Nat21 Nat50) Character)
 
 -}
 isLengthInRange :
     Nat
-        (N
+        (ArgN
             lowerBound
             (Is lowerBoundToUpperBound To upperBound)
             (Is lowerBoundA To (Nat1Plus atLeastLowerBoundMinus1))
         )
-    -> Nat (N upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastUpperBound))
-    -> { min : Nat (N min (Is minToLowerBound To lowerBound) x) }
+    -> Nat (ArgN upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastUpperBound))
+    -> { min : Nat (ArgN min (Is minToLowerBound To lowerBound) x) }
     ->
         { inRange :
-            Arr (In lowerBound atLeastUpperBound maybeN) element
+            Arr (In lowerBound atLeastUpperBound) element
             -> result
         , less :
-            Arr (In min atLeastLowerBoundMinus1 maybeN) element
+            Arr (In min atLeastLowerBoundMinus1) element
             -> result
         , greater :
-            Arr (In (Nat1Plus upperBound) max maybeN) element
+            Arr (In (Nat1Plus upperBound) max) element
             -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthInRange lowerBound upperBound min cases =
     Internal.isLengthInRange lowerBound upperBound min cases
@@ -266,21 +233,21 @@ isLengthInRange lowerBound upperBound min cases =
 -}
 isLengthAtLeast :
     Nat
-        (N
+        (ArgN
             lowerBound
             (Is a To (Nat1Plus atLeastTriedMinus1))
             (Is atLeastRange To max)
         )
-    -> { min : Nat (N min (Is (Nat1Plus lessRange) To lowerBound) x) }
+    -> { min : Nat (ArgN min (Is (Nat1Plus lessRange) To lowerBound) x) }
     ->
         { less :
-            Arr (In min atLeastTriedMinus1 maybeN) element
+            Arr (In min atLeastTriedMinus1) element
             -> result
         , equalOrGreater :
-            Arr (In lowerBound max maybeN) element
+            Arr (In lowerBound max) element
             -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtLeast lowerBound cases =
     Internal.isLengthAtLeast lowerBound cases
@@ -315,17 +282,17 @@ isLengthAtLeast lowerBound cases =
 -}
 isLengthAtMost :
     Nat
-        (N
+        (ArgN
             upperBound
             (Is a To atLeastUpperBound)
             (Is (Nat1Plus greaterRange) To max)
         )
-    -> { min : Nat (N min (Is minToUpperBound To upperBound) x) }
+    -> { min : Nat (ArgN min (Is minToUpperBound To upperBound) x) }
     ->
-        { equalOrLess : Arr (In min atLeastUpperBound maybeN) element -> result
-        , greater : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
+        { equalOrLess : Arr (In min atLeastUpperBound) element -> result
+        , greater : Arr (In (Nat1Plus upperBound) max) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtMost upperBound min cases =
     Internal.isLengthAtMost upperBound min cases
@@ -338,7 +305,7 @@ isLengthAtMost upperBound min cases =
     serialize10To15Ints :
         Serialize.Codec
             String
-            (Arr (ValueIn Nat10 (Nat15Plus a)) Int)
+            (Arr (In Nat10 (Nat15Plus a)) Int)
     serialize10To15Ints =
         InArr.serialize Serialize.int nat10 nat15
 
@@ -354,7 +321,7 @@ isLengthAtMost upperBound min cases =
         ->
             Result
                 (Serialize.Error String)
-                (Arr (ValueIn Nat10 (Nat15Plus a) Int))
+                (Arr (In Nat10 (Nat15Plus a) Int))
     decode =
         Serialize.decodeFromBytes serialize10To15Ints
 
@@ -362,12 +329,12 @@ For decoded `Arr`s with a length outside of the expected bounds, the `Result` is
 
 -}
 serialize :
-    Nat (In minLowerBound upperBound lowerBoundMaybeN)
-    -> Nat (In upperBound upperBoundPlusA upperBoundMaybeN)
+    Nat (ArgIn minLowerBound upperBound lowerBoundMaybeN)
+    -> Nat (ArgIn upperBound upperBoundPlusA upperBoundMaybeN)
     -> Serialize.Codec String element
     ->
         Serialize.Codec
             String
-            (Arr (ValueIn minLowerBound upperBoundPlusA) element)
+            (Arr (In minLowerBound upperBoundPlusA) element)
 serialize lowerBound upperBound serializeElement =
     Internal.serialize lowerBound upperBound serializeElement

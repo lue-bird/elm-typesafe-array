@@ -1,11 +1,10 @@
-module NArrTests exposing (startBoard)
+module Tests exposing (startBoard)
 
 import Arr exposing (Arr)
 import Expect
 import InArr
-import NArr
 import NNats exposing (..)
-import Nat exposing (ValueOnly)
+import Nat exposing (Only)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
@@ -16,12 +15,9 @@ suite =
         []
 
 
-startBoard : Arr (ValueOnly Nat8) (Arr (ValueOnly Nat8) Field)
+startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
 startBoard =
     let
-        emptyRow =
-            Arr.repeat nat8 Empty
-
         pawnRow color =
             Arr.repeat nat8 (Piece Pawn color)
 
@@ -29,13 +25,12 @@ startBoard =
             Arr.repeat nat8 (Piece Other color)
     in
     Arr.empty
-        |> NArr.push (firstRow White)
-        |> NArr.push (pawnRow White)
-        |> NArr.extend nat4 (Arr.repeat nat4 emptyRow)
-        |> NArr.push (pawnRow Black)
-        |> NArr.push (firstRow Black)
-        |> Arr.map InArr.value
-        |> InArr.value
+        |> InArr.push (firstRow White)
+        |> InArr.push (pawnRow White)
+        |> InArr.extendOnly nat4
+            (Arr.repeat nat4 (Arr.repeat nat8 Empty))
+        |> InArr.push (pawnRow Black)
+        |> InArr.push (firstRow Black)
 
 
 type Color
@@ -55,15 +50,14 @@ type Piece
 
 type alias TicTacToeBoard =
     Arr
-        (ValueOnly Nat3)
-        (Arr (ValueOnly Nat3) TicTacToeField)
+        (Only Nat3)
+        (Arr (Only Nat3) TicTacToeField)
 
 
 initialTicTacToeBoard : TicTacToeBoard
 initialTicTacToeBoard =
     Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty |> InArr.value)
-        |> InArr.value
+        (Arr.repeat nat3 FieldEmpty)
 
 
 type TicTacToeField

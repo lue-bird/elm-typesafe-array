@@ -1,6 +1,6 @@
 module Internal.MinArr exposing
     ( extend
-    , extendN
+    , extendOnly
     , group
     , insertAt
     , isLength
@@ -19,25 +19,25 @@ import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueOnly)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
 import TypeNats exposing (..)
 import Typed exposing (isChecked, tag, val)
 
 
 push :
     element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin (Nat1Plus min)) element
+    -> Arr (In min max) element
+    -> Arr (Min (Nat1Plus min)) element
 push element =
     Internal.push element (MinNat.addN nat1)
 
 
 insertAt :
-    Nat (In indexMin lengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin lengthMinus1 indexMaybeN)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus lengthMinus1) max maybeN) element
-    -> Arr (ValueMin (Nat2Plus lengthMinus1)) element
+    -> Arr (In (Nat1Plus lengthMinus1) max) element
+    -> Arr (Min (Nat2Plus lengthMinus1)) element
 insertAt index direction elementToInsert =
     Internal.insertAt index
         direction
@@ -46,30 +46,32 @@ insertAt index direction elementToInsert =
 
 
 removeAt :
-    Nat (In indexMin lengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin lengthMinus1 indexMaybeN)
     -> LinearDirection
-    -> Arr (In (Nat1Plus lengthMinus1) max maybeN) element
-    -> Arr (ValueIn lengthMinus1 max) element
+    -> Arr (In (Nat1Plus lengthMinus1) max) element
+    -> Arr (In lengthMinus1 max) element
 removeAt index direction =
     Internal.removeAt index direction (MinNat.subN nat1)
 
 
 extend :
-    Arr (In minAdded maxAdded addedMaybeN) element
-    -> Nat (N minAdded (Is min To extendedMin) x)
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin extendedMin) element
+    Arr (In minAdded maxAdded) element
+    -> Nat (ArgN minAdded (Is min To extendedMin) x)
+    -> Arr (In min max) element
+    -> Arr (Min extendedMin) element
 extend added minAdded =
     Internal.extend added
         (\addedLen -> MinNat.add addedLen minAdded)
 
 
-extendN :
-    Arr (N added (Is min To extendedMin) x) element
-    -> Arr (In min max maybeN) element
-    -> Arr (ValueMin extendedMin) element
-extendN arrExtension =
-    Internal.extend arrExtension MinNat.addN
+extendOnly :
+    Nat (ArgN added (Is min To extendedMin) x)
+    -> Arr (Only added) element
+    -> Arr (In min max) element
+    -> Arr (Min extendedMin) element
+extendOnly addedLength arrExtension =
+    Internal.extend arrExtension
+        (\_ -> MinNat.addN addedLength)
 
 
 
@@ -77,20 +79,20 @@ extendN arrExtension =
 
 
 isLength :
-    Nat (N (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
-    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) y) }
+    Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
+    -> { min : Nat (ArgN min (Is minToTriedMinus1 To triedMinus1) y) }
     ->
         { equal :
             Arr
-                (ValueOnly (Nat1Plus triedMinus1))
+                (Only (Nat1Plus triedMinus1))
                 element
             -> result
         , greater :
-            Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
+            Arr (Min (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min triedMinus1PlusA maybeN) element -> result
+            Arr (In min triedMinus1PlusA) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLength amount min cases =
     \arr ->
@@ -113,13 +115,13 @@ isLength amount min cases =
 
 
 isLengthAtLeast :
-    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
-    -> { min : Nat (N min (Is minToTriedMin To lowerBound) y) }
+    Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    -> { min : Nat (ArgN min (Is minToTriedMin To lowerBound) y) }
     ->
-        { equalOrGreater : Arr (ValueMin lowerBound) element -> result
-        , less : Arr (In min lowerBoundMinus1PlusA maybeN) element -> result
+        { equalOrGreater : Arr (Min lowerBound) element -> result
+        , less : Arr (In min lowerBoundMinus1PlusA) element -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtLeast lowerBound min cases =
     \arr ->
@@ -140,17 +142,17 @@ isLengthAtLeast lowerBound min cases =
 
 
 isLengthAtMost :
-    Nat (N upperBound (Is a To upperBoundPlusA) x)
-    -> { min : Nat (N min (Is minToAtMostMin To upperBound) y) }
+    Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
+    -> { min : Nat (ArgN min (Is minToAtMostMin To upperBound) y) }
     ->
         { equalOrLess :
-            Arr (In min upperBoundPlusA maybeN) element
+            Arr (In min upperBoundPlusA) element
             -> result
         , greater :
-            Arr (ValueMin (Nat1Plus upperBound)) element
+            Arr (Min (Nat1Plus upperBound)) element
             -> result
         }
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     -> result
 isLengthAtMost upperBound min cases =
     \arr ->
@@ -170,18 +172,18 @@ isLengthAtMost upperBound min cases =
 
 
 group :
-    Nat (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
     -> LinearDirection
-    -> Arr (In min max maybeN) element
+    -> Arr (In min max) element
     ->
         { groups :
             Arr
-                (ValueIn Nat0 max)
+                (In Nat0 max)
                 (Arr
-                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
                     element
                 )
-        , less : Arr (ValueIn Nat0 max) element
+        , less : Arr (In Nat0 max) element
         }
 group groupSize direction =
     \arr ->
@@ -212,7 +214,7 @@ group groupSize direction =
         }
 
 
-value : Arr (In min max maybeN) element -> Arr (ValueMin min) element
+value : Arr (In min max) element -> Arr (Min min) element
 value =
     Internal.mapLength MinNat.value
         >> isChecked Internal.Arr

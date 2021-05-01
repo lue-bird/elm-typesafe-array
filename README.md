@@ -10,24 +10,12 @@ chessBoard
 
 returns a **_value, not a `Maybe`_** if `chessBoard`'s type can promise that it contains enough elements.
 
-```elm
-initialChessBoard =
-    let
-        pawnRow color =
-            Arr.repeat nat8 (Piece Pawn color)
+A type that can hold that promise could be:
 
-        firstRow color =
-            Arr.from8 --...
-    in
-    Arr.empty
-        |> NArr.push (firstRow White)
-        |> NArr.push (pawnRow White)
-        |> NArr.extend nat4
-            (Arr.repeat nat4
-                (Arr.repeat nat8 Empty)
-            )
-        |> NArr.push (pawnRow Black)
-        |> NArr.push (firstRow Black)
+```elm
+{-| 8 by 8 -}
+type alias ChessBoard =
+    Arr (Only Nat8) (Arr (Only Nat8) Field)
 
 type Field
     = Empty
@@ -35,6 +23,25 @@ type Field
 
 type PieceKind = Pawn | --...
 type Color = Black | White
+```
+
+```elm
+initialChessBoard : ChessBoard
+initialChessBoard =
+    let
+        pawnRow color =
+            Arr.repeat nat8 (Piece Pawn color)
+
+        firstRow color =
+            Arr.repeat nat8 (Piece Other color)
+    in
+    Arr.empty
+        |> InArr.push (firstRow White)
+        |> InArr.push (pawnRow White)
+        |> InArr.extendOnly nat4
+            (Arr.repeat nat4 (Arr.repeat nat8 Empty))
+        |> InArr.push (pawnRow Black)
+        |> InArr.push (firstRow Black)
 ```
 
 **We know** there are enough elements in `initialChessBoard`. You can then easily ask:
@@ -62,19 +69,18 @@ elm install lue-bird/elm-typesafe-array
 ```elm
 import LinearDirection exposing (LinearDirection(..))
 
-import Nat exposing (Nat, Only, In, ValueIn, ValueMin)
+import Nat exposing (Nat, Only, In, Min)
 import MinNat
 import InNat
 import NNats exposing (..)
     -- (..) is nat0 to nat160
 
-import Typed exposing (val, val2)
+import Typed exposing (val)
 
 import TypeNats exposing (..)
     -- (..) is Nat0 to Nat160 & Nat1Plus to Nat160Plus
 
 import Arr exposing (Arr)
-import NArr
 import InArr
 import MinArr
 ```
@@ -85,13 +91,13 @@ You can define & use operations for `Arr`s with a certain amount.
 
 ```elm
 first :
-    Arr (In (Nat1Plus orLonger) max maybeN) element
+    Arr (In (Nat1Plus orLonger) max) element
     -> element
 first =
     Arr.at nat0 FirstToLast
 
 biggest :
-    Arr (In (Nat1Plus orLonger) max maybeN) comparable
+    Arr (In (Nat1Plus orLonger) max) comparable
     -> comparable
 biggest =
     Arr.foldWith FirstToLast max
@@ -100,23 +106,22 @@ first Arr.empty --> compile-time error
 biggest Arr.empty --> compile-time error
 ```
 
-`Arr (In (Nat1Plus orLonger) max maybeN)` means what exactly?
+`Arr (In (Nat1Plus orLonger) max)` means what exactly?
 → It constrains the length of possible `Arr`s.
 
-The types are explained in more detail in [`bounded-nat`][bounded-nat]. In this example:
+The types are explained in more detail in [`bounded-nat`][bounded-nat] (but be aware that its `Arg...` types aren't used for `Arr`s!). In this example:
 
 - `Arr`: `Array` with additional type info about its length
     - `In`: length is within a minimum (& maximum)
         - `Nat1Plus orLonger`: the minimum length is >= 1
         - `max`: no maximum length or any maximum length
-        - `maybeN` potential extra information if the length is exact
 
 ## an exact length?
 
 ```elm
 type alias TicTacToeBoard =
-    Arr (ValueOnly Nat3)
-        (Arr (ValueOnly Nat3) TicTacToeField)
+    Arr (Only Nat3)
+        (Arr (Only Nat3) TicTacToeField)
 
 type TicTacToeField =
     FieldEmpty
@@ -126,18 +131,17 @@ type TicTacToeField =
 initialTicTacToeBoard : TicTacToeBoard
 initialTicTacToeBoard =
     Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty |> InArr.value)
-        |> InArr.value
+        (Arr.repeat nat3 FieldEmpty)
 ```
 
-Why the `InArr.value` calls? It's because in situations like these, the type is more precise than a `ValueOnly`: It's a `ValueN` → you have to _explicitly drop type information_.
+Why the `InArr.value` calls? It's because in situations like these, the type is more precise than a `Only`: It's a `N` → you have to _explicitly drop type information_.
 
 
 ## a maximum length?
   
 ```elm
 -- the max tag count should be 53
-tag : Arr (In min Nat53 maybeN) Tag -> a -> Tagged a
+tag : Arr (In min Nat53) Tag -> a -> Tagged a
 tag tags toTag = --...
 
 tag (Arr.from3 "fun" "easy" "fresh")
