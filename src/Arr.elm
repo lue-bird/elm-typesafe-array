@@ -846,21 +846,20 @@ random amount generateElement =
     serializeGameRow :
         Serialize.Codec
             String
-            (Arr (N Nat10 ...) GameField)
+            (Arr (Only Nat10) GameField)
     serializeGameRow =
         Arr.serialize nat10 serializeGameField
 
-    encode : Arr (Only Nat10 maybeN) GameField -> Bytes
+    encode : Arr (Only Nat10) GameField -> Bytes
     encode =
-        Arr.restoreLength nat10
-            >> Serialize.encodeToBytes serializeGameRow
+        Serialize.encodeToBytes serializeGameRow
 
     decode :
         Bytes
         ->
             Result
                 (Serialize.Error String)
-                (Arr (N Nat10 ...) GameField)
+                (Arr (Only Nat10) GameField)
     decode =
         Serialize.decodeFromBytes serializeGameRow
 
