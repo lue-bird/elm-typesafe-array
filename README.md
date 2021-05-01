@@ -66,12 +66,12 @@ import Nat exposing (Nat, Only, In, ValueIn, ValueMin)
 import MinNat
 import InNat
 import NNats exposing (..)
-    -- nat0 to nat160
+    -- (..) is nat0 to nat160
 
 import Typed exposing (val, val2)
 
 import TypeNats exposing (..)
-    -- Nat0 to Nat160 & Nat1Plus to Nat160Plus
+    -- (..) is Nat0 to Nat160 & Nat1Plus to Nat160Plus
 
 import Arr exposing (Arr)
 import NArr
