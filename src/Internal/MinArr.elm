@@ -19,7 +19,7 @@ import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueOnly)
 import TypeNats exposing (..)
 import Typed exposing (isChecked, tag, val)
 
@@ -77,22 +77,18 @@ extendN arrExtension =
 
 
 isLength :
-    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) triedMaybeN)
-    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
+    Nat (N (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
+    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) y) }
     ->
         { equal :
             Arr
-                (In
-                    (Nat1Plus triedMinus1)
-                    (Nat1Plus atLeastTriedMinus1)
-                    triedMaybeN
-                )
+                (ValueOnly (Nat1Plus triedMinus1))
                 element
             -> result
         , greater :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min atLeastTriedMinus1 maybeN) element -> result
+            Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
@@ -105,25 +101,27 @@ isLength amount min cases =
                     |> isChecked Internal.Arr
         in
         length arr
-            |> MinNat.is (amount |> InNat.value)
+            |> MinNat.is amount
                 min
                 { equal =
-                    \() -> .equal cases (withLength amount)
+                    \() ->
+                        .equal cases
+                            (withLength (amount |> InNat.value))
                 , greater = withLength >> .greater cases
                 , less = withLength >> .less cases
                 }
 
 
 isLengthAtLeast :
-    Nat (In tried (Nat1Plus triedMinus1PlusA) triedMaybeN)
-    -> { min : Nat (N min (Is minToTriedMin To tried) x) }
+    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    -> { min : Nat (N min (Is minToTriedMin To lowerBound) y) }
     ->
-        { equalOrGreater : Arr (ValueMin tried) element -> result
-        , less : Arr (In min triedMinus1PlusA maybeN) element -> result
+        { equalOrGreater : Arr (ValueMin lowerBound) element -> result
+        , less : Arr (In min lowerBoundMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
-isLengthAtLeast tried min cases =
+isLengthAtLeast lowerBound min cases =
     \arr ->
         let
             withLength len =
@@ -132,7 +130,7 @@ isLengthAtLeast tried min cases =
                     |> isChecked Internal.Arr
         in
         length arr
-            |> MinNat.isAtLeast tried
+            |> MinNat.isAtLeast lowerBound
                 min
                 { less =
                     withLength >> .less cases
@@ -142,19 +140,19 @@ isLengthAtLeast tried min cases =
 
 
 isLengthAtMost :
-    Nat (In atMostMin atLeastAtMostMin atMostMaybeN)
-    -> { min : Nat (N min (Is minToAtMostMin To atMostMin) x) }
+    Nat (N upperBound (Is a To upperBoundPlusA) x)
+    -> { min : Nat (N min (Is minToAtMostMin To upperBound) y) }
     ->
         { equalOrLess :
-            Arr (In min atLeastAtMostMin maybeN) element
+            Arr (In min upperBoundPlusA maybeN) element
             -> result
         , greater :
-            Arr (ValueMin (Nat1Plus atMostMin)) element
+            Arr (ValueMin (Nat1Plus upperBound)) element
             -> result
         }
     -> Arr (In min max maybeN) element
     -> result
-isLengthAtMost tried min cases =
+isLengthAtMost upperBound min cases =
     \arr ->
         let
             withLength len =
@@ -163,7 +161,7 @@ isLengthAtMost tried min cases =
                     |> isChecked Internal.Arr
         in
         length arr
-            |> MinNat.isAtMost tried
+            |> MinNat.isAtMost upperBound
                 min
                 { equalOrLess =
                     withLength >> .equalOrLess cases

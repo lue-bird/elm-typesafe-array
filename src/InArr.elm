@@ -2,6 +2,7 @@ module InArr exposing
     ( push, extend, extendN, removeAt, insertAt
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
     , value
+    , serialize
     )
 
 {-| If the maximum length is set to a specific value,
@@ -29,13 +30,20 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 @docs value
 
+
+## extra
+
+@docs serialize
+
 -}
 
-import Arr exposing (Arr)
+import Arr exposing (Arr, fromArray, length, toArray)
 import Internal.InArr as Internal
 import LinearDirection exposing (LinearDirection(..))
+import MinArr
 import NNats exposing (..)
 import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueOnly)
+import Serialize
 import TypeNats exposing (..)
 
 
@@ -213,21 +221,21 @@ isLength tried min cases =
 isLengthInRange :
     Nat
         (N
-            first
-            (Is firstToLast To last)
-            (Is firstA To (Nat1Plus atLeastFirstMinus1))
+            lowerBound
+            (Is lowerBoundToUpperBound To upperBound)
+            (Is lowerBoundA To (Nat1Plus atLeastLowerBoundMinus1))
         )
-    -> Nat (N last (Is lastToMax To max) (Is lastA To atLeastLast))
-    -> { min : Nat (N min (Is minToFirst To first) x) }
+    -> Nat (N upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastUpperBound))
+    -> { min : Nat (N min (Is minToLowerBound To lowerBound) x) }
     ->
         { inRange :
-            Arr (In first atLeastLast maybeN) element
+            Arr (In lowerBound atLeastUpperBound maybeN) element
             -> result
         , less :
-            Arr (In min atLeastFirstMinus1 maybeN) element
+            Arr (In min atLeastLowerBoundMinus1 maybeN) element
             -> result
-        , more :
-            Arr (In (Nat1Plus last) max maybeN) element
+        , greater :
+            Arr (In (Nat1Plus upperBound) max maybeN) element
             -> result
         }
     -> Arr (In min max maybeN) element
@@ -268,7 +276,7 @@ isLengthAtLeast :
         { less :
             Arr (In min atLeastTriedMinus1 maybeN) element
             -> result
-        , equalOrMore :
+        , equalOrGreater :
             Arr (In lowerBound max maybeN) element
             -> result
         }
@@ -315,9 +323,51 @@ isLengthAtMost :
     -> { min : Nat (N min (Is minToUpperBound To upperBound) x) }
     ->
         { equalOrLess : Arr (In min atLeastUpperBound maybeN) element -> result
-        , more : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
+        , greater : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
 isLengthAtMost upperBound min cases =
     Internal.isLengthAtMost upperBound min cases
+
+
+{-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s within a minimum & maximum length.
+
+    import Serialize
+
+    serialize10To15Ints :
+        Serialize.Codec
+            String
+            (Arr (ValueIn Nat10 (Nat15Plus a)) Int)
+    serialize10To15Ints =
+        InArr.serialize Serialize.int nat10 nat15
+
+    encode :
+        Arr (In (Nat10Plus orHigherMin) Nat15 maybeN) Int
+        -> Bytes
+    encode =
+        InNat.value
+            >> Serialize.encodeToBytes serialize10To15Ints
+
+    decode :
+        Bytes
+        ->
+            Result
+                (Serialize.Error String)
+                (Arr (ValueIn Nat10 (Nat15Plus a) Int))
+    decode =
+        Serialize.decodeFromBytes serialize10To15Ints
+
+For decoded `Arr`s with a length outside of the expected bounds, the `Result` is an error message.
+
+-}
+serialize :
+    Nat (In minLowerBound upperBound lowerBoundMaybeN)
+    -> Nat (In upperBound upperBoundPlusA upperBoundMaybeN)
+    -> Serialize.Codec String element
+    ->
+        Serialize.Codec
+            String
+            (Arr (ValueIn minLowerBound upperBoundPlusA) element)
+serialize lowerBound upperBound serializeElement =
+    Internal.serialize lowerBound upperBound serializeElement

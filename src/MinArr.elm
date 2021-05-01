@@ -3,6 +3,7 @@ module MinArr exposing
     , isLength, isLengthAtLeast, isLengthAtMost
     , group
     , value
+    , serialize
     )
 
 {-| If the maximum length is a type variable,
@@ -33,13 +34,19 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 @docs value
 
+
+## extra
+
+@docs serialize
+
 -}
 
-import Arr exposing (Arr, length, toArray)
+import Arr exposing (Arr, fromArray, length, toArray)
 import Internal.MinArr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueMin, ValueOnly)
+import Serialize
 import TypeNats exposing (..)
 
 
@@ -165,22 +172,18 @@ Is it `greater`, `less` or `equal`?
 
 -}
 isLength :
-    Nat (In (Nat1Plus triedMinus1) (Nat1Plus atLeastTriedMinus1) triedMaybeN)
-    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) x) }
+    Nat (N (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
+    -> { min : Nat (N min (Is minToTriedMinus1 To triedMinus1) y) }
     ->
         { equal :
             Arr
-                (In
-                    (Nat1Plus triedMinus1)
-                    (Nat1Plus atLeastTriedMinus1)
-                    triedMaybeN
-                )
+                (ValueOnly (Nat1Plus triedMinus1))
                 element
             -> result
         , greater :
             Arr (ValueMin (Nat2Plus triedMinus1)) element -> result
         , less :
-            Arr (In min atLeastTriedMinus1 maybeN) element -> result
+            Arr (In min triedMinus1PlusA maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
@@ -214,8 +217,8 @@ Is it `equalOrGreater` or `less`?
 
 -}
 isLengthAtLeast :
-    Nat (In lowerBound (Nat1Plus lowerBoundMinus1PlusA) lowerBoundMaybeN)
-    -> { min : Nat (N min (Is minToTriedMin To lowerBound) x) }
+    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    -> { min : Nat (N min (Is minToTriedMin To lowerBound) y) }
     ->
         { equalOrGreater : Arr (ValueMin lowerBound) element -> result
         , less : Arr (In min lowerBoundMinus1PlusA maybeN) element -> result
@@ -251,20 +254,20 @@ isLengthAtLeast lowerBound min cases =
 
 -}
 isLengthAtMost :
-    Nat (In atMostMin atLeastAtMostMin atMostMaybeN)
-    -> { min : Nat (N min (Is minToAtMostMin To atMostMin) x) }
+    Nat (N upperBound (Is a To upperBoundPlusA) x)
+    -> { min : Nat (N min (Is minToAtMostMin To upperBound) y) }
     ->
         { equalOrLess :
-            Arr (In min atLeastAtMostMin maybeN) element
+            Arr (In min upperBoundPlusA maybeN) element
             -> result
         , greater :
-            Arr (ValueMin (Nat1Plus atMostMin)) element
+            Arr (ValueMin (Nat1Plus upperBound)) element
             -> result
         }
     -> Arr (In min max maybeN) element
     -> result
-isLengthAtMost tried min cases =
-    Internal.isLengthAtMost tried min cases
+isLengthAtMost upperBound min cases =
+    Internal.isLengthAtMost upperBound min cases
 
 
 
@@ -332,3 +335,52 @@ Elm complains:
 value : Arr (In min max maybeN) element -> Arr (ValueMin min) element
 value =
     Internal.value
+
+
+{-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a minimum amount of elements.
+
+    import Serialize
+
+
+    -- we can't start if we have no worlds to choose from!
+    serializeSaves :
+        Serialize.Codec
+            String
+            (Arr (ValueMin Nat1) World)
+    serializeSaves =
+        MinArr.serialize nat1 serializeWorld
+
+    encode :
+        Arr (In (Nat1Plus minMinus1) max maybeN) World
+        -> Bytes
+    encode =
+        MinArr.value
+            >> Serialize.encodeToBytes serializeSaves
+
+    decode :
+        Bytes
+        ->
+            Result
+                (Serialize.Error String)
+                (Arr (ValueMin Nat1) World)
+    decode =
+        Serialize.decodeFromBytes serializeSaves
+
+-}
+serialize :
+    Nat (N lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    -> Serialize.Codec String element
+    -> Serialize.Codec String (Arr (ValueMin lowerBound) element)
+serialize lowerBound serializeElement =
+    Serialize.array serializeElement
+        |> Serialize.mapValid
+            (fromArray
+                >> isLengthAtLeast lowerBound
+                    { min = nat0 }
+                    { equalOrGreater =
+                        Ok
+                    , less =
+                        \_ -> Err "Array length was less than the required minimum"
+                    }
+            )
+            toArray

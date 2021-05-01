@@ -8,6 +8,7 @@ module Arr exposing
     , replaceAt
     , lowerMinLength
     , restoreMaxLength, restoreLength
+    , serialize
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -82,6 +83,11 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 @docs restoreMaxLength, restoreLength
 
+
+## extra
+
+@docs serialize
+
 -}
 
 import Arguments exposing (..)
@@ -93,6 +99,7 @@ import NNat exposing (..)
 import NNats exposing (nat0)
 import Nat exposing (In, Is, N, Nat, Only, To, ValueIn, ValueMin, ValueN)
 import Random
+import Serialize
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Typed)
 
@@ -865,3 +872,39 @@ random :
     -> Random.Generator (Arr length element)
 random amount generateElement =
     Internal.random amount generateElement
+
+
+{-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a specific amount of elements.
+
+    import Serialize
+
+
+    -- we can't start if we have no worlds to choose from!
+    serializeGameRow :
+        Serialize.Codec
+            String
+            (Arr (ValueN Nat10 ...) GameField)
+    serializeGameRow =
+        Arr.serialize nat10 serializeGameField
+
+    encode : Arr (Only Nat10 maybeN) GameField -> Bytes
+    encode =
+        Arr.restoreLength nat10
+            >> Serialize.encodeToBytes serializeGameRow
+
+    decode :
+        Bytes
+        ->
+            Result
+                (Serialize.Error String)
+                (Arr (ValueN Nat10 ...) GameField)
+    decode =
+        Serialize.decodeFromBytes serializeGameRow
+
+-}
+serialize :
+    Nat length
+    -> Serialize.Codec String element
+    -> Serialize.Codec String (Arr length element)
+serialize length_ serializeElement =
+    Internal.serialize length_ serializeElement

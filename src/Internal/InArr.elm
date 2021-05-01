@@ -1,6 +1,6 @@
 module Internal.InArr exposing
     ( isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , extend, extendN, insertAt, push, removeAt, value
+    , extend, extendN, insertAt, push, removeAt, serialize, value
     )
 
 {-| All functions must be tested a lot, especially the type signatures.
@@ -14,13 +14,15 @@ Try to reduce the amount of functions.
 -}
 
 import Arr exposing (Arr, length, toArray)
+import Array
 import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueOnly)
+import Nat exposing (In, Is, N, Nat, To, ValueIn, ValueN, ValueOnly)
+import Serialize
 import TypeNats exposing (..)
-import Typed exposing (isChecked, tag)
+import Typed exposing (isChecked, tag, val)
 
 
 push :
@@ -140,7 +142,7 @@ isLengthInRange :
         , less :
             Arr (In min atLeastFirstMinus1 maybeN) element
             -> result
-        , more :
+        , greater :
             Arr (In (Nat1Plus upperBound) max maybeN) element
             -> result
         }
@@ -155,10 +157,11 @@ isLengthInRange lowerBound upperBound min cases =
                     |> isChecked Internal.Arr
         in
         length arr
-            |> InNat.isInRange { first = lowerBound, last = upperBound }
+            |> InNat.isInRange lowerBound
+                upperBound
                 min
                 { inRange = withLength >> .inRange cases
-                , greater = withLength >> .more cases
+                , greater = withLength >> .greater cases
                 , less = withLength >> .less cases
                 }
 
@@ -175,7 +178,7 @@ isLengthAtLeast :
         { less :
             Arr (In min atLeastLowerBoundMinus1 maybeN) element
             -> result
-        , equalOrMore :
+        , equalOrGreater :
             Arr (In lowerBound max maybeN) element
             -> result
         }
@@ -194,7 +197,7 @@ isLengthAtLeast lowerBound min cases =
                 min
                 { less = withLength >> .less cases
                 , equalOrGreater =
-                    withLength >> .equalOrMore cases
+                    withLength >> .equalOrGreater cases
                 }
 
 
@@ -208,7 +211,7 @@ isLengthAtMost :
     -> { min : Nat (N min (Is minToUpperBound To upperBound) x) }
     ->
         { equalOrLess : Arr (In min atLeastUpperBound maybeN) element -> result
-        , more : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
+        , greater : Arr (In (Nat1Plus upperBound) max maybeN) element -> result
         }
     -> Arr (In min max maybeN) element
     -> result
@@ -225,5 +228,37 @@ isLengthAtMost upperBound min cases =
                 min
                 { equalOrLess = withLength >> .equalOrLess cases
                 , greater =
-                    withLength >> .more cases
+                    withLength >> .greater cases
                 }
+
+
+serialize :
+    Nat (In minLowerBound upperBound lowerBoundMaybeN)
+    -> Nat (In upperBound upperBoundPlusA upperBoundMaybeN)
+    -> Serialize.Codec String element
+    ->
+        Serialize.Codec
+            String
+            (Arr (ValueIn minLowerBound upperBoundPlusA) element)
+serialize lowerBound upperBound serializeElement =
+    Serialize.array serializeElement
+        |> Serialize.mapValid
+            (\array ->
+                Array.length array
+                    |> Nat.isIntInRange lowerBound
+                        upperBound
+                        { less =
+                            \() ->
+                                Err
+                                    "Array length was less than the expected minimum"
+                        , greater =
+                            \_ ->
+                                Err "Array length was greater than the expected maximum"
+                        , inRange =
+                            \lengthInRange ->
+                                tag { array = array, length = lengthInRange }
+                                    |> isChecked Internal.Arr
+                                    |> Ok
+                        }
+            )
+            toArray

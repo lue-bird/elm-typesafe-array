@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreLength, restoreMaxLength, reverse, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreLength, restoreMaxLength, reverse, serialize, take, toArray)
 
 {-| Only use it in `Internal.Arr. ...` modules.
 -}
@@ -14,6 +14,7 @@ import NNat
 import NNats exposing (..)
 import Nat exposing (In, Is, N, Nat, Only, To, ValueIn, ValueMin, ValueN)
 import Random
+import Serialize
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
 
@@ -246,7 +247,7 @@ take :
 take amount maxTakenAmount direction =
     mapArrayAndLength
         (Array.take (amount |> val) direction)
-        (\_ -> amount |> Nat.maxIs maxTakenAmount)
+        (\_ -> amount |> Nat.restoreMax maxTakenAmount)
         >> isChecked Arr
 
 
@@ -280,7 +281,7 @@ restoreMaxLength :
     -> Arr (In min max maybeN) element
     -> Arr (In min atLeastMax maybeN) element
 restoreMaxLength maximumLength =
-    mapLength (Nat.maxIs maximumLength)
+    mapLength (Nat.restoreMax maximumLength)
         >> isChecked Arr
 
 
@@ -293,13 +294,34 @@ restoreLength length_ =
         >> isChecked Arr
 
 
+reverse : Arr length element -> Arr length element
+reverse =
+    mapArray Array.reverse >> isChecked Arr
+
+
 
 -- ## extra
 
 
-reverse : Arr length element -> Arr length element
-reverse =
-    mapArray Array.reverse >> isChecked Arr
+serialize :
+    Nat length
+    -> Serialize.Codec String element
+    -> Serialize.Codec String (Arr length element)
+serialize length_ serializeElement =
+    Serialize.array serializeElement
+        |> Serialize.mapValid
+            (\array ->
+                if Array.length array == val length_ then
+                    tag { array = array, length = length_ }
+                        |> isChecked Arr
+                        |> Ok
+
+                else
+                    "Array length was different from the required length "
+                        ++ String.fromInt (val length_)
+                        |> Err
+            )
+            toArray
 
 
 
