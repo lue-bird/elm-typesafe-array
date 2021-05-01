@@ -5,7 +5,7 @@ module InArr exposing
     , serialize
     )
 
-{-| If the maximum length is set to a specific value,
+{-| If the maximum length is set to a specific value (also in `Only`),
 
     -- only up to 50 tags
     tag :

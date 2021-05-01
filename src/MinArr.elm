@@ -9,7 +9,7 @@ module MinArr exposing
 {-| If the maximum length is a type variable,
 
     first :
-        Arr (In (Nat1Plus minMinus1) max maybeN) element
+        Arr (In (Nat1Plus orHigherMin) max maybeN) element
         -> element
 
 use these operations instead of the ones in `Arr` or `InArr`
