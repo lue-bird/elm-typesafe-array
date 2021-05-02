@@ -192,7 +192,7 @@ toArray =
 
     Arr.repeat nat4 'L'
     --> Arr.from4 'L' 'L' 'L' 'L'
-    --> : Arr (N Nat4 ...) Char
+    --> : Arr (Only Nat4) Char
 
 
     Arr.repeat atLeast3 'L'
@@ -233,9 +233,9 @@ fromArray =
 {-| No elements.
 
     Arr.empty
-    --> : Arr (N Nat0 ...) element
+    --> : Arr (Only Nat0) element
         |> NArr.push ":)"
-    --> : Arr (N Nat1 ...) String
+    --> : Arr (Only Nat1) String
 
 -}
 empty : Arr (Only Nat0) element

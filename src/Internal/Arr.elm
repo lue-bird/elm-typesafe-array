@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nPush, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
 
 {-| ArgOnly use it in `Internal.Arr. ...` modules.
 -}
@@ -10,9 +10,8 @@ import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection)
 import MinNat
-import NNat
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, Nat, Only, To)
 import Random
 import Serialize
 import TypeNats exposing (..)
@@ -210,22 +209,6 @@ random amount generateElement =
 
 
 -- ## modify
-
-
-nPush :
-    element
-    -> Arr (N n atLeastN (Is a To nPlusA) (Is b To nPlusB)) element
-    ->
-        Arr
-            (N
-                (Nat1Plus n)
-                (Nat1Plus atLeastN)
-                (Is a To (Nat1Plus nPlusA))
-                (Is b To (Nat1Plus nPlusB))
-            )
-            element
-nPush elementToPush =
-    push elementToPush (NNat.add ( nat1, nat1 ))
 
 
 replaceAt :

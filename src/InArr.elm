@@ -84,7 +84,7 @@ extend extension extensionMin extensionMax =
     Internal.extend extension extensionMin extensionMax
 
 
-{-| Append the elements of a `Arr (N ...)`.
+{-| Append the elements of an `Arr (Only ...)`.
 -}
 extendOnly :
     Nat (ArgN added (Is min To sumMin) (Is max To sumMax))

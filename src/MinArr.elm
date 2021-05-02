@@ -131,7 +131,7 @@ Is it `greater`, `less` or `equal`?
 
     convertUserArguments :
         String
-        -> Result String (Arr (N Nat3 {- ... -}))
+        -> Result String (Arr (Only Nat3))
     convertUserArguments =
         String.words
             >> Array.fromList
