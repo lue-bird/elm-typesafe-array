@@ -12,4 +12,4 @@
 
 ## 3.0.0
 
-- gave `MinArr.group`'s return field `less` a smaller range
+- gave `MinArr.group`'s return field `less` a smaller range and moved it to `Arr.groupsOf`
