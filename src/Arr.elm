@@ -895,9 +895,9 @@ nats length_ =
 {-| Generate a given `amount` of elements and put them in an `Arr`.
 -}
 random :
-    Nat length
+    Nat (ArgIn min max maybeN)
     -> Random.Generator element
-    -> Random.Generator (Arr length element)
+    -> Random.Generator (Arr (In min max) element)
 random amount generateElement =
     Internal.random amount generateElement
 

@@ -194,14 +194,16 @@ nats length_ =
 
 
 random :
-    Nat length
+    Nat (ArgIn min max maybeN)
     -> Random.Generator element
-    -> Random.Generator (Arr length element)
+    -> Random.Generator (Arr (In min max) element)
 random amount generateElement =
     Random.list (val amount) generateElement
         |> Random.map
             (\list ->
-                { array = Array.fromList list, length = amount }
+                { array = Array.fromList list
+                , length = amount |> InNat.value
+                }
                     |> tag
                     |> isChecked Arr
             )
