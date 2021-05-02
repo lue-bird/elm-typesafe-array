@@ -198,7 +198,7 @@ toArray =
 
     Arr.repeat nat4 'L'
     --> Arr.from4 'L' 'L' 'L' 'L'
-    --> : Arr (Only Nat4) Char
+    --> : Arr (In Nat4 (Nat4Plus a)) Char
 
 
     Arr.repeat atLeast3 'L'
