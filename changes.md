@@ -17,3 +17,7 @@
 ## 4.0.0
 
 - corrected `Arr.groupsOf`'s `groups` group length type
+
+## 5.0.0
+
+- corrected `Arr.random` return type to be `In` instead of possibly `Arg-`
