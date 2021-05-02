@@ -706,9 +706,13 @@ length =
 
 {-| Element at a valid position.
 
-    Arr.from3 1 2 3
-        |> Arr.at nat1
+    Arr.from4 1 2 3 4
+        |> Arr.at nat1 FirstToLast
     --> 2
+
+    Arr.from4 1 2 3 4
+        |> Arr.at nat1 LastToFirst
+    --> 3
 
 -}
 at :
