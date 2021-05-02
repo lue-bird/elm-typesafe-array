@@ -589,9 +589,13 @@ drop droppedAmount direction =
     aToZ =
         Arr.nats nat26
             |> Arr.map
-                ((+) ('a' |> Char.toCode)
-                    >> Char.fromCode
-                )
+                (val >> fromPositionInABC)
+
+    fromPositionInABC =
+        (+) ('a' |> Char.toCode)
+            >> Char.fromCode
+
+`val` refers to `Typed.val`.
 
 -}
 map :
@@ -609,6 +613,30 @@ If one list is longer, the extra elements are dropped.
         Arr.map2 (\a b -> a.lifes + b.lifes)
             aBoard
             bBoard
+
+The length pf all `Arr`s must be in the same range.
+
+  - If 1 `Arr` is a potential `Arr (Min ...)`, you have to
+
+```
+Arr.map2 (\a b -> a.lifes + b.lifes)
+    (aBoard |> MinArr.value)
+    (bBoard |> MinArr.value)
+
+aBoard, bBoard : Arr (In Nat2 someMax) Field
+```
+
+for every non-`Arr (Min ...)`.
+
+  - If 1 `Arr` has a higher minimum length, you have to
+
+```
+Arr.map2 (\a b -> a.lifes + b.lifes)
+    (aBoard |> Arr.lowerMinLength nat2)
+    bBoard
+
+aBoard : Arr (In Nat5 Nat10) Field
+```
 
 -}
 map2 :
