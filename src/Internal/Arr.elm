@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
 
 {-| ArgOnly use it in `Internal.Arr. ...` modules.
 -}
@@ -370,3 +370,46 @@ push :
 push elementToPush add1 =
     mapArrayAndLength (Array.push elementToPush) add1
         >> isChecked Arr
+
+
+groupsOf :
+    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+    -> LinearDirection
+    -> Arr (In min max) element
+    ->
+        { groups :
+            Arr
+                (In Nat0 max)
+                (Arr
+                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    element
+                )
+        , less : Arr (In Nat0 maxGroupSize) element
+        }
+groupsOf groupSize direction =
+    \arr ->
+        let
+            { groups, less } =
+                toArray arr
+                    |> Array.group (val groupSize) direction
+        in
+        { groups =
+            { array =
+                groups
+                    |> Array.map
+                        (\array ->
+                            { array = array, length = groupSize }
+                                |> tag
+                                |> isChecked Arr
+                        )
+            , length = length arr |> Nat.div groupSize
+            }
+                |> tag
+                |> isChecked Arr
+        , less =
+            { array = less
+            , length = length arr |> Nat.remainderBy groupSize
+            }
+                |> tag
+                |> isChecked Arr
+        }

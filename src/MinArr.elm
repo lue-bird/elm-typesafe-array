@@ -1,7 +1,6 @@
 module MinArr exposing
     ( push, removeAt, insertAt, extend
     , isLength, isLengthAtLeast, isLengthAtMost
-    , group
     , value
     , serialize
     )
@@ -23,11 +22,6 @@ use these operations instead of the ones in `Arr` or `InArr`
 ## scan length
 
 @docs isLength, isLengthAtLeast, isLengthAtMost
-
-
-## transform
-
-@docs group
 
 
 ## drop information
@@ -253,43 +247,6 @@ isLengthAtMost :
     -> result
 isLengthAtMost upperBound min cases =
     Internal.isLengthAtMost upperBound min cases
-
-
-
--- ## extra
-
-
-{-| Split
-
-    { groups : the Arr divided into equal-sized Arrs
-    , less : values to one side which aren't enough
-    }
-
-    Arr.from7 1 2 3 4 5 6 7
-        |> MinArr.group nat5 FirstToLast
-    --> { groups = Arr.from1 (Arr.from5 1 2 3 4 5)
-    --> , less = Arr.from2 6 7
-    --> }
-
-The type of the result isn't as accurate as in the example, though!
-
--}
-group :
-    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
-    -> LinearDirection
-    -> Arr (In min max) element
-    ->
-        { groups :
-            Arr
-                (In Nat0 max)
-                (Arr
-                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
-                    element
-                )
-        , less : Arr (In Nat0 maxGroupSize) element
-        }
-group groupSize direction =
-    Internal.group groupSize direction
 
 
 

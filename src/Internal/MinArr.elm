@@ -1,7 +1,6 @@
 module Internal.MinArr exposing
     ( extend
     , extendOnly
-    , group
     , insertAt
     , isLength
     , isLengthAtLeast
@@ -12,16 +11,14 @@ module Internal.MinArr exposing
     )
 
 import Arr exposing (Arr, length, toArray)
-import Array
-import Array.LinearDirection as Array
 import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, Nat, Only, To)
 import TypeNats exposing (..)
-import Typed exposing (isChecked, tag, val)
+import Typed exposing (isChecked, tag)
 
 
 push :
@@ -169,49 +166,6 @@ isLengthAtMost upperBound min cases =
                     withLength >> .equalOrLess cases
                 , greater = withLength >> .greater cases
                 }
-
-
-group :
-    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
-    -> LinearDirection
-    -> Arr (In min max) element
-    ->
-        { groups :
-            Arr
-                (In Nat0 max)
-                (Arr
-                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
-                    element
-                )
-        , less : Arr (In Nat0 maxGroupSize) element
-        }
-group groupSize direction =
-    \arr ->
-        let
-            { groups, less } =
-                toArray arr
-                    |> Array.group (val groupSize) direction
-        in
-        { groups =
-            { array =
-                groups
-                    |> Array.map
-                        (\array ->
-                            { array = array, length = groupSize }
-                                |> tag
-                                |> isChecked Internal.Arr
-                        )
-            , length = length arr |> Nat.div groupSize
-            }
-                |> tag
-                |> isChecked Internal.Arr
-        , less =
-            { array = less
-            , length = length arr |> Nat.remainderBy groupSize
-            }
-                |> tag
-                |> isChecked Internal.Arr
-        }
 
 
 value : Arr (In min max) element -> Arr (Min min) element

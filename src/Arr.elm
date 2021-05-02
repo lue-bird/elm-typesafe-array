@@ -5,7 +5,8 @@ module Arr exposing
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , take, drop
-    , map, fold, toArray, map2, map3, map4, foldWith, reverse
+    , map, fold, toArray, foldWith, reverse, groupsOf
+    , map2, map3, map4
     , replaceAt
     , lowerMinLength
     , restoreMaxLength
@@ -71,7 +72,12 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## transform
 
-@docs map, fold, toArray, map2, map3, map4, foldWith, reverse
+@docs map, fold, toArray, foldWith, reverse, groupsOf
+
+
+### map
+
+@docs map2, map3, map4
 
 
 ### modify
@@ -760,6 +766,39 @@ at index direction =
 reverse : Arr length element -> Arr length element
 reverse =
     Internal.reverse
+
+
+{-| Split the `Arr` into equal-sized chunks.
+
+    { groups : the Arr divided into equal-sized Arrs
+    , less : values to one side which aren't enough
+    }
+
+    Arr.from7 1 2 3 4 5 6 7
+        |> MinArr.groupsOf nat5 FirstToLast
+    --> { groups = Arr.from1 (Arr.from5 1 2 3 4 5)
+    --> , less = Arr.from2 6 7
+    --> }
+
+The type of the result isn't as accurate as in the example, though!
+
+-}
+groupsOf :
+    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+    -> LinearDirection
+    -> Arr (In min max) element
+    ->
+        { groups :
+            Arr
+                (In Nat0 max)
+                (Arr
+                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    element
+                )
+        , less : Arr (In Nat0 maxGroupSize) element
+        }
+groupsOf groupSize direction =
+    Internal.groupsOf groupSize direction
 
 
 
