@@ -792,7 +792,7 @@ groupsOf :
             Arr
                 (In Nat0 max)
                 (Arr
-                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
                     element
                 )
         , less : Arr (In Nat0 maxGroupSize) element

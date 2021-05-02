@@ -381,7 +381,7 @@ groupsOf :
             Arr
                 (In Nat0 max)
                 (Arr
-                    (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
                     element
                 )
         , less : Arr (In Nat0 maxGroupSize) element
@@ -398,7 +398,9 @@ groupsOf groupSize direction =
                 groups
                     |> Array.map
                         (\array ->
-                            { array = array, length = groupSize }
+                            { array = array
+                            , length = groupSize |> InNat.value
+                            }
                                 |> tag
                                 |> isChecked Arr
                         )
