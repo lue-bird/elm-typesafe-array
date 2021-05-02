@@ -4,8 +4,9 @@ import Arr exposing (Arr)
 import Array
 import Expect
 import InArr
+import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
-import Nat exposing (Only)
+import Nat exposing (In, Only)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
@@ -23,7 +24,42 @@ suite =
                             |> Array.fromList
                         )
             )
+        , describe "resize"
+            [ describe "FirstToLast"
+                [ test "length less than current"
+                    (\() ->
+                        Arr.resize FirstToLast nat3 0 num1234
+                            |> Expect.equal
+                                (Arr.from3 1 2 3)
+                    )
+                , test "length greater than current"
+                    (\() ->
+                        Arr.resize FirstToLast nat6 0 num1234
+                            |> Expect.equal
+                                (Arr.from6 1 2 3 4 0 0)
+                    )
+                ]
+            , describe "LastToFirst"
+                [ test "length less than current"
+                    (\() ->
+                        Arr.resize LastToFirst nat3 0 num1234
+                            |> Expect.equal
+                                (Arr.from3 2 3 4)
+                    )
+                , test "length greater than current"
+                    (\() ->
+                        Arr.resize LastToFirst nat6 0 num1234
+                            |> Expect.equal
+                                (Arr.from6 0 0 1 2 3 4)
+                    )
+                ]
+            ]
         ]
+
+
+num1234 : Arr (In Nat4 (Nat4Plus a)) number
+num1234 =
+    Arr.from4 1 2 3 4
 
 
 startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
