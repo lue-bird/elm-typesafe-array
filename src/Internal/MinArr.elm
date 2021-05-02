@@ -183,7 +183,7 @@ group :
                     (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
                     element
                 )
-        , less : Arr (In Nat0 max) element
+        , less : Arr (In Nat0 maxGroupSize) element
         }
 group groupSize direction =
     \arr ->
