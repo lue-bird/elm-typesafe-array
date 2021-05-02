@@ -1,7 +1,8 @@
 module Arr exposing
     ( Arr
     , fromArray, repeat, nats, random
-    , empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
+    , empty, from1
+    , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , take, drop
     , map, fold, toArray, map2, map3, map4, foldWith, reverse
@@ -51,7 +52,11 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ### exact
 
-@docs empty, from1, from2, from3, from4, from10, from11, from12, from13, from14, from15, from16, from5, from6, from7, from8, from9
+@docs empty, from1
+
+[Skip to `from16`](Arr#from16).
+
+@docs from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
 
 
 ## scan
