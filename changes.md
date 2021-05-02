@@ -13,3 +13,7 @@
 ## 3.0.0
 
 - gave `MinArr.group`'s return field `less` a smaller range and moved it to `Arr.groupsOf`
+
+## 4.0.0
+
+- corrected `Arr.groupsOf`'s `groups` group length type
