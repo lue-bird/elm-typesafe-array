@@ -1,14 +1,22 @@
 module Internal.MinArr exposing
-    ( extend
-    , extendOnly
-    , insertAt
-    , isLength
-    , isLengthAtLeast
-    , isLengthAtMost
-    , push
-    , removeAt
+    ( isLength, isLengthAtLeast, isLengthAtMost
+    , push, removeAt, drop, extend, extendOnly, insertAt
     , value
     )
+
+{-|
+
+
+## scan length
+
+@docs isLength, isLengthAtLeast, isLengthAtMost
+
+
+## modify
+
+@docs push, removeAt, drop, extend, extendOnly, insertAt
+
+-}
 
 import Arr exposing (Arr, length, toArray)
 import InNat
@@ -69,6 +77,15 @@ extendOnly :
 extendOnly addedLength arrExtension =
     Internal.extend arrExtension
         (\_ -> MinNat.addN addedLength)
+
+
+drop :
+    Nat (ArgN dropped (Is minTaken To min) x)
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In minTaken max) element
+drop droppedAmount direction =
+    Internal.drop droppedAmount direction MinNat.subN
 
 
 

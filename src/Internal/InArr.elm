@@ -1,6 +1,7 @@
 module Internal.InArr exposing
     ( isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , extend, extendOnly, insertAt, push, removeAt, serialize
+    , drop, extend, extendOnly, insertAt, push, removeAt
+    , serialize
     )
 
 {-| All functions must be tested a lot, especially the type signatures.
@@ -10,6 +11,11 @@ Try to reduce the amount of functions.
 ## scan length
 
 @docs isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
+
+
+## modify
+
+@docs drop, extend, extendOnly, insertAt, push, removeAt
 
 -}
 
@@ -75,6 +81,15 @@ extendOnly :
     -> Arr (In sumMin sumMax) element
 extendOnly addedLength extension =
     Internal.extend extension (\_ -> InNat.addN addedLength)
+
+
+drop :
+    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In minTaken maxTaken) element
+drop droppedAmount direction =
+    Internal.drop droppedAmount direction InNat.subN
 
 
 

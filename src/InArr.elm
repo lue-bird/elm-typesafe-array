@@ -106,6 +106,22 @@ removeAt index direction =
     Internal.removeAt index direction
 
 
+{-| Elements after a certain number of elements from one side.
+
+    with6To10Elements
+        |> Arr.drop nat2 LastToFirst
+    --> : Arr (In Nat4 (Nat10Plus a)) ...
+
+-}
+drop :
+    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In minTaken maxTaken) element
+drop droppedAmount direction =
+    Internal.drop droppedAmount direction
+
+
 
 -- ## scan length
 

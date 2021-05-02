@@ -4,7 +4,7 @@ module Arr exposing
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
-    , take, drop, groupsOf
+    , take, groupsOf
     , map, fold, toArray, foldWith, reverse, resize
     , map2, map3, map4
     , replaceAt
@@ -67,7 +67,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## part
 
-@docs take, drop, groupsOf
+@docs take, groupsOf
 
 
 ## transform
@@ -564,24 +564,6 @@ take :
     -> Arr (In minTaken atLeastMaxTaken) element
 take takenAmount maxAmount direction =
     Internal.take takenAmount maxAmount direction
-
-
-{-| After a certain number of elements from one side.
-
-    with6To10Elements
-        |> Arr.drop nat2 LastToFirst
-    --> : Arr (In Nat4 (Nat10Plus a)) ...
-
-Use `take` `LastToFirst` if you know the exact amount of elements.
-
--}
-drop :
-    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
-    -> LinearDirection
-    -> Arr (In min max) element
-    -> Arr (In minTaken maxTaken) element
-drop droppedAmount direction =
-    Internal.drop droppedAmount direction
 
 
 

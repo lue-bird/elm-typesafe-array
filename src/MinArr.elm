@@ -1,5 +1,5 @@
 module MinArr exposing
-    ( push, removeAt, insertAt, extend
+    ( push, removeAt, insertAt, extend, drop
     , isLength, isLengthAtLeast, isLengthAtMost
     , value
     , serialize
@@ -16,7 +16,7 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 ## modify
 
-@docs push, removeAt, insertAt, extend
+@docs push, removeAt, insertAt, extend, drop
 
 
 ## scan length
@@ -111,6 +111,22 @@ extend :
     -> Arr (Min extendedMin) element
 extend extension extensionMin =
     Internal.extend extension extensionMin
+
+
+{-| Elements after a certain number of elements from one side.
+
+    withAtLeast6Elements
+        |> Arr.drop nat2 LastToFirst
+    --> : Arr (Min Nat4) ...
+
+-}
+drop :
+    Nat (ArgN dropped (Is minTaken To min) x)
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In minTaken max) element
+drop droppedAmount direction =
+    Internal.drop droppedAmount direction
 
 
 

@@ -246,18 +246,6 @@ take amount maxTakenAmount direction =
         >> isChecked Arr
 
 
-drop :
-    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
-    -> LinearDirection
-    -> Arr (In min max) element
-    -> Arr (In minTaken maxTaken) element
-drop droppedAmount direction =
-    mapArrayAndLength
-        (Array.drop (droppedAmount |> val) direction)
-        (\len -> len |> InNat.subN droppedAmount)
-        >> isChecked Arr
-
-
 
 -- ## drop information
 
@@ -344,6 +332,23 @@ extend extension addLength =
     in
     internalVal2 appendVal Arr extension Arr
         >> tag
+        >> isChecked Arr
+
+
+drop :
+    Nat (ArgN dropped (Is minTaken To min) x)
+    -> LinearDirection
+    ->
+        (Nat (ArgN dropped (Is minTaken To min) x)
+         -> Nat (In min max)
+         -> Nat (In minTaken maxTaken)
+        )
+    -> Arr (In min max) element
+    -> Arr (In minTaken maxTaken) element
+drop droppedAmount direction subDropped =
+    mapArrayAndLength
+        (Array.drop (droppedAmount |> val) direction)
+        (\len -> len |> subDropped droppedAmount)
         >> isChecked Arr
 
 
