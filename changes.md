@@ -29,3 +29,8 @@
 ### 6.1.0
 
 - added `Arr.resize`
+
+## 7.0.0
+
+- moved `drop` from `Arr` to `InArr`
+- added `MinArr.drop`
