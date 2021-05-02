@@ -21,3 +21,7 @@
 ## 5.0.0
 
 - corrected `Arr.random` return type to be `In` instead of possibly `Arg-`
+
+## 6.0.0
+
+- direct constructors `empty` to `from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
