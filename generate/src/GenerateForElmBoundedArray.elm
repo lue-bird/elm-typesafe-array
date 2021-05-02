@@ -341,9 +341,7 @@ from1To16 =
             fromXPreset x implementation =
                 packageExposedFunDecl From1To16Tag
                     [ markdown
-                        ("Create an `Arr (Only Nat"
-                            ++ String.fromInt x
-                            ++ ")` from exactly "
+                        ("Create an `Arr` from exactly "
                             ++ String.fromInt x
                             ++ " elements in this order."
                         )
@@ -351,7 +349,7 @@ from1To16 =
                     (funAnn
                         (List.repeat x (typeVar "element"))
                         (typed "Arr"
-                            [ typed "Only" [ natXAnn x ]
+                            [ typed "In" [ natXAnn x, natXPlusAnn x (typeVar "a") ]
                             , typeVar "element"
                             ]
                         )

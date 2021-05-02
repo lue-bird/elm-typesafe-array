@@ -142,7 +142,7 @@ map2 combine aArr bArr =
 -- ## create
 
 
-empty : Arr (Only Nat0) element
+empty : Arr (In Nat0 atLeast0) element
 empty =
     { array = Array.empty
     , length = nat0 |> InNat.value

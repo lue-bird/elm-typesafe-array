@@ -239,50 +239,54 @@ fromArray =
 {-| No elements.
 
     Arr.empty
-    --> : Arr (Only Nat0) element
+    --> : Arr (In Nat0 atLeast0) element
         |> NArr.push ":)"
-    --> : Arr (Only Nat1) String
+    --> : Arr (In Nat1 (Nat1Plus atLeast0)) String
 
 -}
-empty : Arr (Only Nat0) element
+empty : Arr (In Nat0 atLeast0) element
 empty =
     Internal.empty
 
 
-{-| Create an `Arr (Only Nat1)` from exactly 1 elements in this order.
+{-| Create an `Arr` from exactly 1 elements in this order.
 -}
-from1 : element -> Arr (Only Nat1) element
+from1 : element -> Arr (In Nat1 (Nat1Plus a)) element
 from1 =
     \a -> empty |> push a
 
 
-{-| Create an `Arr (Only Nat2)` from exactly 2 elements in this order.
+{-| Create an `Arr` from exactly 2 elements in this order.
 -}
-from2 : element -> element -> Arr (Only Nat2) element
+from2 : element -> element -> Arr (In Nat2 (Nat2Plus a)) element
 from2 =
     apply1 from1 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat3)` from exactly 3 elements in this order.
+{-| Create an `Arr` from exactly 3 elements in this order.
 -}
-from3 : element -> element -> element -> Arr (Only Nat3) element
+from3 :
+    element
+    -> element
+    -> element
+    -> Arr (In Nat3 (Nat3Plus a)) element
 from3 =
     apply2 from2 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat4)` from exactly 4 elements in this order.
+{-| Create an `Arr` from exactly 4 elements in this order.
 -}
 from4 :
     element
     -> element
     -> element
     -> element
-    -> Arr (Only Nat4) element
+    -> Arr (In Nat4 (Nat4Plus a)) element
 from4 =
     apply3 from3 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat5)` from exactly 5 elements in this order.
+{-| Create an `Arr` from exactly 5 elements in this order.
 -}
 from5 :
     element
@@ -290,12 +294,12 @@ from5 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat5) element
+    -> Arr (In Nat5 (Nat5Plus a)) element
 from5 =
     apply4 from4 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat6)` from exactly 6 elements in this order.
+{-| Create an `Arr` from exactly 6 elements in this order.
 -}
 from6 :
     element
@@ -304,12 +308,12 @@ from6 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat6) element
+    -> Arr (In Nat6 (Nat6Plus a)) element
 from6 =
     apply5 from5 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat7)` from exactly 7 elements in this order.
+{-| Create an `Arr` from exactly 7 elements in this order.
 -}
 from7 :
     element
@@ -319,12 +323,12 @@ from7 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat7) element
+    -> Arr (In Nat7 (Nat7Plus a)) element
 from7 =
     apply6 from6 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat8)` from exactly 8 elements in this order.
+{-| Create an `Arr` from exactly 8 elements in this order.
 -}
 from8 :
     element
@@ -335,12 +339,12 @@ from8 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat8) element
+    -> Arr (In Nat8 (Nat8Plus a)) element
 from8 =
     apply7 from7 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat9)` from exactly 9 elements in this order.
+{-| Create an `Arr` from exactly 9 elements in this order.
 -}
 from9 :
     element
@@ -352,12 +356,12 @@ from9 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat9) element
+    -> Arr (In Nat9 (Nat9Plus a)) element
 from9 =
     apply8 from8 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat10)` from exactly 10 elements in this order.
+{-| Create an `Arr` from exactly 10 elements in this order.
 -}
 from10 :
     element
@@ -370,12 +374,12 @@ from10 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat10) element
+    -> Arr (In Nat10 (Nat10Plus a)) element
 from10 =
     apply9 from9 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat11)` from exactly 11 elements in this order.
+{-| Create an `Arr` from exactly 11 elements in this order.
 -}
 from11 :
     element
@@ -389,12 +393,12 @@ from11 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat11) element
+    -> Arr (In Nat11 (Nat11Plus a)) element
 from11 =
     apply10 from10 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat12)` from exactly 12 elements in this order.
+{-| Create an `Arr` from exactly 12 elements in this order.
 -}
 from12 :
     element
@@ -409,12 +413,12 @@ from12 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat12) element
+    -> Arr (In Nat12 (Nat12Plus a)) element
 from12 =
     apply11 from11 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat13)` from exactly 13 elements in this order.
+{-| Create an `Arr` from exactly 13 elements in this order.
 -}
 from13 :
     element
@@ -430,12 +434,12 @@ from13 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat13) element
+    -> Arr (In Nat13 (Nat13Plus a)) element
 from13 =
     apply12 from12 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat14)` from exactly 14 elements in this order.
+{-| Create an `Arr` from exactly 14 elements in this order.
 -}
 from14 :
     element
@@ -452,12 +456,12 @@ from14 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat14) element
+    -> Arr (In Nat14 (Nat14Plus a)) element
 from14 =
     apply13 from13 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat15)` from exactly 15 elements in this order.
+{-| Create an `Arr` from exactly 15 elements in this order.
 -}
 from15 :
     element
@@ -475,12 +479,12 @@ from15 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat15) element
+    -> Arr (In Nat15 (Nat15Plus a)) element
 from15 =
     apply14 from14 (\init -> \last -> init |> push last)
 
 
-{-| Create an `Arr (Only Nat16)` from exactly 16 elements in this order.
+{-| Create an `Arr` from exactly 16 elements in this order.
 -}
 from16 :
     element
@@ -499,7 +503,7 @@ from16 :
     -> element
     -> element
     -> element
-    -> Arr (Only Nat16) element
+    -> Arr (In Nat16 (Nat16Plus a)) element
 from16 =
     apply15 from15 (\init -> \last -> init |> push last)
 
