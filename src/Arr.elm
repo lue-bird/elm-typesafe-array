@@ -113,7 +113,7 @@ import Typed exposing (Checked, Internal, Typed)
 {-| An `Arr` describes an array where you know more about the amount of elements.
 
 
-## value / return types
+## types
 
   - amount >= 5
 
@@ -133,19 +133,8 @@ Arr (In Nat2 Nat12) ...
 Arr (Only Nat4) ...
 ```
 
-  - the exact amount 3, also described as the difference between 2 numbers
 
-```
-Arr
-    (N Nat3
-        (Nat3Plus more)
-        (Is a To (Nat3Plus a))
-        (Is b To (Nat3Plus b))
-    )
-```
-
-
-## function argument types
+### as argument types
 
   - amount >= 4
 
