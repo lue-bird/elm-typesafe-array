@@ -134,8 +134,6 @@ initialTicTacToeBoard =
         (Arr.repeat nat3 FieldEmpty)
 ```
 
-Why the `InArr.value` calls? It's because in situations like these, the type is more precise than a `Only`: It's a `N` → you have to _explicitly drop type information_.
-
 
 ## a maximum length?
   
