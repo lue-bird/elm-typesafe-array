@@ -25,3 +25,7 @@
 ## 6.0.0
 
 - direct constructors `empty` to `from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
+
+### 6.1.0
+
+- added `Arr.resize`
