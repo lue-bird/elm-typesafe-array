@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, toArray)
 
 {-| ArgOnly use it in `Internal.Arr. ...` modules.
 -}
@@ -11,7 +11,7 @@ import InNat
 import LinearDirection exposing (LinearDirection)
 import MinNat
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, Min, Nat, Only, To)
+import Nat exposing (ArgIn, ArgN, In, Is, Min, Nat, To)
 import Random
 import Serialize
 import TypeNats exposing (..)
@@ -283,6 +283,19 @@ restoreMaxLength maximumLength =
 reverse : Arr length element -> Arr length element
 reverse =
     mapArray Array.reverse >> isChecked Arr
+
+
+resize :
+    LinearDirection
+    -> Nat (ArgIn min max maybeN)
+    -> element
+    -> Arr length element
+    -> Arr (In min max) element
+resize direction newLength defaultElement =
+    mapArrayAndLength
+        (Array.resize direction (val newLength) defaultElement)
+        (\_ -> newLength |> InNat.value)
+        >> isChecked Arr
 
 
 

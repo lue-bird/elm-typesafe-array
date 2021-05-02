@@ -4,8 +4,8 @@ module Arr exposing
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
-    , take, drop
-    , map, fold, toArray, foldWith, reverse, groupsOf
+    , take, drop, groupsOf
+    , map, fold, toArray, foldWith, reverse, resize
     , map2, map3, map4
     , replaceAt
     , lowerMinLength
@@ -67,12 +67,12 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## part
 
-@docs take, drop
+@docs take, drop, groupsOf
 
 
 ## transform
 
-@docs map, fold, toArray, foldWith, reverse, groupsOf
+@docs map, fold, toArray, foldWith, reverse, resize
 
 
 ### map
@@ -770,6 +770,37 @@ at index direction =
 reverse : Arr length element -> Arr length element
 reverse =
     Internal.reverse
+
+
+{-| Resize an `Arr` in a direction, padding with a given value.
+
+    Arr.resize LastToFirst nat4 0
+        (Arr.from2 1 2)
+    --> Array.from4 0 0 1 2
+
+    Arr.resize LastToFirst nat2 0
+        (Array.from3 1 2 3)
+    --> Array.from2 2 3
+
+    Arr.resize FirstToLast nat4 0
+        (Array.from2 1 2)
+    --> Array.from4 1 2 0 0
+
+    Arr.resize FirstToLast nat2 0
+        (Array.from3 1 2 3)
+    --> Array.from2 1 2
+
+This is a quick way to gain some type-level knowledge about the length.
+
+-}
+resize :
+    LinearDirection
+    -> Nat (ArgIn min max maybeN)
+    -> element
+    -> Arr length element
+    -> Arr (In min max) element
+resize direction newLength defaultElement =
+    Internal.resize direction newLength defaultElement
 
 
 {-| Split the `Arr` into equal-sized chunks.
