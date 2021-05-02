@@ -1,6 +1,7 @@
-module Tests exposing (startBoard)
+module Tests exposing (startBoard, suite)
 
 import Arr exposing (Arr)
+import Array
 import Expect
 import InArr
 import NNats exposing (..)
@@ -11,8 +12,18 @@ import TypeNats exposing (..)
 
 suite : Test
 suite =
-    describe "NArr"
-        []
+    describe "InArr"
+        [ test "extendOnly"
+            (\() ->
+                Arr.from3 1 1 1
+                    |> InArr.extendOnly nat3 (Arr.from3 0 0 0)
+                    |> Arr.toArray
+                    |> Expect.equal
+                        ([ 1, 1, 1, 0, 0, 0 ]
+                            |> Array.fromList
+                        )
+            )
+        ]
 
 
 startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
