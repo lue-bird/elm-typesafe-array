@@ -8,7 +8,7 @@ module MinArr exposing
 {-| If the maximum length is a type variable,
 
     first :
-        Arr (In (Nat1Plus orHigherMin) max maybeN) element
+        Arr (In (Nat1Plus orHigherMin) max) element
         -> element
 
 use these operations instead of the ones in `Arr` or `InArr`
@@ -233,10 +233,7 @@ isLengthAtLeast lowerBound min cases =
 `min` ensures that the upper bound is greater than the minimum length.
 
     -- only up to 50 tags
-    tag :
-        Arr (In min Nat50 maybeN) String
-        -> a
-        -> Tagged a
+    tag : Arr (In min Nat50) String -> a -> Tagged a
 
     tagIfValidTags : Array String -> a -> Maybe (Tagged a)
     tagIfValidTags array value =
@@ -308,9 +305,7 @@ value =
     serializeSaves =
         MinArr.serialize nat1 serializeWorld
 
-    encode :
-        Arr (In (Nat1Plus minMinus1) max maybeN) World
-        -> Bytes
+    encode : Arr (In (Nat1Plus minMinus1) max) World -> Bytes
     encode =
         MinArr.value
             >> Serialize.encodeToBytes serializeSaves
