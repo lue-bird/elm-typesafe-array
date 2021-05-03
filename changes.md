@@ -37,5 +37,5 @@
 
 ### 7.1.0
 
-- exposed the added `MinArr.drop`
+- exposed the added `InArr.drop`
 - fixed wrong usage of `Arr (In ...)` in the documentation
