@@ -1,5 +1,5 @@
 module InArr exposing
-    ( push, extend, extendOnly, removeAt, insertAt
+    ( push, extend, extendOnly, removeAt, insertAt, drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
     , serialize
     )
@@ -7,17 +7,14 @@ module InArr exposing
 {-| If the maximum length is set to a specific value (also in `ArgOnly`),
 
     -- only up to 50 tags
-    tag :
-        Arr (In min Nat50 maybeN) String
-        -> a
-        -> Tagged a
+    tag : Arr (In min Nat50) String -> a -> Tagged a
 
 use these operations instead of the ones in `Arr` or `MinArr`.
 
 
 ## modify
 
-@docs push, extend, extendOnly, removeAt, insertAt
+@docs push, extend, extendOnly, removeAt, insertAt, drop
 
 
 ## scan length
@@ -236,8 +233,8 @@ isLengthInRange lowerBound upperBound min cases =
 `min` ensures that the lower bound is greater than the minimum length.
 
     first5 :
-        Arr (In min max maybeN) element
-        -> Maybe (Arr (In Nat5 max maybeN) element)
+        Arr (In min max) element
+        -> Maybe (Arr (In Nat5 max) element)
     first5 =
         MinArr.lowerMinLength nat0
             >> MinArr.isLengthAtLeast nat5
@@ -279,12 +276,12 @@ isLengthAtLeast lowerBound cases =
 
     -- at least 3 and only up to 50 tags
     tag :
-        Arr (In (Nat3Plus orHigherMin) Nat50 maybeN) String
+        Arr (In (Nat3Plus orHigherMin) Nat50) String
         -> a
         -> Tagged a
 
     tagIfValidTags :
-        Arr (In (Nat3Plus orHigherMin) max maybeN)
+        Arr (In (Nat3Plus orHigherMin) max)
         -> a
         -> Maybe (Tagged a)
     tagIfValidTags array value =
@@ -326,7 +323,7 @@ isLengthAtMost upperBound min cases =
         InArr.serialize Serialize.int nat10 nat15
 
     encode :
-        Arr (In (Nat10Plus orHigherMin) Nat15 maybeN) Int
+        Arr (In (Nat10Plus orHigherMin) Nat15) Int
         -> Bytes
     encode =
         InNat.value
