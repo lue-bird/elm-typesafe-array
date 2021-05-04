@@ -51,3 +51,4 @@
     ... -> Case1Or2 ... ...
     ```
     in `InArr` & `MinArr`
+- renamed `groupsOf` result from `{ groups, less }` to `{ groups, remaining }`
