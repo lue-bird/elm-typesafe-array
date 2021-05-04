@@ -39,3 +39,15 @@
 
 - exposed the added `InArr.drop`
 - fixed wrong usage of `Arr (In ...)` in the documentation
+
+## 8.0.0
+
+- updated `lue-bird/elm-bounded-nat` to `12.0.0` meaning comparisons now return a union type, replacing the pattern
+    ```elm
+    { case1 : ... -> result, case2 : ... -> result } -> ... -> result
+    ```
+    with
+    ```elm
+    ... -> Case1Or2 ... ...
+    ```
+    in `InArr` & `MinArr`
