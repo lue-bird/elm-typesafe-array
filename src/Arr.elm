@@ -791,9 +791,9 @@ resize direction newLength defaultElement =
     }
 
     Arr.from7 1 2 3 4 5 6 7
-        |> MinArr.groupsOf nat5 FirstToLast
+        |> Arr.groupsOf nat5 FirstToLast
     --> { groups = Arr.from1 (Arr.from5 1 2 3 4 5)
-    --> , less = Arr.from2 6 7
+    --> , remaining = Arr.from2 6 7
     --> }
 
 The type of the result isn't as accurate as in the example, though!
@@ -811,7 +811,7 @@ groupsOf :
                     (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
                     element
                 )
-        , less : Arr (In Nat0 maxGroupSize) element
+        , remaining : Arr (In Nat0 maxGroupSize) element
         }
 groupsOf groupSize direction =
     Internal.groupsOf groupSize direction

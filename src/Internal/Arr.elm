@@ -403,7 +403,7 @@ groupsOf :
                     (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
                     element
                 )
-        , less : Arr (In Nat0 maxGroupSize) element
+        , remaining : Arr (In Nat0 maxGroupSize) element
         }
 groupsOf groupSize direction =
     \arr ->
@@ -411,6 +411,9 @@ groupsOf groupSize direction =
             { groups, less } =
                 toArray arr
                     |> Array.group (val groupSize) direction
+
+            remaining =
+                less
         in
         { groups =
             { array =
@@ -427,8 +430,8 @@ groupsOf groupSize direction =
             }
                 |> tag
                 |> isChecked Arr
-        , less =
-            { array = less
+        , remaining =
+            { array = remaining
             , length = length arr |> Nat.remainderBy groupSize
             }
                 |> tag

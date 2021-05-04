@@ -42,6 +42,7 @@ import NNats exposing (..)
 import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
+import Typed exposing (val)
 
 
 
@@ -134,132 +135,119 @@ drop droppedAmount direction =
 -- ### scan length
 
 
-{-| Compare the length to an exact `Nat (ArgN ...)`.
-Is it `greater`, `less` or `equal`?
+{-| Compare the length to an exact `Nat (ArgN ...)`. Is it `LessOrEqualOrGreater`?
 
-`min` ensures that the `Nat (ArgN ...)` is bigger than the minimum length.
+`min` ensures that that `Nat (ArgN ...)` is bigger than the minimum length.
 
     convertUserArguments :
         String
         -> Result String (Arr (Only Nat3))
     convertUserArguments =
-        String.words
-            >> Array.fromList
-            >> Arr.fromArray
-            >> MinArr.isLength nat3
-                { min = nat0 }
-                { equal = Ok
-                , less =
-                    \less ->
-                        Err
-                            ("I need 3 arguments, but there are only "
-                                ++ String.fromInt (val (Arr.length less))
-                                ++ "."
-                            )
-                , greater =
-                    \more ->
-                        Err
-                            ("I need exact 3 arguments, so "
-                                ++ String.fromInt (val (Arr.length more))
-                                ++ " is too much."
-                            )
-                }
+        let
+            wordArr =
+                String.words arguments
+                    |> Array.fromList
+                    |> Arr.fromArray
+        in
+        case wordArr |> MinArr.isLength nat3 { min = nat0 } of
+            Nat.Equal only3 ->
+                Ok only3
+
+            Nat.Less atMost2 ->
+                Err
+                    ("I need 3 arguments, but there are only "
+                        ++ String.fromInt (val (Arr.length atMost2))
+                        ++ "."
+                    )
+
+            Nat.Greater atLeast4 ->
+                Err
+                    ("I need exact 3 arguments, so "
+                        ++ String.fromInt (val (Arr.length atLeast4))
+                        ++ " is too much."
+                    )
 
 -}
 isLength :
     Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
     -> { min : Nat (ArgN min (Is minToTriedMinus1 To triedMinus1) y) }
-    ->
-        { equal :
-            Arr
-                (Only (Nat1Plus triedMinus1))
-                element
-            -> result
-        , greater :
-            Arr (Min (Nat2Plus triedMinus1)) element -> result
-        , less :
-            Arr (In min triedMinus1PlusA) element -> result
-        }
     -> Arr (In min max) element
-    -> result
+    ->
+        Nat.LessOrEqualOrGreater
+            (Arr (In min triedMinus1PlusA) element)
+            (Arr (Only (Nat1Plus triedMinus1)) element)
+            (Arr (Min (Nat2Plus triedMinus1)) element)
 isLength length =
     Internal.isLength length
 
 
 {-| Compare the length to an exact `Nat (ArgN ...)`.
-Is it `equalOrGreater` or `less`?
+Is it `BelowOrAtLeast` that value?
 
-`min` ensures that the lower bound is bigger than the minimum length.
+`min` ensures that that `Nat` is bigger than the minimum length.
 
-    convertUserArguments :
-        String
-        -> Result String (Arr (Min Nat3))
-    convertUserArguments =
-        String.words
-            >> Array.fromList
-            >> Arr.fromArray
-            >> MinArr.isLengthAtLeast nat3
-                { min = nat0 }
-                { equalOrGreater = Ok
-                , less =
-                    \less ->
-                        Err
-                            ("I need at least 3 arguments, but there are only "
-                                ++ String.fromInt (val (Arr.length less))
-                                ++ "."
-                            )
-                }
+    convertUserArguments : String -> Result String (Arr (Min Nat3))
+    convertUserArguments arguments =
+        let
+            wordArr =
+                String.words arguments
+                    |> Array.fromList
+                    |> Arr.fromArray
+        in
+        case wordArr |> MinArr.isLengthAtLeast nat3 { min = nat0 } of
+            Nat.EqualOrGreater atLeast3 ->
+                Ok atLeast3
+
+            Nat.Below atMost2 ->
+                Err
+                    ("I need at least 3 arguments, but there are only "
+                        ++ String.fromInt (val (Arr.length atMost2))
+                        ++ "."
+                    )
 
 -}
 isLengthAtLeast :
     Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
     -> { min : Nat (ArgN min (Is minToTriedMin To lowerBound) y) }
-    ->
-        { equalOrGreater : Arr (Min lowerBound) element -> result
-        , less : Arr (In min lowerBoundMinus1PlusA) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtLeast lowerBound min cases =
-    Internal.isLengthAtLeast lowerBound min cases
+    ->
+        Nat.BelowOrAtLeast
+            (Arr (In min lowerBoundMinus1PlusA) element)
+            (Arr (Min lowerBound) element)
+isLengthAtLeast lowerBound min =
+    Internal.isLengthAtLeast lowerBound min
 
 
-{-| Is the length
+{-| Is the length `AtMostOrAbove` a given `Nat`?
 
-  - `equalOrLess` than an upper bound or
-
-  - `greater`?
-
-`min` ensures that the upper bound is greater than the minimum length.
+`min` ensures that that `Nat` is greater than the minimum length.
 
     -- only up to 50 tags
     tag : Arr (In min Nat50) String -> a -> Tagged a
 
     tagIfValidTags : Array String -> a -> Maybe (Tagged a)
     tagIfValidTags array value =
-        array
-            |> Arr.fromArray
-            |> MinArr.isLengthAtMost nat50
-                { equalOrLess = tag value >> Just
-                , greater = \_ -> Nothing
-                }
+        case
+            (array |> Arr.fromArray)
+                |> MinArr.isLengthAtMost nat50 { min = nat0 }
+        of
+            Nat.EqualOrLess atMost50 ->
+                tag value atMost50 |> Just
+
+            Nat.Above _ ->
+                Nothing
 
 -}
 isLengthAtMost :
     Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
     -> { min : Nat (ArgN min (Is minToAtMostMin To upperBound) y) }
-    ->
-        { equalOrLess :
-            Arr (In min upperBoundPlusA) element
-            -> result
-        , greater :
-            Arr (Min (Nat1Plus upperBound)) element
-            -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtMost upperBound min cases =
-    Internal.isLengthAtMost upperBound min cases
+    ->
+        Nat.AtMostOrAbove
+            (Arr (In min upperBoundPlusA) element)
+            (Arr (Min (Nat1Plus upperBound)) element)
+isLengthAtMost upperBound min =
+    Internal.isLengthAtMost upperBound min
 
 
 
@@ -327,13 +315,20 @@ serialize :
 serialize lowerBound serializeElement =
     Serialize.array serializeElement
         |> Serialize.mapValid
-            (fromArray
-                >> isLengthAtLeast lowerBound
-                    { min = nat0 }
-                    { equalOrGreater =
-                        Ok
-                    , less =
-                        \_ -> Err "Array length was less than the required minimum"
-                    }
+            (\array ->
+                case
+                    fromArray array
+                        |> isLengthAtLeast lowerBound
+                            { min = nat0 }
+                of
+                    Nat.EqualOrGreater atLeast ->
+                        Ok atLeast
+
+                    Nat.Below below ->
+                        Err
+                            ("Array length "
+                                ++ String.fromInt (val (length below))
+                                ++ "was less than the required minimum"
+                            )
             )
             toArray
