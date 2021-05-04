@@ -574,10 +574,9 @@ take takenAmount maxAmount direction =
 
     aToZ =
         Arr.nats nat26
-            |> Arr.map
-                (val >> fromPositionInABC)
+            |> Arr.map (val >> inABC)
 
-    fromPositionInABC =
+    inABC =
         (+) ('a' |> Char.toCode)
             >> Char.fromCode
 

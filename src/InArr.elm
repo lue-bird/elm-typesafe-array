@@ -123,27 +123,26 @@ drop droppedAmount direction =
 -- ## scan length
 
 
-{-| Compare the length to an exact `Nat (ArgN ...)` length.
-Are there `more`, `less` or an `equal` amount of elements?
+{-| Compare the length to an exact `Nat (ArgN ...)` length. Is it `LessOrEqualOrGreater`?
 
 `min` ensures that the `Nat (ArgN ...)` is greater than the minimum length.
 
     chooseFormation :
-        Arr (In Nat0 Nat50) Character
+        Arr (In min Nat50) Character
         -> Formation
     chooseFormation characters =
-        characters
-            |> InArr.isLength nat7
-                { min = nat0 }
-                { equal = SpecialAttack
-                , less = Retreat
-                , more = Fight
-                }
+        case
+            (characters |> Arr.lowerMinLength nat0)
+                |> InArr.isLength nat7 { min = nat0 }
+        of
+            Equal only7 ->
+                SpecialAttack only7
 
-    type Formation
-        = SpecialAttack (Arr (Only Nat7) Character)
-        | Retreat (Arr (In Nat0 Nat6) Character)
-        | Fight (Arr (In Nat8 Nat50) Character)
+            Less atMost6 ->
+                Retreat atMost6
+
+            Greater atLeast8 ->
+                Fight atLeast8
 
 -}
 isLength :
@@ -154,125 +153,96 @@ isLength :
             (Is a To (Nat1Plus atLeastTriedMinus1))
         )
     -> { min : Nat (ArgN min (Is minToTried To tried) x) }
-    ->
-        { equal :
-            Arr (Only tried) element
-            -> result
-        , greater :
-            Arr (In (Nat2Plus triedMinus1) max) element -> result
-        , less :
-            Arr (In min atLeastTriedMinus1) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLength tried min cases =
-    Internal.isLength tried min cases
+    ->
+        Nat.LessOrEqualOrGreater
+            (Arr (In min atLeastTriedMinus1) element)
+            (Arr (Only tried) element)
+            (Arr (In (Nat2Plus triedMinus1) max) element)
+isLength tried min =
+    Internal.isLength tried min
 
 
-{-| Compared to a range from a lower to an upper bound, is the length
-
-  - `inRange`
-
-  - `greater` than the upper bound or
-
-  - `less` than the lower bound?
+{-| Compared to a range from a lower to an upper bound, is the length `BelowOrInOrAboveRange`?
 
 `min` ensures that the lower bound is greater than the minimum length.
 
     chooseFormation :
-        Arr (In Nat0 Nat50) Character
+        Arr (In min Nat50) Character
         -> Formation
     chooseFormation characters =
-        characters
-            |> InArr.isLengthInRange nat10
-                nat20
-                { min = nat0 }
-                { equal = SpecialAttack
-                , less = Retreat
-                , more = Fight
-                }
+        case
+            (characters |> Arr.lowerMinLength nat0)
+                |> InArr.isLengthInRange nat10 nat20 { min = nat0 }
+        of
+            InRange between10And20 ->
+                SpecialAttack between10And20
 
-    type Formation
-        = SpecialAttack (Arr (In Nat10 Nat20) Character)
-        | Retreat (Arr (In Nat0 Nat9) Character)
-        | Fight (Arr (In Nat21 Nat50) Character)
+            BelowRange atMost9 ->
+                Retreat atMost9
+
+            AboveRange atLeast21 ->
+                Fight atLeast21
 
 -}
 isLengthInRange :
     Nat
         (ArgN
             lowerBound
-            (Is lowerBoundToUpperBound To upperBound)
-            (Is lowerBoundA To (Nat1Plus atLeastLowerBoundMinus1))
+            (Is lowerBoundToLast To upperBound)
+            (Is lowerBoundA To (Nat1Plus atLeastFirstMinus1))
         )
-    -> Nat (ArgN upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastUpperBound))
-    -> { min : Nat (ArgN min (Is minToLowerBound To lowerBound) x) }
-    ->
-        { inRange :
-            Arr (In lowerBound atLeastUpperBound) element
-            -> result
-        , less :
-            Arr (In min atLeastLowerBoundMinus1) element
-            -> result
-        , greater :
-            Arr (In (Nat1Plus upperBound) max) element
-            -> result
-        }
+    -> Nat (ArgN upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastLast))
+    -> { min : Nat (ArgN min (Is minToFirst To lowerBound) x) }
     -> Arr (In min max) element
-    -> result
-isLengthInRange lowerBound upperBound min cases =
-    Internal.isLengthInRange lowerBound upperBound min cases
+    ->
+        Nat.BelowOrInOrAboveRange
+            (Arr (In min atLeastFirstMinus1) element)
+            (Arr (In lowerBound atLeastLast) element)
+            (Arr (In (Nat1Plus upperBound) max) element)
+isLengthInRange lowerBound upperBound min =
+    Internal.isLengthInRange lowerBound upperBound min
 
 
-{-| Is the length
+{-| Is the length `BelowOrAtLeast` as big as a `Nat`?
 
-  - `equalOrGreater` than a lower bound or
-
-  - `less`?
-
-`min` ensures that the lower bound is greater than the minimum length.
+`min` ensures that the `Nat` is greater than the minimum length.
 
     first5 :
         Arr (In min max) element
         -> Maybe (Arr (In Nat5 max) element)
-    first5 =
-        MinArr.lowerMinLength nat0
-            >> MinArr.isLengthAtLeast nat5
-                { min = nat0 }
-                { less = \_ -> Nothing
-                , equalOrGreater = Just
-                }
+    first5 arr =
+        case
+            (arr |> Arr.lowerMinLength nat0)
+                |> MinArr.isLengthAtLeast nat5 { min = nat0 }
+        of
+            Below _ ->
+                Nothing
+
+            EqualOrGreater atLeast5 ->
+                Just atLeast5
 
 -}
 isLengthAtLeast :
     Nat
         (ArgN
             lowerBound
-            (Is a To (Nat1Plus atLeastTriedMinus1))
+            (Is a To (Nat1Plus atLeastLowerBoundMinus1))
             (Is atLeastRange To max)
         )
     -> { min : Nat (ArgN min (Is (Nat1Plus lessRange) To lowerBound) x) }
-    ->
-        { less :
-            Arr (In min atLeastTriedMinus1) element
-            -> result
-        , equalOrGreater :
-            Arr (In lowerBound max) element
-            -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtLeast lowerBound cases =
-    Internal.isLengthAtLeast lowerBound cases
+    ->
+        Nat.BelowOrAtLeast
+            (Arr (In min atLeastLowerBoundMinus1) element)
+            (Arr (In lowerBound max) element)
+isLengthAtLeast lowerBound min =
+    Internal.isLengthAtLeast lowerBound min
 
 
-{-| Is the length
+{-| Is the length `AtMostOrAbove` a `Nat`?
 
-  - `equalOrLess` than a upper bound or
-
-  - `greater`?
-
-`min` ensures that the upper bound is greater than the minimum length.
+`min` ensures that the `Nat` is greater than the minimum length.
 
     -- at least 3 and only up to 50 tags
     tag :
@@ -285,12 +255,16 @@ isLengthAtLeast lowerBound cases =
         -> a
         -> Maybe (Tagged a)
     tagIfValidTags array value =
-        array
-            |> Arr.fromArray
-            |> InArr.isLengthAtMost nat50
-                { equalOrLess = tag value >> Just
-                , greater = \_ -> Nothing
-                }
+        case
+            array
+                |> Arr.fromArray
+                |> InArr.isLengthAtMost nat50
+        of
+            Nat.EqualOrLess atMost53 ->
+                tag value atMost53 |> Just
+
+            Nat.Above _ ->
+                Nothing
 
 -}
 isLengthAtMost :
@@ -301,14 +275,13 @@ isLengthAtMost :
             (Is (Nat1Plus greaterRange) To max)
         )
     -> { min : Nat (ArgN min (Is minToUpperBound To upperBound) x) }
-    ->
-        { equalOrLess : Arr (In min atLeastUpperBound) element -> result
-        , greater : Arr (In (Nat1Plus upperBound) max) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtMost upperBound min cases =
-    Internal.isLengthAtMost upperBound min cases
+    ->
+        Nat.AtMostOrAbove
+            (Arr (In min atLeastUpperBound) element)
+            (Arr (In (Nat1Plus upperBound) max) element)
+isLengthAtMost upperBound min =
+    Internal.isLengthAtMost upperBound min
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s within a minimum & maximum length.

@@ -25,7 +25,7 @@ import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, N, Nat, Only, To)
+import Nat exposing (ArgIn, ArgN, In, Is, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
 import Typed exposing (isChecked, tag, val)
@@ -104,18 +104,13 @@ isLength :
             (Is a To (Nat1Plus atLeastTriedMinus1))
         )
     -> { min : Nat (ArgN min (Is minToTried To tried) x) }
-    ->
-        { equal :
-            Arr (Only tried) element
-            -> result
-        , greater :
-            Arr (In (Nat2Plus triedMinus1) max) element -> result
-        , less :
-            Arr (In min atLeastTriedMinus1) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLength amount min cases =
+    ->
+        Nat.LessOrEqualOrGreater
+            (Arr (In min atLeastTriedMinus1) element)
+            (Arr (Only tried) element)
+            (Arr (In (Nat2Plus triedMinus1) max) element)
+isLength amount min =
     \arr ->
         let
             withLength len =
@@ -123,16 +118,15 @@ isLength amount min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> InNat.is amount
-                min
-                { equal =
-                    \() ->
-                        withLength (amount |> InNat.value)
-                            |> .equal cases
-                , greater = withLength >> .greater cases
-                , less = withLength >> .less cases
-                }
+        case length arr |> InNat.is amount min of
+            Nat.Less less ->
+                Nat.Less (withLength less)
+
+            Nat.Equal () ->
+                Nat.Equal (withLength (amount |> InNat.value))
+
+            Nat.Greater greater ->
+                Nat.Greater (withLength greater)
 
 
 isLengthInRange :
@@ -144,20 +138,13 @@ isLengthInRange :
         )
     -> Nat (ArgN upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastLast))
     -> { min : Nat (ArgN min (Is minToFirst To lowerBound) x) }
-    ->
-        { inRange :
-            Arr (In lowerBound atLeastLast) element
-            -> result
-        , less :
-            Arr (In min atLeastFirstMinus1) element
-            -> result
-        , greater :
-            Arr (In (Nat1Plus upperBound) max) element
-            -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthInRange lowerBound upperBound min cases =
+    ->
+        Nat.BelowOrInOrAboveRange
+            (Arr (In min atLeastFirstMinus1) element)
+            (Arr (In lowerBound atLeastLast) element)
+            (Arr (In (Nat1Plus upperBound) max) element)
+isLengthInRange lowerBound upperBound min =
     \arr ->
         let
             withLength len =
@@ -165,14 +152,18 @@ isLengthInRange lowerBound upperBound min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> InNat.isInRange lowerBound
-                upperBound
-                min
-                { inRange = withLength >> .inRange cases
-                , greater = withLength >> .greater cases
-                , less = withLength >> .less cases
-                }
+        case
+            length arr
+                |> InNat.isInRange lowerBound upperBound min
+        of
+            Nat.BelowRange below ->
+                Nat.BelowRange (withLength below)
+
+            Nat.InRange inRange ->
+                Nat.InRange (withLength inRange)
+
+            Nat.AboveRange above ->
+                Nat.AboveRange (withLength above)
 
 
 isLengthAtLeast :
@@ -183,17 +174,12 @@ isLengthAtLeast :
             (Is atLeastRange To max)
         )
     -> { min : Nat (ArgN min (Is (Nat1Plus lessRange) To lowerBound) x) }
-    ->
-        { less :
-            Arr (In min atLeastLowerBoundMinus1) element
-            -> result
-        , equalOrGreater :
-            Arr (In lowerBound max) element
-            -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtLeast lowerBound min cases =
+    ->
+        Nat.BelowOrAtLeast
+            (Arr (In min atLeastLowerBoundMinus1) element)
+            (Arr (In lowerBound max) element)
+isLengthAtLeast lowerBound min =
     \arr ->
         let
             withLength len =
@@ -201,13 +187,15 @@ isLengthAtLeast lowerBound min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> InNat.isAtLeast lowerBound
-                min
-                { less = withLength >> .less cases
-                , equalOrGreater =
-                    withLength >> .equalOrGreater cases
-                }
+        case
+            length arr
+                |> InNat.isAtLeast lowerBound min
+        of
+            Nat.Below below ->
+                Nat.Below (withLength below)
+
+            Nat.EqualOrGreater atLeast ->
+                Nat.EqualOrGreater (withLength atLeast)
 
 
 isLengthAtMost :
@@ -218,13 +206,12 @@ isLengthAtMost :
             (Is (Nat1Plus greaterRange) To max)
         )
     -> { min : Nat (ArgN min (Is minToUpperBound To upperBound) x) }
-    ->
-        { equalOrLess : Arr (In min atLeastUpperBound) element -> result
-        , greater : Arr (In (Nat1Plus upperBound) max) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtMost upperBound min cases =
+    ->
+        Nat.AtMostOrAbove
+            (Arr (In min atLeastUpperBound) element)
+            (Arr (In (Nat1Plus upperBound) max) element)
+isLengthAtMost upperBound min =
     \arr ->
         let
             withLength len =
@@ -232,42 +219,42 @@ isLengthAtMost upperBound min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> InNat.isAtMost upperBound
-                min
-                { equalOrLess = withLength >> .equalOrLess cases
-                , greater =
-                    withLength >> .greater cases
-                }
+        case
+            length arr
+                |> InNat.isAtMost upperBound min
+        of
+            Nat.EqualOrLess atMost ->
+                Nat.EqualOrLess (withLength atMost)
+
+            Nat.Above above ->
+                Nat.Above (withLength above)
 
 
 serialize :
-    Nat (ArgIn minLowerBound upperBound lowerBoundMaybeN)
-    -> Nat (ArgIn upperBound upperBoundPlusA upperBoundMaybeN)
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundMaybeN)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundMaybeN)
     -> Serialize.Codec String element
     ->
         Serialize.Codec
             String
-            (Arr (In minLowerBound upperBoundPlusA) element)
+            (Arr (In minLowerBound maxUpperBound) element)
 serialize lowerBound upperBound serializeElement =
     Serialize.array serializeElement
         |> Serialize.mapValid
             (\array ->
-                Array.length array
-                    |> Nat.isIntInRange lowerBound
-                        upperBound
-                        { less =
-                            \() ->
-                                Err
-                                    "Array length was less than the expected minimum"
-                        , greater =
-                            \_ ->
-                                Err "Array length was greater than the expected maximum"
-                        , inRange =
-                            \lengthInRange ->
-                                tag { array = array, length = lengthInRange }
-                                    |> isChecked Internal.Arr
-                                    |> Ok
-                        }
+                case
+                    Array.length array
+                        |> Nat.isIntInRange lowerBound upperBound
+                of
+                    Nat.BelowRange () ->
+                        Err "Array length was less than the expected minimum"
+
+                    Nat.AboveRange _ ->
+                        Err "Array length was greater than the expected maximum"
+
+                    Nat.InRange lengthInRange ->
+                        tag { array = array, length = lengthInRange }
+                            |> isChecked Internal.Arr
+                            |> Ok
             )
             toArray

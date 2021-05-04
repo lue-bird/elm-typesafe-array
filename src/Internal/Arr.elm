@@ -9,7 +9,6 @@ import Array.LinearDirection as Array
 import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection)
-import MinNat
 import NNats exposing (..)
 import Nat exposing (ArgIn, ArgN, In, Is, Min, Nat, To)
 import Random
@@ -168,7 +167,7 @@ fromArray array =
     { array = array
     , length =
         Array.length array
-            |> Nat.intAtLeast (nat0 |> MinNat.value)
+            |> Nat.intAtLeast nat0
     }
         |> tag
         |> isChecked Arr

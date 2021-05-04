@@ -95,20 +95,13 @@ drop droppedAmount direction =
 isLength :
     Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
     -> { min : Nat (ArgN min (Is minToTriedMinus1 To triedMinus1) y) }
-    ->
-        { equal :
-            Arr
-                (Only (Nat1Plus triedMinus1))
-                element
-            -> result
-        , greater :
-            Arr (Min (Nat2Plus triedMinus1)) element -> result
-        , less :
-            Arr (In min triedMinus1PlusA) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLength amount min cases =
+    ->
+        Nat.LessOrEqualOrGreater
+            (Arr (In min triedMinus1PlusA) element)
+            (Arr (Only (Nat1Plus triedMinus1)) element)
+            (Arr (Min (Nat2Plus triedMinus1)) element)
+isLength amount min =
     \arr ->
         let
             withLength len =
@@ -116,28 +109,27 @@ isLength amount min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> MinNat.is amount
-                min
-                { equal =
-                    \() ->
-                        .equal cases
-                            (withLength (amount |> InNat.value))
-                , greater = withLength >> .greater cases
-                , less = withLength >> .less cases
-                }
+        case length arr |> MinNat.is amount min of
+            Nat.Equal () ->
+                Nat.Equal
+                    (withLength (amount |> InNat.value))
+
+            Nat.Greater greater ->
+                Nat.Greater (withLength greater)
+
+            Nat.Less less ->
+                Nat.Less (withLength less)
 
 
 isLengthAtLeast :
     Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
     -> { min : Nat (ArgN min (Is minToTriedMin To lowerBound) y) }
-    ->
-        { equalOrGreater : Arr (Min lowerBound) element -> result
-        , less : Arr (In min lowerBoundMinus1PlusA) element -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtLeast lowerBound min cases =
+    ->
+        Nat.BelowOrAtLeast
+            (Arr (In min lowerBoundMinus1PlusA) element)
+            (Arr (Min lowerBound) element)
+isLengthAtLeast lowerBound min =
     \arr ->
         let
             withLength len =
@@ -145,30 +137,24 @@ isLengthAtLeast lowerBound min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> MinNat.isAtLeast lowerBound
-                min
-                { less =
-                    withLength >> .less cases
-                , equalOrGreater =
-                    withLength >> .equalOrGreater cases
-                }
+        case length arr |> MinNat.isAtLeast lowerBound min of
+            Nat.Below less ->
+                Nat.Below
+                    (withLength less)
+
+            Nat.EqualOrGreater atLeast ->
+                Nat.EqualOrGreater (withLength atLeast)
 
 
 isLengthAtMost :
     Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
     -> { min : Nat (ArgN min (Is minToAtMostMin To upperBound) y) }
-    ->
-        { equalOrLess :
-            Arr (In min upperBoundPlusA) element
-            -> result
-        , greater :
-            Arr (Min (Nat1Plus upperBound)) element
-            -> result
-        }
     -> Arr (In min max) element
-    -> result
-isLengthAtMost upperBound min cases =
+    ->
+        Nat.AtMostOrAbove
+            (Arr (In min upperBoundPlusA) element)
+            (Arr (Min (Nat1Plus upperBound)) element)
+isLengthAtMost upperBound min =
     \arr ->
         let
             withLength len =
@@ -176,13 +162,12 @@ isLengthAtMost upperBound min cases =
                     |> tag
                     |> isChecked Internal.Arr
         in
-        length arr
-            |> MinNat.isAtMost upperBound
-                min
-                { equalOrLess =
-                    withLength >> .equalOrLess cases
-                , greater = withLength >> .greater cases
-                }
+        case length arr |> MinNat.isAtMost upperBound min of
+            Nat.EqualOrLess atMost ->
+                Nat.EqualOrLess (withLength atMost)
+
+            Nat.Above above ->
+                Nat.Above (withLength above)
 
 
 value : Arr (In min max) element -> Arr (Min min) element
