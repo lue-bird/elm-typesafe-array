@@ -14,10 +14,10 @@ import TypeNats exposing (..)
 suite : Test
 suite =
     describe "InArr"
-        [ test "extendOnly"
+        [ test "extend"
             (\() ->
                 Arr.from3 1 1 1
-                    |> InArr.extendOnly nat3 (Arr.from3 0 0 0)
+                    |> InArr.extend nat3 (Arr.from3 0 0 0)
                     |> Arr.toArray
                     |> Expect.equal
                         ([ 1, 1, 1, 0, 0, 0 ]
@@ -74,7 +74,7 @@ startBoard =
     Arr.empty
         |> InArr.push (firstRow White)
         |> InArr.push (pawnRow White)
-        |> InArr.extendOnly nat4
+        |> InArr.extend nat4
             (Arr.repeat nat4 (Arr.repeat nat8 Empty))
         |> InArr.push (pawnRow Black)
         |> InArr.push (firstRow Black)

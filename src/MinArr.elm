@@ -106,12 +106,12 @@ removeAt index direction =
 
 -}
 extend :
-    Arr (In extensionMin extensionMax) element
-    -> Nat (ArgN extensionMin (Is min To extendedMin) x)
+    Nat (ArgN extensionMin (Is min To sumMin) x)
+    -> Arr (In extensionMin extensionMax) element
     -> Arr (In min max) element
-    -> Arr (Min extendedMin) element
-extend extension extensionMin =
-    Internal.extend extension extensionMin
+    -> Arr (Min sumMin) element
+extend minAddedLength extension =
+    Internal.extend minAddedLength extension
 
 
 {-| Elements after a certain number of elements from one side.
@@ -135,9 +135,9 @@ drop droppedAmount direction =
 -- ### scan length
 
 
-{-| Compare the length to an exact `Nat (ArgN ...)`. Is it `LessOrEqualOrGreater`?
+{-| Compare its length to a given exact length. Is it `LessOrEqualOrGreater`?
 
-`min` ensures that that `Nat (ArgN ...)` is bigger than the minimum length.
+`lowest` can be a number <= the minimum length.
 
     convertUserArguments :
         String
@@ -149,7 +149,10 @@ drop droppedAmount direction =
                     |> Array.fromList
                     |> Arr.fromArray
         in
-        case wordArr |> MinArr.isLength nat3 { min = nat0 } of
+        case
+            wordArr
+                |> MinArr.isLength nat3 { lowest = nat0 }
+        of
             Nat.Equal only3 ->
                 Ok only3
 
@@ -170,21 +173,29 @@ drop droppedAmount direction =
 -}
 isLength :
     Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
-    -> { min : Nat (ArgN min (Is minToTriedMinus1 To triedMinus1) y) }
+    ->
+        { lowest :
+            Nat
+                (ArgN
+                    lowest
+                    (Is lowestToMin To min)
+                    (Is minToTriedMinus1 To triedMinus1)
+                )
+        }
     -> Arr (In min max) element
     ->
         Nat.LessOrEqualOrGreater
-            (Arr (In min triedMinus1PlusA) element)
+            (Arr (In lowest triedMinus1PlusA) element)
             (Arr (Only (Nat1Plus triedMinus1)) element)
             (Arr (Min (Nat2Plus triedMinus1)) element)
 isLength length =
     Internal.isLength length
 
 
-{-| Compare the length to an exact `Nat (ArgN ...)`.
+{-| Compare its length to a given exact length.
 Is it `BelowOrAtLeast` that value?
 
-`min` ensures that that `Nat` is bigger than the minimum length.
+`lowest` can be a number <= the minimum length.
 
     convertUserArguments : String -> Result String (Arr (Min Nat3))
     convertUserArguments arguments =
@@ -194,7 +205,10 @@ Is it `BelowOrAtLeast` that value?
                     |> Array.fromList
                     |> Arr.fromArray
         in
-        case wordArr |> MinArr.isLengthAtLeast nat3 { min = nat0 } of
+        case
+            wordArr
+                |> MinArr.isLengthAtLeast nat3 { lowest = nat0 }
+        of
             Nat.EqualOrGreater atLeast3 ->
                 Ok atLeast3
 
@@ -208,19 +222,27 @@ Is it `BelowOrAtLeast` that value?
 -}
 isLengthAtLeast :
     Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
-    -> { min : Nat (ArgN min (Is minToTriedMin To lowerBound) y) }
+    ->
+        { lowest :
+            Nat
+                (ArgN
+                    lowest
+                    (Is lowestToMin To min)
+                    (Is minToTriedMin To lowerBound)
+                )
+        }
     -> Arr (In min max) element
     ->
         Nat.BelowOrAtLeast
-            (Arr (In min lowerBoundMinus1PlusA) element)
+            (Arr (In lowest lowerBoundMinus1PlusA) element)
             (Arr (Min lowerBound) element)
-isLengthAtLeast lowerBound min =
-    Internal.isLengthAtLeast lowerBound min
+isLengthAtLeast lowerBound lowest =
+    Internal.isLengthAtLeast lowerBound lowest
 
 
-{-| Is the length `AtMostOrAbove` a given `Nat`?
+{-| Is its length `AtMostOrAbove` a given length?
 
-`min` ensures that that `Nat` is greater than the minimum length.
+`lowest` can be a number <= the minimum length.
 
     -- only up to 50 tags
     tag : Arr (In min Nat50) String -> a -> Tagged a
@@ -228,8 +250,9 @@ isLengthAtLeast lowerBound min =
     tagIfValidTags : Array String -> a -> Maybe (Tagged a)
     tagIfValidTags array value =
         case
-            (array |> Arr.fromArray)
-                |> MinArr.isLengthAtMost nat50 { min = nat0 }
+            array
+                |> Arr.fromArray
+                |> MinArr.isLengthAtMost nat50 { lowest = nat0 }
         of
             Nat.EqualOrLess atMost50 ->
                 tag value atMost50 |> Just
@@ -240,21 +263,29 @@ isLengthAtLeast lowerBound min =
 -}
 isLengthAtMost :
     Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
-    -> { min : Nat (ArgN min (Is minToAtMostMin To upperBound) y) }
+    ->
+        { lowest :
+            Nat
+                (ArgN
+                    lowest
+                    (Is lowestToMin To min)
+                    (Is minToAtMostMin To upperBound)
+                )
+        }
     -> Arr (In min max) element
     ->
         Nat.AtMostOrAbove
-            (Arr (In min upperBoundPlusA) element)
+            (Arr (In lowest upperBoundPlusA) element)
             (Arr (Min (Nat1Plus upperBound)) element)
-isLengthAtMost upperBound min =
-    Internal.isLengthAtMost upperBound min
+isLengthAtMost upperBound lowest =
+    Internal.isLengthAtMost upperBound lowest
 
 
 
 -- ## drop information
 
 
-{-| Convert an exact Arr (In min ...) to a Nat (Min min).
+{-| Convert the `Arr (In min ...)` to a `Arr (Min min)`.
 
     between4And10Elements |> MinArr.value
     --> : Arr (Min Nat4) ...
@@ -286,16 +317,14 @@ value =
 
 
     -- we can't start if we have no worlds to choose from!
-    serializeSaves :
-        Serialize.Codec
-            String
-            (Arr (Min Nat1) World)
+    serializeSaves : Serialize.Codec String (Arr (Min Nat1) World)
     serializeSaves =
         MinArr.serialize nat1 serializeWorld
 
     encode : Arr (In (Nat1Plus minMinus1) max) World -> Bytes
     encode =
         MinArr.value
+            >> Arr.lowerMinLength nat1
             >> Serialize.encodeToBytes serializeSaves
 
     decode :
@@ -319,7 +348,7 @@ serialize lowerBound serializeElement =
                 case
                     fromArray array
                         |> isLengthAtLeast lowerBound
-                            { min = nat0 }
+                            { lowest = nat0 }
                 of
                     Nat.EqualOrGreater atLeast ->
                         Ok atLeast
