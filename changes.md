@@ -57,7 +57,7 @@
 
 - updated `lue-bird/elm-bounded-nat` to `13.0.0` meaning that `Arr.lowerMinLength natX` before `|> ...Arr.isLength... { min = natX }` became redundant because `min` was replaced with `{ lowest }` which can be <=, not = the minimum length. Changed functions:
 
-    - `InArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`, `isInRange`
+    - `InArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`, `isLengthInRange`
     - `MinArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`
 - moved arguments in `MinArr.extend arr nat` to `MinArr.extend nat arr`
 - renamed & moved arguments in `InArr.extend min max arr` to `extendIn min max arr`
