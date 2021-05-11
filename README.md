@@ -15,10 +15,9 @@ A type that can hold that promise could be:
 ```elm
 {-| 3 by 3 -}
 type alias TicTacToeBoard =
-    Arr (Only Nat3)
-        (Arr (Only Nat3) TicTacToeField)
+    Arr (Only Nat3) (Arr (Only Nat3) Field)
 
-type TicTacToeField =
+type Field =
     FieldEmpty
     | X
     | O
@@ -75,13 +74,13 @@ You can define & use operations for `Arr`s with a certain amount.
 
 ```elm
 first :
-    Arr (In (Nat1Plus orLonger) max) element
+    Arr (In (Nat1Plus orMore_) max_) element
     -> element
 first =
     Arr.at nat0 FirstToLast
 
 biggest :
-    Arr (In (Nat1Plus orLonger) max) comparable
+    Arr (In (Nat1Plus orMore_) max_) comparable
     -> comparable
 biggest =
     Arr.foldWith FirstToLast max
@@ -90,15 +89,15 @@ first Arr.empty --> compile-time error
 biggest Arr.empty --> compile-time error
 ```
 
-`Arr (In (Nat1Plus orLonger) max)` means what exactly?
+`Arr (In (Nat1Plus orMore_) max_)` means what exactly?
 → It constrains the length of possible `Arr`s.
 
 The types are explained in more detail in [`bounded-nat`][bounded-nat] (only `In`, `Min` & `Only` is used for `Arr`s). In this example:
 
 - `Arr`: `Array` with additional type info about its length
     - `In`: length is within a minimum (& maximum)
-        - `Nat1Plus orLonger`: the minimum length is >= 1
-        - `max`: no maximum length or any maximum length
+        - `Nat1Plus orMore_`: the minimum length is >= 1
+        - `max_`: no maximum length or any maximum length
 
 ## an exact length?
 
@@ -144,7 +143,7 @@ initialChessBoard
   
 ```elm
 -- the max tag count should be 53
-tag : Arr (In min Nat53) Tag -> a -> Tagged a
+tag : Arr (In min_ Nat53) Tag -> a -> Tagged a
 tag tags toTag = --...
 
 tag (Arr.from3 "fun" "easy" "fresh")
@@ -160,6 +159,8 @@ Now take a look at modules like `Arr` to get started!
 
 I started creating my package before this one so I didn't take inspiration from this package.
 
+#### creation
+
 ```elm
 six = StaticArray.Length.five |> StaticArray.Length.plus1
 
@@ -169,18 +170,24 @@ vs
 ```elm
 Arr.from6 0 1 2 3 4 5
 ```
-
+#### appending
 ```elm
--- array1, array2 from calling `StaticArray.toRecord` an a StaticArray Six
+staticArray1, staticArray2 : StaticArray Six ...
 
--- append them
+let
+    array1 =
+        staticArray1 |> StaticArray.toRecord
+    
+    array2 =
+        staticArray2 |> StaticArray.toRecord
+in
 StaticArray.fromRecord
     { length = StaticArray.Length.twelve
     , head = array1.head
     , tail = Array.append (array1.tail |> Array.push array2.head) array2.tail
     }
 ```
-Note from static-array:
+important note from static-array:
 
 > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
 
@@ -198,26 +205,38 @@ wrong =
 → length in the type doesn't match the actual length
 
 ```elm
-wrong |> StaticArray.get (StaticArray.Index.last StaticArray.Length.eight)
+wrong
+    |> StaticArray.get
+        (StaticArray.Index.last StaticArray.Length.eight)
 ```
-
-[`get`](https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/StaticArray#get)'s documentation states:
 
 It silently gave us back an element at the wrong (first) index!
 
 vs
 
 ```elm
-arr1, arr2 : Arr (Only Nat6) -- ...
+arr1, arr2 : Arr (In Nat6 (Nat6Plus a_)) ...
 
 arr1 |> InArr.extend nat6 arr2
--- : Arr (Only Nat12) ...
+-- : Arr (In Nat12 (Nat12Plus a_)) ...
 ```
 
 type-safe.
 
+#### a length in a range
+
 ```elm
 maybePush : Maybe a -> StaticArray n a -> -- what is the result?!
+
+type MaybePushResult lengthBefore
+    = Pushed
+        (StaticArray    
+            (StaticArray.Index.OnePlus lengthBefore)
+        )
+    | DidntPush (StaticArray lengthBefore)
+
+maybePush : Maybe a -> StaticArray n a -> MaybePushResult n
+-- unconvenient
 ```
 vs
 ```elm

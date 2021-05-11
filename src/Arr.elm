@@ -109,7 +109,7 @@ import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNat exposing (..)
 import NNats exposing (nat0, nat1)
-import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
+import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
 import Serialize
 import TypeNats exposing (..)
@@ -206,7 +206,7 @@ toArray =
 
 -}
 repeat :
-    Nat (ArgIn min max maybeN)
+    Nat (ArgIn min max ifN_)
     -> element
     -> Arr (In min max) element
 repeat amount element =
@@ -517,7 +517,7 @@ push :
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
-    Internal.push element (InNat.addN nat1)
+    Internal.push element (InNat.add nat1)
 
 
 {-| Set the element at an index in a direction.
@@ -532,7 +532,7 @@ push element =
 
 -}
 replaceAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
@@ -557,8 +557,8 @@ replaceAt index direction replacingElement =
 
 -}
 take :
-    Nat (ArgIn minTaken maxTaken takenMaybeN)
-    -> Nat (ArgN maxTaken (Is a To atLeastMaxTaken) (Is maxTakenToMin To min))
+    Nat (ArgIn minTaken maxTaken takenIfN_)
+    -> Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin To min) is_)
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In minTaken atLeastMaxTaken) element
@@ -729,7 +729,7 @@ length =
 
 -}
 at :
-    Nat (ArgIn indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minMinus1 indexIfN_)
     -> LinearDirection
     -> Arr (In (Nat1Plus minMinus1) max) element
     -> element
@@ -776,7 +776,7 @@ This is a quick way to gain some type-level knowledge about the length.
 -}
 resize :
     LinearDirection
-    -> Nat (ArgIn min max maybeN)
+    -> Nat (ArgIn min max ifN_)
     -> element
     -> Arr length element
     -> Arr (In min max) element
@@ -800,7 +800,7 @@ The type of the result isn't as accurate as in the example, though!
 
 -}
 groupsOf :
-    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeMaybeN)
+    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
     -> Arr (In min max) element
     ->
@@ -839,7 +839,7 @@ Elm complains:
 
 -}
 lowerMinLength :
-    Nat (ArgIn lowerMin min lowerMaybeN)
+    Nat (ArgIn lowerMin min lowerIfN_)
     -> Arr (In min max) element
     -> Arr (In lowerMin max) element
 lowerMinLength =
@@ -867,7 +867,7 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements`.
 
 -}
 restoreMaxLength :
-    Nat (ArgN max (Is a To atLeastMax) x)
+    Nat (N max atLeastMax isA_ isB_)
     -> Arr (In min max) element
     -> Arr (In min atLeastMax) element
 restoreMaxLength maximumLength =
@@ -895,7 +895,7 @@ nats :
         (ArgIn
             (Nat1Plus minLengthMinus1)
             (Nat1Plus maxLengthMinus1)
-            lengthMaybeN
+            lengthIfN_
         )
     ->
         Arr
@@ -911,7 +911,7 @@ nats length_ =
 {-| Generate a given `amount` of elements and put them in an `Arr`.
 -}
 random :
-    Nat (ArgIn min max maybeN)
+    Nat (ArgIn min max ifN_)
     -> Random.Generator element
     -> Random.Generator (Arr (In min max) element)
 random amount generateElement =
@@ -946,7 +946,7 @@ random amount generateElement =
 
 -}
 serialize :
-    Nat (ArgIn min max maybeN)
+    Nat (ArgIn min max ifN_)
     -> Serialize.Codec String element
     -> Serialize.Codec String (Arr (In min max) element)
 serialize length_ serializeElement =

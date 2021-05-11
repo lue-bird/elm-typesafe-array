@@ -25,7 +25,7 @@ import InNat
 import Internal.Arr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, Nat, Only, To)
+import Nat exposing (ArgIn, In, Is, N, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
 import Typed exposing (isChecked, tag, val)
@@ -36,11 +36,11 @@ push :
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
-    Internal.push element (InNat.addN nat1)
+    Internal.push element (InNat.add nat1)
 
 
 insertAt :
-    Nat (ArgIn indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minMinus1 indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In (Nat1Plus minMinus1) max) element
@@ -49,47 +49,45 @@ insertAt index direction insertedElement =
     Internal.insertAt index
         direction
         insertedElement
-        (InNat.addN nat1)
+        (InNat.add nat1)
 
 
 removeAt :
-    Nat (ArgIn indexMin minMinus1 indexMaybeN)
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
     -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
     -> Arr (In minMinus1 maxMinus1) element
 removeAt index direction =
-    Internal.removeAt index direction (InNat.subN nat1)
+    Internal.removeAt index direction (InNat.sub nat1)
 
 
 extendIn :
-    Nat (ArgN extensionMin (Is min To extendedMin) x)
-    -> Nat (ArgN extensionMax (Is max To extendedMax) y)
-    -> Arr (In extensionMin extensionMax) element
+    Nat (N addedMin atLeastAddedMin_ (Is min To extendedMin) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is max To extendedMax) addedMaxIs_)
+    -> Arr (In addedMin addedMax) element
     -> Arr (In min max) element
     -> Arr (In extendedMin extendedMax) element
 extendIn extensionMin extensionMax extension =
     Internal.extend extension
-        (\extensionLen ->
-            InNat.add extensionLen extensionMin extensionMax
-        )
+        (InNat.addIn extensionMin extensionMax)
 
 
 extend :
-    Nat (ArgN added (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 extend addedLength extension =
-    Internal.extend extension (\_ -> InNat.addN addedLength)
+    Internal.extend extension (\_ -> InNat.add addedLength)
 
 
 drop :
-    Nat (ArgN dropped (Is minTaken To min) (Is maxTaken To max))
+    Nat (N dropped_ atLeastDropped_ (Is minTaken To min) (Is maxTaken To max))
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In minTaken maxTaken) element
 drop droppedAmount direction =
-    Internal.drop droppedAmount direction InNat.subN
+    Internal.drop droppedAmount direction InNat.sub
 
 
 
@@ -98,25 +96,27 @@ drop droppedAmount direction =
 
 isLength :
     Nat
-        (ArgN
-            value
-            (Is valueToMax To max)
-            (Is a To (Nat1Plus atLeastValueMinus1))
+        (N
+            (Nat1Plus valueMinus1)
+            atLeastValue
+            (Is a_ To (Nat1Plus atLeastValueMinus1))
+            (Is valueToMax_ To max)
         )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToValue To value)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is minToValue_ To (Nat1Plus valueMinus1))
                 )
         }
     -> Arr (In min max) element
     ->
         Nat.LessOrEqualOrGreater
             (Arr (In lowest atLeastValueMinus1) element)
-            (Arr (Only value) element)
+            (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
             (Arr (In (Nat2Plus valueMinus1) max) element)
 isLength amount lowest =
     \arr ->
@@ -130,8 +130,8 @@ isLength amount lowest =
             Nat.Less less ->
                 Nat.Less (withLength less)
 
-            Nat.Equal () ->
-                Nat.Equal (withLength (amount |> InNat.value))
+            Nat.Equal equal ->
+                Nat.Equal (withLength equal)
 
             Nat.Greater greater ->
                 Nat.Greater (withLength greater)
@@ -139,26 +139,35 @@ isLength amount lowest =
 
 isLengthInRange :
     Nat
-        (ArgN
+        (N
             lowerBound
-            (Is lowerBoundToLast To upperBound)
-            (Is lowerBoundA To (Nat1Plus atLeastFirstMinus1))
+            (Nat1Plus atLeastLowerBoundMinus1)
+            (Is lowerBoundToUpperBound_ To upperBound)
+            lowerBoundIs_
         )
-    -> Nat (ArgN upperBound (Is upperBoundToMax To max) (Is upperBoundA To atLeastLast))
+    ->
+        Nat
+            (N
+                upperBound
+                atLeastUpperBound
+                (Is upperBoundToMax_ To max)
+                upperBoundIs_
+            )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToFirst To lowerBound)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is minToLowerBound_ To lowerBound)
                 )
         }
     -> Arr (In min max) element
     ->
         Nat.BelowOrInOrAboveRange
-            (Arr (In lowest atLeastFirstMinus1) element)
-            (Arr (In lowerBound atLeastLast) element)
+            (Arr (In lowest atLeastLowerBoundMinus1) element)
+            (Arr (In lowerBound atLeastUpperBound) element)
             (Arr (In (Nat1Plus upperBound) max) element)
 isLengthInRange lowerBound upperBound lowest =
     \arr ->
@@ -184,18 +193,20 @@ isLengthInRange lowerBound upperBound lowest =
 
 isLengthAtLeast :
     Nat
-        (ArgN
+        (N
             lowerBound
-            (Is a To (Nat1Plus atLeastLowerBoundMinus1))
-            (Is atLeastRange To max)
+            (Nat1Plus atLeastLowerBoundMinus1)
+            (Is atLeastRange_ To max)
+            is_
         )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
+                    atLeastLowest
                     (Is lowestToMin To min)
-                    (Is (Nat1Plus lessRange) To lowerBound)
+                    (Is (Nat1Plus lowestToLowerBound_) To lowerBound)
                 )
         }
     -> Arr (In min max) element
@@ -224,18 +235,20 @@ isLengthAtLeast lowerBound lowest =
 
 isLengthAtMost :
     Nat
-        (ArgN
+        (N
             upperBound
-            (Is a To atLeastUpperBound)
-            (Is (Nat1Plus greaterRange) To max)
+            atLeastUpperBound
+            (Is (Nat1Plus greaterRange_) To max)
+            is_
         )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToUpperBound To upperBound)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is minToUpperBound_ To upperBound)
                 )
         }
     -> Arr (In min max) element
@@ -263,8 +276,8 @@ isLengthAtMost upperBound lowest =
 
 
 serialize :
-    Nat (ArgIn minLowerBound minUpperBound lowerBoundMaybeN)
-    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundMaybeN)
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
     -> Serialize.Codec String element
     ->
         Serialize.Codec

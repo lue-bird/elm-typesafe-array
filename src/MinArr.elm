@@ -39,7 +39,7 @@ import Arr exposing (Arr, fromArray, length, toArray)
 import Internal.MinArr as Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (ArgIn, ArgN, In, Is, Min, N, Nat, Only, To)
+import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Serialize
 import TypeNats exposing (..)
 import Typed exposing (val)
@@ -73,7 +73,7 @@ push element =
 
 -}
 insertAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexMaybeN)
+    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
@@ -106,8 +106,8 @@ removeAt index direction =
 
 -}
 extend :
-    Nat (ArgN extensionMin (Is min To sumMin) x)
-    -> Arr (In extensionMin extensionMax) element
+    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    -> Arr (In minAdded maxAdded) element
     -> Arr (In min max) element
     -> Arr (Min sumMin) element
 extend minAddedLength extension =
@@ -122,7 +122,7 @@ extend minAddedLength extension =
 
 -}
 drop :
-    Nat (ArgN dropped (Is minTaken To min) x)
+    Nat (N dropped_ atLeastDropped_ (Is minTaken To min) is_)
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In minTaken max) element
@@ -172,24 +172,31 @@ drop droppedAmount direction =
 
 -}
 isLength :
-    Nat (ArgN (Nat1Plus triedMinus1) (Is a To (Nat1Plus triedMinus1PlusA)) x)
+    Nat
+        (N
+            (Nat1Plus valueMinus1)
+            atLeastValue
+            (Is a_ To (Nat1Plus atLeastValueMinus1))
+            is_
+        )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToTriedMinus1 To triedMinus1)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is minToValueMinus1_ To valueMinus1)
                 )
         }
     -> Arr (In min max) element
     ->
         Nat.LessOrEqualOrGreater
-            (Arr (In lowest triedMinus1PlusA) element)
-            (Arr (Only (Nat1Plus triedMinus1)) element)
-            (Arr (Min (Nat2Plus triedMinus1)) element)
-isLength length =
-    Internal.isLength length
+            (Arr (In lowest atLeastValueMinus1) element)
+            (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
+            (Arr (Min (Nat2Plus valueMinus1)) element)
+isLength lengthToCompareAgainst =
+    Internal.isLength lengthToCompareAgainst
 
 
 {-| Compare its length to a given exact length.
@@ -221,20 +228,27 @@ Is it `BelowOrAtLeast` that value?
 
 -}
 isLengthAtLeast :
-    Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    Nat
+        (N
+            lowerBound
+            (Nat1Plus atLeastLowerBoundMinus1)
+            isA_
+            isB_
+        )
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToTriedMin To lowerBound)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is lowestToLowerBound_ To lowerBound)
                 )
         }
     -> Arr (In min max) element
     ->
         Nat.BelowOrAtLeast
-            (Arr (In lowest lowerBoundMinus1PlusA) element)
+            (Arr (In lowest atLeastLowerBoundMinus1) element)
             (Arr (Min lowerBound) element)
 isLengthAtLeast lowerBound lowest =
     Internal.isLengthAtLeast lowerBound lowest
@@ -262,20 +276,21 @@ isLengthAtLeast lowerBound lowest =
 
 -}
 isLengthAtMost :
-    Nat (ArgN upperBound (Is a To upperBoundPlusA) x)
+    Nat (N upperBound atLeastUpperBound isA_ isB_)
     ->
         { lowest :
             Nat
-                (ArgN
+                (N
                     lowest
-                    (Is lowestToMin To min)
-                    (Is minToAtMostMin To upperBound)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
+                    (Is minToAtMostMin_ To upperBound)
                 )
         }
     -> Arr (In min max) element
     ->
         Nat.AtMostOrAbove
-            (Arr (In lowest upperBoundPlusA) element)
+            (Arr (In lowest atLeastUpperBound) element)
             (Arr (Min (Nat1Plus upperBound)) element)
 isLengthAtMost upperBound lowest =
     Internal.isLengthAtMost upperBound lowest
@@ -338,7 +353,7 @@ value =
 
 -}
 serialize :
-    Nat (ArgN lowerBound (Is a To (Nat1Plus lowerBoundMinus1PlusA)) x)
+    Nat (N lowerBound (Nat1Plus atLeastLowerBoundMinus1) isA_ isB_)
     -> Serialize.Codec String element
     -> Serialize.Codec String (Arr (Min lowerBound) element)
 serialize lowerBound serializeElement =
