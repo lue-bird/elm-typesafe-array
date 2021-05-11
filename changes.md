@@ -66,6 +66,6 @@
 ## 10.0.0
 
 - updated `lue-bird/elm-bounded-nat` to `15.0.0`
-    - corrected `InArr.isLength` return type
+    - corrected `InArr.isLength` result type
     - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
     - replaced `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
