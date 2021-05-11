@@ -62,3 +62,10 @@
 - moved arguments in `MinArr.extend arr nat` to `MinArr.extend nat arr`
 - renamed & moved arguments in `InArr.extend min max arr` to `extendIn min max arr`
 - renamed `InArr.extendOnly` to `extend`
+
+## 10.0.0
+
+- updated `lue-bird/elm-bounded-nat` to `15.0.0`
+    - corrected `InArr.isLength` return type
+    - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
+    - replaced `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
