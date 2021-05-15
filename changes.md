@@ -69,3 +69,8 @@
     - corrected `InArr.isLength` result type
     - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
     - replaced `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
+
+### 10.1.0
+
+- added `Arr.minNats`
+- added `Arr.updateAt`
