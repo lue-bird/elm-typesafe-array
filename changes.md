@@ -75,3 +75,7 @@
 - added `Arr.minNats`
 - added `Arr.updateAt`
 - changed `Arr.nats` type: the minimum length can be 0
+
+## 11.0.1
+
+- corrected minor doc example mistakes
