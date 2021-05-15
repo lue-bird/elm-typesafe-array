@@ -176,18 +176,22 @@ fromArray array =
 
 
 nats :
-    Nat
-        (ArgIn (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1) lengthIfN_)
+    Nat (ArgIn minLength (Nat1Plus maxLengthMinus1) lengthIfN_)
     ->
         Arr
-            (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1))
+            (In minLength (Nat1Plus maxLengthMinus1))
             (Nat (In Nat0 maxLengthMinus1))
 nats length_ =
     { array =
-        List.range 0 (val length_ - 1)
-            |> List.map
-                (Nat.intInRange nat0 (length_ |> InNat.sub nat1))
-            |> Array.fromList
+        case length_ |> InNat.isAtLeast nat1 { lowest = nat0 } of
+            Nat.EqualOrGreater lengthAtLeast1 ->
+                List.range 0 (val length_ - 1)
+                    |> List.map
+                        (Nat.intInRange nat0 (lengthAtLeast1 |> InNat.sub nat1))
+                    |> Array.fromList
+
+            Nat.Below _ ->
+                Array.empty
     , length = length_ |> InNat.value
     }
         |> tag

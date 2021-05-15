@@ -924,18 +924,10 @@ use [minNats](Arr#minNats).
 
 -}
 nats :
-    Nat
-        (ArgIn
-            (Nat1Plus minLengthMinus1)
-            (Nat1Plus maxLengthMinus1)
-            lengthIfN_
-        )
+    Nat (ArgIn minLength (Nat1Plus maxLengthMinus1) lengthIfN_)
     ->
         Arr
-            (In
-                (Nat1Plus minLengthMinus1)
-                (Nat1Plus maxLengthMinus1)
-            )
+            (In minLength (Nat1Plus maxLengthMinus1))
             (Nat (In Nat0 maxLengthMinus1))
 nats length_ =
     Internal.nats length_
