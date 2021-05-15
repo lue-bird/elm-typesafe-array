@@ -1,13 +1,13 @@
 module Arr exposing
     ( Arr
-    , fromArray, repeat, nats, random
+    , fromArray, repeat, nats, minNats, random
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
+    , replaceAt, updateAt
     , take, groupsOf
     , map, fold, toArray, foldWith, reverse, resize
     , map2, map3, map4
-    , replaceAt
     , lowerMinLength
     , restoreMaxLength
     , serialize
@@ -48,7 +48,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## create
 
-@docs fromArray, repeat, nats, random
+@docs fromArray, repeat, nats, minNats, random
 
 
 ### exact
@@ -65,6 +65,11 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs length, at
 
 
+### modify
+
+@docs replaceAt, updateAt
+
+
 ## part
 
 @docs take, groupsOf
@@ -78,11 +83,6 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 ### map
 
 @docs map2, map3, map4
-
-
-### modify
-
-@docs replaceAt
 
 
 ## drop information
@@ -508,16 +508,18 @@ from16 =
     apply15 from15 (\init -> \last -> init |> push last)
 
 
-
--- ## modify
-
-
+{-| **Should not be exposed.**
+-}
 push :
     element
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
     Internal.push element (InNat.add nat1)
+
+
+
+-- ## modify
 
 
 {-| Set the element at an index in a direction.
@@ -539,6 +541,31 @@ replaceAt :
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
 replaceAt index direction replacingElement =
     Internal.replaceAt index direction replacingElement
+
+
+{-| Change the element at an index in a direction based on its previous value.
+
+    Arr.from3 1 20 30
+        |> Arr.updateAt nat0 FirstToLast ((*) 10)
+    --> Arr.from3 10 20 30
+
+    Arr.from3 10 20 -30
+        |> Arr.replaceAt nat0 LastToFirst (\x -> -x)
+    --> Arr.from3 10 20 30
+
+-}
+updateAt :
+    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
+    -> LinearDirection
+    -> (element -> element)
+    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+updateAt index direction updateElement =
+    \arr ->
+        arr
+            |> replaceAt index
+                direction
+                (updateElement (arr |> at index direction))
 
 
 
@@ -880,14 +907,20 @@ restoreMaxLength maximumLength =
 
 {-| Increasing natural numbers. In the end, there are `length` numbers.
 
-    Arr.nats nat10
+    Arr.nats between2And10
     --> : Arr
-    -->     (N Nat10 ...)
+    -->     (In Nat2 (Nat10Plus a))
     -->     (Nat (In Nat0 (Nat9Plus a)))
 
     from first length_ =
         Arr.nats length_
             |> Arr.map (InNat.add first)
+
+If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
+
+    Arr.nats (Nat.intAtLeast nat5 someInt) -- error
+
+use [minNats](Arr#minNats).
 
 -}
 nats :
@@ -906,6 +939,34 @@ nats :
             (Nat (In Nat0 maxLengthMinus1))
 nats length_ =
     Internal.nats length_
+
+
+{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum of the length.
+
+    Arr.nats nat5
+
+    Arr.nats between2And10
+
+If not:
+
+    Arr.minNats atLeast10
+    --> : Arr (Min Nat10)
+    -->     (Nat (Min Nat10))
+
+    from first length_ =
+        Arr.minNats length_
+            |> Arr.map (MinNat.add first)
+
+-}
+minNats :
+    Nat
+        (ArgIn (Nat1Plus minLengthMinus1) maxLength lengthIfN_)
+    ->
+        Arr
+            (In (Nat1Plus minLengthMinus1) maxLength)
+            (Nat (In Nat0 maxLength))
+minNats length_ =
+    Internal.minNats length_
 
 
 {-| Generate a given `amount` of elements and put them in an `Arr`.
