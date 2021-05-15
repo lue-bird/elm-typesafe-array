@@ -1,6 +1,6 @@
 module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, minNats, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, toArray)
 
-{-| ArgOnly use it in `Internal.Arr. ...` modules.
+{-| Only use it in `Internal.Arr. ...` modules.
 -}
 
 import Array exposing (Array)
@@ -8,7 +8,8 @@ import Array.Extra
 import Array.LinearDirection as Array
 import ArrayExtra as Array
 import InNat
-import LinearDirection exposing (LinearDirection)
+import LinearDirection exposing (LinearDirection(..))
+import List.LinearDirection as List
 import MinNat
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
@@ -194,17 +195,15 @@ nats length_ =
 
 
 minNats :
-    Nat
-        (ArgIn (Nat1Plus minLength) maxLength lengthIfN_)
+    Nat (ArgIn minLength maxLength lengthIfN_)
     ->
         Arr
-            (In (Nat1Plus minLength) maxLength)
+            (In minLength maxLength)
             (Nat (In Nat0 maxLength))
 minNats length_ =
     { array =
-        List.range 0 (val length_ - 1)
-            |> List.map
-                (Nat.intInRange nat0 (length_ |> MinNat.sub nat1))
+        Nat.range nat0 length_
+            |> List.dropFrom LastToFirst 1
             |> Array.fromList
     , length = length_ |> InNat.value
     }

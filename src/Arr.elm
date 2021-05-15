@@ -959,11 +959,10 @@ If not:
 
 -}
 minNats :
-    Nat
-        (ArgIn (Nat1Plus minLengthMinus1) maxLength lengthIfN_)
+    Nat (ArgIn minLength maxLength lengthIfN_)
     ->
         Arr
-            (In (Nat1Plus minLengthMinus1) maxLength)
+            (In minLength maxLength)
             (Nat (In Nat0 maxLength))
 minNats length_ =
     Internal.minNats length_
