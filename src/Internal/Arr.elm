@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, minNats, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, toArray)
 
 {-| ArgOnly use it in `Internal.Arr. ...` modules.
 -}
@@ -9,6 +9,7 @@ import Array.LinearDirection as Array
 import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection)
+import MinNat
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
@@ -185,6 +186,25 @@ nats length_ =
         List.range 0 (val length_ - 1)
             |> List.map
                 (Nat.intInRange nat0 (length_ |> InNat.sub nat1))
+            |> Array.fromList
+    , length = length_ |> InNat.value
+    }
+        |> tag
+        |> isChecked Arr
+
+
+minNats :
+    Nat
+        (ArgIn (Nat1Plus minLength) maxLength lengthIfN_)
+    ->
+        Arr
+            (In (Nat1Plus minLength) maxLength)
+            (Nat (In Nat0 maxLength))
+minNats length_ =
+    { array =
+        List.range 0 (val length_ - 1)
+            |> List.map
+                (Nat.intInRange nat0 (length_ |> MinNat.sub nat1))
             |> Array.fromList
     , length = length_ |> InNat.value
     }
