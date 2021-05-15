@@ -16,7 +16,7 @@
         "elm/random": "1.0.0 <= v < 2.0.0",
         "elm-community/array-extra": "2.3.0 <= v < 3.0.0",
         "lue-bird/elm-bounded-nat": "15.0.0 <= v < 16.0.0",
-        "lue-bird/elm-linear-direction": "2.1.0 <= v < 3.0.0",
+        "lue-bird/elm-linear-direction": "2.2.0 <= v < 3.0.0",
         "lue-bird/elm-typed-value": "5.0.0 <= v < 6.0.0"
     },
     "test-dependencies": {
