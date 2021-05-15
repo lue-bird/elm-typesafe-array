@@ -550,7 +550,7 @@ replaceAt index direction replacingElement =
     --> Arr.from3 10 20 30
 
     Arr.from3 10 20 -30
-        |> Arr.replaceAt nat0 LastToFirst (\x -> -x)
+        |> Arr.updateAt nat0 LastToFirst (\x -> -x)
     --> Arr.from3 10 20 30
 
 -}
@@ -918,7 +918,7 @@ restoreMaxLength maximumLength =
 
 If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
 
-    Arr.nats (Nat.intAtLeast nat5 someInt) -- error
+    Arr.minNats (Nat.intAtLeast nat5 someInt) -- error
 
 use [minNats](Arr#minNats).
 
