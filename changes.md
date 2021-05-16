@@ -79,3 +79,12 @@
 ## 11.0.1
 
 - corrected minor doc example mistakes
+
+## 12.0.0
+
+- made `Arr.restoreMaxLength` type more general
+- split `Arr.take amount maxAmount` into
+    - `takeMax maxAmount amount`
+    - `take amount`, where the `amount` is a `Nat (N ...)`
+- improved documentation
+- added tic-tac-toe example elm program
