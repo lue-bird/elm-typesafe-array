@@ -5,7 +5,7 @@ module Arr exposing
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , replaceAt, updateAt
-    , take, groupsOf
+    , take, groupsOf, takeMax
     , map, fold, toArray, foldWith, reverse, resize
     , map2, map3, map4
     , lowerMinLength
@@ -72,7 +72,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## part
 
-@docs take, groupsOf
+@docs take, groupsOf, takeMax
 
 
 ## transform
@@ -218,17 +218,19 @@ repeat amount element =
     Arr.fromArray arrayFromSomewhere
     --> : Arr (Min Nat0)
 
+Don't use it this way:
+
     Arr.fromArray
         (Array.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
     --> big no
+
+Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
 
     Arr.from7 0 1 2 3 4 5 6
     --> ok
 
     Arr.nats nat7
     --> big yes
-
-Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
 
 -}
 fromArray : Array element -> Arr (Min Nat0) element
@@ -240,7 +242,7 @@ fromArray =
 
     Arr.empty
     --> : Arr (In Nat0 atLeast0) element
-        |> NArr.push ":)"
+        |> InArr.push ":)"
     --> : Arr (In Nat1 (Nat1Plus atLeast0)) String
 
 -}
@@ -522,7 +524,7 @@ push element =
 -- ## modify
 
 
-{-| Set the element at an index in a direction.
+{-| Set the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     Arr.from3 "I" "am" "ok"
         |> Arr.replaceAt nat2 FirstToLast "confusion"
@@ -543,7 +545,7 @@ replaceAt index direction replacingElement =
     Internal.replaceAt index direction replacingElement
 
 
-{-| Change the element at an index in a direction based on its previous value.
+{-| Change the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/) based on its previous value.
 
     Arr.from3 1 20 30
         |> Arr.updateAt nat0 FirstToLast ((*) 10)
@@ -572,25 +574,43 @@ updateAt index direction updateElement =
 -- ## part
 
 
-{-| This works for both
+{-| A certain number of elements from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     Arr.from8 0 1 2 3 4 5 6 7
         |> Arr.take nat3 nat3 LastToFirst
     --> Arr.from3 5 6 7
 
     Arr.from8 0 1 2 3 4 5 6 7
-        |> Arr.take between3To7 nat7 FirstToLast
+        |> Arr.takeMax nat7 between3And7 FirstToLast
+    --> : Arr (In Nat3 Nat7) ...
+
+The first number is the maximum taken amount. The second number is the amount of taken elements.
+
+-}
+takeMax :
+    Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
+    -> Nat (ArgIn minTaken maxTaken takenIfN_)
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In minTaken atLeastMaxTaken) element
+takeMax maxAmount takenAmount direction =
+    Internal.takeMax maxAmount takenAmount direction
+
+
+{-| A certain number of elements from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    Arr.from8 0 1 2 3 4 5 6 7
+        |> Arr.take nat7 FirstToLast
     --> : Arr (In Nat3 Nat7) ...
 
 -}
 take :
-    Nat (ArgIn minTaken maxTaken takenIfN_)
-    -> Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin To min) is_)
+    Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
     -> LinearDirection
     -> Arr (In min max) element
-    -> Arr (In minTaken atLeastMaxTaken) element
-take takenAmount maxAmount direction =
-    Internal.take takenAmount maxAmount direction
+    -> Arr (In taken atLeastTaken) element
+take takenAmount direction =
+    Internal.take takenAmount direction
 
 
 
@@ -710,11 +730,36 @@ fold direction reduce initial =
     toArray >> Array.fold direction reduce initial
 
 
-{-| A fold where the initial result is the first value.
+{-| A fold where the initial result is the first value in the `Arr`, looking from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     Arr.foldWith FirstToLast maximum
         (Arr.from3 234 345 543)
     --> 543
+
+    Arr.foldWith LastToFirst (++)
+        (Arr.from3 "m" "l" "e")
+    --> "elm"
+
+Often, calling `map` before `foldWith` is helpful.
+
+    allOfTheSameValue =
+        Arr.map
+            (\field ->
+                case field of
+                    EmptyField ->
+                        Nothing
+
+                    FieldSet x ->
+                        Just x
+            )
+            >> Arr.foldWith FirstToLast
+                (\field soFar ->
+                    if field == soFar then
+                        soFar
+
+                    else
+                        Nothing
+                )
 
 -}
 foldWith :
@@ -744,7 +789,7 @@ length =
     Internal.length
 
 
-{-| Element at a valid position.
+{-| The element at a valid position in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     Arr.from4 1 2 3 4
         |> Arr.at nat1 FirstToLast
@@ -780,7 +825,7 @@ reverse =
     Internal.reverse
 
 
-{-| Resize an `Arr` in a direction, padding with a given value.
+{-| Resize an `Arr` in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/), padding with a given value.
 
     Arr.resize LastToFirst nat4 0
         (Arr.from2 1 2)
@@ -803,15 +848,15 @@ This is a quick way to gain some type-level knowledge about the length.
 -}
 resize :
     LinearDirection
-    -> Nat (ArgIn min max ifN_)
+    -> Nat (ArgIn newMin newMax ifN_)
     -> element
-    -> Arr length element
     -> Arr (In min max) element
+    -> Arr (In newMin newMax) element
 resize direction newLength defaultElement =
     Internal.resize direction newLength defaultElement
 
 
-{-| Split the `Arr` into equal-sized chunks.
+{-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     { groups : the Arr divided into equal-sized Arrs
     , less : values to one side which aren't enough
@@ -819,15 +864,23 @@ resize direction newLength defaultElement =
 
     Arr.from7 1 2 3 4 5 6 7
         |> Arr.groupsOf nat5 FirstToLast
-    --> { groups = Arr.from1 (Arr.from5 1 2 3 4 5)
-    --> , remaining = Arr.from2 6 7
+    --> { groups =
+    -->     Arr.from1 (Arr.from5 1 2 3 4 5)
+    -->     : Arr (In Nat0 (Nat7Plus a_))
+    -->         (Arr (In Nat5 (Nat5Plus b_)) number)
+    --> , remaining =
+    -->     Arr.from2 6 7 : Arr (In Nat0 (Nat5Plus c_)) number
     --> }
 
-The type of the result isn't as accurate as in the example, though!
+    Arr.from7 1 2 3 4 5 6 7
+        |> Arr.groupsOf nat5 LastToFirst
+    --> { groups = Arr.from1 (Arr.from5 3 4 5 6 7) : ...
+    --> , remaining = Arr.from2 1 2
+    --> }
 
 -}
 groupsOf :
-    Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeIfN_)
+    Nat (ArgIn (Nat1Plus minGroupSizeMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
     -> Arr (In min max) element
     ->
@@ -835,7 +888,7 @@ groupsOf :
             Arr
                 (In Nat0 max)
                 (Arr
-                    (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
+                    (In (Nat1Plus minGroupSizeMinus1) maxGroupSize)
                     element
                 )
         , remaining : Arr (In Nat0 maxGroupSize) element
@@ -894,9 +947,9 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements`.
 
 -}
 restoreMaxLength :
-    Nat (N max atLeastMax isA_ isB_)
+    Nat (ArgIn max newMax ifN_)
     -> Arr (In min max) element
-    -> Arr (In min atLeastMax) element
+    -> Arr (In min newMax) element
 restoreMaxLength maximumLength =
     Internal.restoreMaxLength maximumLength
 
