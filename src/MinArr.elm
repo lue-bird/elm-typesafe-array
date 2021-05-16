@@ -64,7 +64,7 @@ push element =
     Internal.push element
 
 
-{-| Put a new element at an index in a direction.
+{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     arrWithAtLeast5Elements
         |> MinArr.insertAt nat0 FirstToLast
@@ -82,7 +82,7 @@ insertAt index direction inserted =
     Internal.insertAt index direction inserted
 
 
-{-| Kick out the element at an index in a direction.
+{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     removeLast arrWithAtLeast1Element =
         arrWithAtLeast1Element
@@ -98,7 +98,7 @@ removeAt index direction =
     Internal.removeAt index direction
 
 
-{-| Append an `Arr (In ...)`.
+{-| Append an `Arr`.
 
     Arr.from3 1 2 3
         |> MinArr.extend nat3 arrWithAtLeast3Elements
@@ -114,7 +114,7 @@ extend minAddedLength extension =
     Internal.extend minAddedLength extension
 
 
-{-| Elements after a certain number of elements from one side.
+{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     withAtLeast6Elements
         |> Arr.drop nat2 LastToFirst
