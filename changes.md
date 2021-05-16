@@ -68,7 +68,6 @@
 - updated `lue-bird/elm-bounded-nat` to `15.0.0`
     - corrected `InArr.isLength` result type
     - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
-    - replaced `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
 
 ### 11.0.0
 
@@ -82,7 +81,7 @@
 
 ## 12.0.0
 
-- made `Arr.restoreMaxLength` type more general
+- changed `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
 - split `Arr.take amount maxAmount` into
     - `takeMax maxAmount amount`
     - `take amount`, where the `amount` is a `Nat (N ...)`
