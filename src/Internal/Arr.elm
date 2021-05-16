@@ -1,4 +1,4 @@
-module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, minNats, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, toArray)
+module Internal.Arr exposing (ArrTag(..), Content, at, drop, empty, extend, fromArray, groupsOf, insertAt, length, lowerMinLength, map, map2, mapArrayAndLength, mapLength, minNats, nats, push, random, removeAt, repeat, replaceAt, resize, restoreMaxLength, reverse, serialize, take, takeMax, toArray)
 
 {-| Only use it in `Internal.Arr. ...` modules.
 -}
@@ -73,27 +73,27 @@ toArray =
 
 mapArrayAndLength :
     (Array element -> Array mappedElement)
-    -> (Nat length -> Nat mappedLength)
-    -> Arr length element
-    -> ArrAs Tagged mappedLength mappedElement
+    -> (Nat (In min max) -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
+    -> Arr (In min max) element
+    -> ArrAs Tagged (In mappedMin mappedMax) mappedElement
 mapArrayAndLength mapArray_ mapLength_ =
     Typed.map
         (\v ->
             { array = mapArray_ v.array
-            , length = mapLength_ v.length
+            , length = mapLength_ v.length |> InNat.value
             }
         )
 
 
 mapLength :
-    (Nat length -> Nat mappedLength)
-    -> Arr length element
-    -> ArrAs Tagged mappedLength element
+    (Nat (In min max) -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
+    -> Arr (In min max) element
+    -> ArrAs Tagged (In mappedMin mappedMax) element
 mapLength mapLength_ =
     Typed.map
         (\v ->
             { array = v.array
-            , length = mapLength_ v.length
+            , length = mapLength_ v.length |> InNat.value
             }
         )
 
@@ -251,20 +251,31 @@ replaceAt index direction replacingElement =
 -- ## part
 
 
-take :
-    Nat (ArgIn minTaken maxTaken takenIfN_)
-    -> Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin To min) is_)
+takeMax :
+    Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
+    -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In minTaken atLeastMaxTaken) element
-take amount maxTakenAmount direction =
+takeMax maxTakenAmount amount direction =
     mapArrayAndLength
         (Array.take (amount |> val) direction)
         (\_ ->
             amount
                 |> Nat.restoreMax maxTakenAmount
-                |> InNat.value
         )
+        >> isChecked Arr
+
+
+take :
+    Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
+    -> LinearDirection
+    -> Arr (In min max) element
+    -> Arr (In taken atLeastTaken) element
+take takenAmount direction =
+    mapArrayAndLength
+        (Array.take (takenAmount |> val) direction)
+        (\_ -> takenAmount)
         >> isChecked Arr
 
 
@@ -297,14 +308,14 @@ reverse =
 
 resize :
     LinearDirection
-    -> Nat (ArgIn min max ifN_)
+    -> Nat (ArgIn newMin newMax ifN_)
     -> element
-    -> Arr length element
     -> Arr (In min max) element
+    -> Arr (In newMin newMax) element
 resize direction newLength defaultElement =
     mapArrayAndLength
         (Array.resize direction (val newLength) defaultElement)
-        (\_ -> newLength |> InNat.value)
+        (\_ -> newLength)
         >> isChecked Arr
 
 
@@ -375,14 +386,14 @@ drop droppedAmount direction subDropped =
 
 
 removeAt :
-    Nat (ArgIn minIndex minLengthMinus1 indexIfN_)
+    Nat (ArgIn minIndex minMinus1 indexIfN_)
     -> LinearDirection
     ->
-        (Nat (In (Nat1Plus minLengthMinus1) maxLength)
-         -> Nat resultLengthMinus1
+        (Nat (In (Nat1Plus minMinus1) max)
+         -> Nat (ArgIn minMinus1 maxMinus1 minus1IfN_)
         )
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
-    -> Arr resultLengthMinus1 element
+    -> Arr (In (Nat1Plus minMinus1) max) element
+    -> Arr (In minMinus1 maxMinus1) element
 removeAt index direction sub1 =
     mapArrayAndLength
         (Array.removeAt (val index) direction)
@@ -394,9 +405,9 @@ insertAt :
     Nat range
     -> LinearDirection
     -> element
-    -> (Nat length -> Nat lengthPlus1)
-    -> Arr length element
-    -> Arr lengthPlus1 element
+    -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
+    -> Arr (In min max) element
+    -> Arr (In (Nat1Plus min) maxPlus1) element
 insertAt index direction inserted add1 =
     mapArrayAndLength
         (Array.insertAt (index |> val) direction inserted)
@@ -406,9 +417,9 @@ insertAt index direction inserted add1 =
 
 push :
     element
-    -> (Nat length -> Nat lengthPlus1)
-    -> Arr length element
-    -> Arr lengthPlus1 element
+    -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
+    -> Arr (In min max) element
+    -> Arr (In (Nat1Plus min) maxPlus1) element
 push elementToPush add1 =
     mapArrayAndLength (Array.push elementToPush) add1
         >> isChecked Arr
