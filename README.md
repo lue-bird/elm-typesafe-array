@@ -40,8 +40,8 @@ initialTicTacToeBoard
 ### Setup
 
 If you want, take a 👀 to get a feel why the used packages are useful.
-- most importantly: [bounded-nat][bounded-nat]: `nat...`, `Nat...`, `Min`, `In`, `Only`
-- [linear-direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/): `FirstToLast` & `LastToFirst`
+- most importantly: [`bounded-nat`][bounded-nat]: `nat...`, `Nat...`, `Min`, `In`, `Only`
+- [`linear-direction`][linear-direction]: `FirstToLast` & `LastToFirst`
 
 ```noformatingplease
 elm install lue-bird/elm-linear-direction
@@ -155,7 +155,7 @@ tag (Arr.repeat nat100 EmptyTag)
 
 Now take a look at modules like `Arr` to get started!
 
-## comparison to [Orasund's static-array](https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/)
+## comparison to [Orasund's static-array][static-array]
 
 I started creating my package before this one so I didn't take inspiration from this package.
 
@@ -246,4 +246,10 @@ maybePush :
     -> Arr (In min (Nat1Plus max)) a
 ```
 
+### and now?
+
+Look at [some example programs using `Arr`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)!
+
 [bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
+[static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
+[linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
