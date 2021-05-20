@@ -36,10 +36,10 @@ use these operations instead of the ones in `Arr` or `InArr`
 -}
 
 import Arr exposing (Arr, fromArray, length, toArray)
-import Internal.MinArr as Internal
+import Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
-import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
+import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Serialize
 import TypeNats exposing (..)
 import Typed exposing (val)
@@ -58,10 +58,10 @@ import Typed exposing (val)
 -}
 push :
     element
-    -> Arr (In min max) element
-    -> Arr (Min (Nat1Plus min)) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min (Nat1Plus minLength)) element
 push element =
-    Internal.push element
+    Internal.minPush element
 
 
 {-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -73,13 +73,13 @@ push element =
 
 -}
 insertAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength_) element
     -> Arr (Min (Nat2Plus minLengthMinus1)) element
 insertAt index direction inserted =
-    Internal.insertAt index direction inserted
+    Internal.minInsertAt index direction inserted
 
 
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -90,12 +90,12 @@ insertAt index direction inserted =
 
 -}
 removeAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexMaybeExact)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
     -> Arr (In minLengthMinus1 maxLength) element
 removeAt index direction =
-    Internal.removeAt index direction
+    Internal.minRemoveAt index direction
 
 
 {-| Append an `Arr`.
@@ -111,13 +111,13 @@ extend :
     -> Arr (In min max) element
     -> Arr (Min sumMin) element
 extend minAddedLength extension =
-    Internal.extend minAddedLength extension
+    Internal.minExtend minAddedLength extension
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     withAtLeast6Elements
-        |> Arr.drop nat2 LastToFirst
+        |> MinArr.drop nat2 LastToFirst
     --> : Arr (Min Nat4) ...
 
 -}
@@ -127,7 +127,7 @@ drop :
     -> Arr (In min max) element
     -> Arr (In minTaken max) element
 drop droppedAmount direction =
-    Internal.drop droppedAmount direction
+    Internal.minDrop droppedAmount direction
 
 
 
@@ -189,14 +189,14 @@ isLength :
                     (Is minToValueMinus1_ To valueMinus1)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     ->
         Nat.LessOrEqualOrGreater
             (Arr (In lowest atLeastValueMinus1) element)
             (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
             (Arr (Min (Nat2Plus valueMinus1)) element)
 isLength lengthToCompareAgainst =
-    Internal.isLength lengthToCompareAgainst
+    Internal.minIsLength lengthToCompareAgainst
 
 
 {-| Compare its length to a given exact length.
@@ -229,11 +229,10 @@ Is it `BelowOrAtLeast` that value?
 -}
 isLengthAtLeast :
     Nat
-        (N
-            lowerBound
-            (Nat1Plus atLeastLowerBoundMinus1)
-            isA_
-            isB_
+        (ArgIn
+            minLowerBound
+            (Nat1Plus maxLowerBoundMinus1)
+            ifN_
         )
     ->
         { lowest :
@@ -242,16 +241,16 @@ isLengthAtLeast :
                     lowest
                     atLeastLowest_
                     (Is lowestToMin_ To min)
-                    (Is lowestToLowerBound_ To lowerBound)
+                    (Is lowestToMinLowerBound_ To minLowerBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     ->
         Nat.BelowOrAtLeast
-            (Arr (In lowest atLeastLowerBoundMinus1) element)
-            (Arr (Min lowerBound) element)
+            (Arr (In lowest maxLowerBoundMinus1) element)
+            (Arr (Min minLowerBound) element)
 isLengthAtLeast lowerBound lowest =
-    Internal.isLengthAtLeast lowerBound lowest
+    Internal.minIsLengthAtLeast lowerBound lowest
 
 
 {-| Is its length `AtMostOrAbove` a given length?
@@ -276,7 +275,7 @@ isLengthAtLeast lowerBound lowest =
 
 -}
 isLengthAtMost :
-    Nat (N upperBound atLeastUpperBound isA_ isB_)
+    Nat (ArgIn minUpperBound maxUpperBound ifN_)
     ->
         { lowest :
             Nat
@@ -284,16 +283,16 @@ isLengthAtMost :
                     lowest
                     atLeastLowest_
                     (Is lowestToMin_ To min)
-                    (Is minToAtMostMin_ To upperBound)
+                    (Is lowestToMinUpperBound_ To minUpperBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     ->
         Nat.AtMostOrAbove
-            (Arr (In lowest atLeastUpperBound) element)
-            (Arr (Min (Nat1Plus upperBound)) element)
+            (Arr (In lowest maxUpperBound) element)
+            (Arr (Min (Nat1Plus minUpperBound)) element)
 isLengthAtMost upperBound lowest =
-    Internal.isLengthAtMost upperBound lowest
+    Internal.minIsLengthAtMost upperBound lowest
 
 
 
@@ -321,9 +320,9 @@ Elm complains:
     ]
 
 -}
-value : Arr (In min max) element -> Arr (Min min) element
+value : Arr (In min max_) element -> Arr (Min min) element
 value =
-    Internal.value
+    Internal.minValue
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a minimum amount of elements.
@@ -336,7 +335,7 @@ value =
     serializeSaves =
         MinArr.serialize nat1 serializeWorld
 
-    encode : Arr (In (Nat1Plus minMinus1) max) World -> Bytes
+    encode : Arr (In (Nat1Plus minMinus1_) max_) World -> Bytes
     encode =
         MinArr.value
             >> Arr.lowerMinLength nat1
@@ -353,26 +352,8 @@ value =
 
 -}
 serialize :
-    Nat (N lowerBound (Nat1Plus atLeastLowerBoundMinus1) isA_ isB_)
+    Nat (ArgIn min max_ ifN_)
     -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (Min lowerBound) element)
+    -> Serialize.Codec String (Arr (Min min) element)
 serialize lowerBound serializeElement =
-    Serialize.array serializeElement
-        |> Serialize.mapValid
-            (\array ->
-                case
-                    fromArray array
-                        |> isLengthAtLeast lowerBound
-                            { lowest = nat0 }
-                of
-                    Nat.EqualOrGreater atLeast ->
-                        Ok atLeast
-
-                    Nat.Below below ->
-                        Err
-                            ("Array length "
-                                ++ String.fromInt (val (length below))
-                                ++ "was less than the required minimum"
-                            )
-            )
-            toArray
+    Internal.serializeMin lowerBound serializeElement
