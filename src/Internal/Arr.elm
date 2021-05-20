@@ -10,7 +10,6 @@ import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection(..))
 import List.LinearDirection as List
-import MinNat
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
@@ -48,12 +47,13 @@ at index direction =
     \arr ->
         case Array.at (val index) direction (toArray arr) of
             Just element ->
-                --succeeds for every correct typed Arr (should be)
+                -- succeeds for every correctly typed Arr
                 element
 
             Nothing ->
-                --if not, we crash with a
-                --RangeError: Maximum call stack size exceeded
+                -- if not, we crash with a
+                -- RangeError: Maximum call stack size exceeded
+                -- instead of failing silently like Orasund's static-array does
                 at index direction arr
 
 
