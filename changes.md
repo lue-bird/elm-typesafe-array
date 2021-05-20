@@ -87,3 +87,8 @@
     - `take amount`, where the `amount` is a `Nat (N ...)`
 - improved documentation
 - added tic-tac-toe example elm program
+
+## 13.0.0
+
+Updated `bounded-nat` to 17.0.0:
+- `MinArr.isLengthAtLeast` & `MinArr.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
