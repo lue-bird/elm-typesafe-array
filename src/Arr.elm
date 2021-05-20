@@ -80,7 +80,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs map, fold, toArray, foldWith, reverse, resize
 
 
-### map
+### combine
 
 @docs map2, map3, map4
 
@@ -104,11 +104,10 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 import Arguments exposing (..)
 import Array exposing (Array)
 import Array.LinearDirection as Array
-import InNat
-import Internal.Arr as Internal
+import Internal as Internal exposing (inPush)
 import LinearDirection exposing (LinearDirection(..))
 import NNat exposing (..)
-import NNats exposing (nat0, nat1)
+import NNats exposing (nat0)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
 import Serialize
@@ -130,29 +129,11 @@ Arr (Min Nat5) ...
   - 2 <= amount <= 12
 
 ```
-Arr (In Nat2 Nat12) ...
-```
-
-  - = 4
-
-```
-Arr (Only Nat4) ...
+Arr (In Nat2 (Nat12Plus a_)) ...
 ```
 
 
 ### as argument types
-
-  - amount >= 4
-
-```
-Arr (In (Nat4Plus minMinus4) max) ...
-```
-
-  - 4 <= amount <= 15
-
-```
-Arr (In (Nat4Plus minMinus4) Nat15) ...
-```
 
   - = 15
 
@@ -160,10 +141,39 @@ Arr (In (Nat4Plus minMinus4) Nat15) ...
 Arr (Only Nat15) ...
 ```
 
-  - any amount
+  - amount >= 4
 
 ```
-Arr range ...
+Arr (In (Nat4Plus minMinus4_) max_) ...
+```
+
+  - 4 <= amount <= 15
+
+```
+Arr (In (Nat4Plus minMinus4_) Nat15) ...
+```
+
+
+## as storage types
+
+For example to store in your `Model`
+
+  - = 15
+
+```
+Arr (Only Nat15) ...
+```
+
+  - amount >= 4
+
+```
+Arr (Min Nat4) ...
+```
+
+  - 4 <= amount <= 15
+
+```
+Arr (In Nat4 Nat15) ...
 ```
 
 -}
@@ -185,7 +195,7 @@ Try to keep extra information as long as you can.
     --> Array.fromList [ 0, 1, 2, 3, 4 ]
 
 -}
-toArray : Arr length element -> Array element
+toArray : Arr length_ element -> Array element
 toArray =
     Internal.toArray
 
@@ -246,49 +256,49 @@ fromArray =
     --> : Arr (In Nat1 (Nat1Plus atLeast0)) String
 
 -}
-empty : Arr (In Nat0 atLeast0) element
+empty : Arr (In Nat0 atLeast0_) element_
 empty =
     Internal.empty
 
 
-{-| Create an `Arr` from exactly 1 elements in this order.
+{-| Create an `Arr` with exactly 1 element.
 -}
-from1 : element -> Arr (In Nat1 (Nat1Plus a)) element
+from1 : element -> Arr (In Nat1 (Nat1Plus a_)) element
 from1 =
-    \a -> empty |> push a
+    \a -> empty |> inPush a
 
 
-{-| Create an `Arr` from exactly 2 elements in this order.
+{-| Create an `Arr` with exactly 2 elements in this order.
 -}
-from2 : element -> element -> Arr (In Nat2 (Nat2Plus a)) element
+from2 : element -> element -> Arr (In Nat2 (Nat2Plus a_)) element
 from2 =
-    apply1 from1 (\init -> \last -> init |> push last)
+    apply1 from1 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 3 elements in this order.
+{-| Create an `Arr` with exactly 3 elements in this order.
 -}
 from3 :
     element
     -> element
     -> element
-    -> Arr (In Nat3 (Nat3Plus a)) element
+    -> Arr (In Nat3 (Nat3Plus a_)) element
 from3 =
-    apply2 from2 (\init -> \last -> init |> push last)
+    apply2 from2 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 4 elements in this order.
+{-| Create an `Arr` with exactly 4 elements in this order.
 -}
 from4 :
     element
     -> element
     -> element
     -> element
-    -> Arr (In Nat4 (Nat4Plus a)) element
+    -> Arr (In Nat4 (Nat4Plus a_)) element
 from4 =
-    apply3 from3 (\init -> \last -> init |> push last)
+    apply3 from3 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 5 elements in this order.
+{-| Create an `Arr` with exactly 5 elements in this order.
 -}
 from5 :
     element
@@ -296,12 +306,12 @@ from5 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat5 (Nat5Plus a)) element
+    -> Arr (In Nat5 (Nat5Plus a_)) element
 from5 =
-    apply4 from4 (\init -> \last -> init |> push last)
+    apply4 from4 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 6 elements in this order.
+{-| Create an `Arr` with exactly 6 elements in this order.
 -}
 from6 :
     element
@@ -310,12 +320,12 @@ from6 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat6 (Nat6Plus a)) element
+    -> Arr (In Nat6 (Nat6Plus a_)) element
 from6 =
-    apply5 from5 (\init -> \last -> init |> push last)
+    apply5 from5 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 7 elements in this order.
+{-| Create an `Arr` with exactly 7 elements in this order.
 -}
 from7 :
     element
@@ -325,12 +335,12 @@ from7 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat7 (Nat7Plus a)) element
+    -> Arr (In Nat7 (Nat7Plus a_)) element
 from7 =
-    apply6 from6 (\init -> \last -> init |> push last)
+    apply6 from6 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 8 elements in this order.
+{-| Create an `Arr` with exactly 8 elements in this order.
 -}
 from8 :
     element
@@ -341,12 +351,12 @@ from8 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat8 (Nat8Plus a)) element
+    -> Arr (In Nat8 (Nat8Plus a_)) element
 from8 =
-    apply7 from7 (\init -> \last -> init |> push last)
+    apply7 from7 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 9 elements in this order.
+{-| Create an `Arr` with exactly 9 elements in this order.
 -}
 from9 :
     element
@@ -358,12 +368,12 @@ from9 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat9 (Nat9Plus a)) element
+    -> Arr (In Nat9 (Nat9Plus a_)) element
 from9 =
-    apply8 from8 (\init -> \last -> init |> push last)
+    apply8 from8 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 10 elements in this order.
+{-| Create an `Arr` with exactly 10 elements in this order.
 -}
 from10 :
     element
@@ -376,12 +386,12 @@ from10 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat10 (Nat10Plus a)) element
+    -> Arr (In Nat10 (Nat10Plus a_)) element
 from10 =
-    apply9 from9 (\init -> \last -> init |> push last)
+    apply9 from9 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 11 elements in this order.
+{-| Create an `Arr` with exactly 11 elements in this order.
 -}
 from11 :
     element
@@ -395,12 +405,12 @@ from11 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat11 (Nat11Plus a)) element
+    -> Arr (In Nat11 (Nat11Plus a_)) element
 from11 =
-    apply10 from10 (\init -> \last -> init |> push last)
+    apply10 from10 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 12 elements in this order.
+{-| Create an `Arr` with exactly 12 elements in this order.
 -}
 from12 :
     element
@@ -415,12 +425,12 @@ from12 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat12 (Nat12Plus a)) element
+    -> Arr (In Nat12 (Nat12Plus a_)) element
 from12 =
-    apply11 from11 (\init -> \last -> init |> push last)
+    apply11 from11 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 13 elements in this order.
+{-| Create an `Arr` with exactly 13 elements in this order.
 -}
 from13 :
     element
@@ -436,12 +446,12 @@ from13 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat13 (Nat13Plus a)) element
+    -> Arr (In Nat13 (Nat13Plus a_)) element
 from13 =
-    apply12 from12 (\init -> \last -> init |> push last)
+    apply12 from12 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 14 elements in this order.
+{-| Create an `Arr` with exactly 14 elements in this order.
 -}
 from14 :
     element
@@ -458,12 +468,12 @@ from14 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat14 (Nat14Plus a)) element
+    -> Arr (In Nat14 (Nat14Plus a_)) element
 from14 =
-    apply13 from13 (\init -> \last -> init |> push last)
+    apply13 from13 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 15 elements in this order.
+{-| Create an `Arr` with exactly 15 elements in this order.
 -}
 from15 :
     element
@@ -481,12 +491,12 @@ from15 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat15 (Nat15Plus a)) element
+    -> Arr (In Nat15 (Nat15Plus a_)) element
 from15 =
-    apply14 from14 (\init -> \last -> init |> push last)
+    apply14 from14 (\init -> \last -> init |> inPush last)
 
 
-{-| Create an `Arr` from exactly 16 elements in this order.
+{-| Create an `Arr` with exactly 16 elements in this order.
 -}
 from16 :
     element
@@ -505,19 +515,9 @@ from16 :
     -> element
     -> element
     -> element
-    -> Arr (In Nat16 (Nat16Plus a)) element
+    -> Arr (In Nat16 (Nat16Plus a_)) element
 from16 =
-    apply15 from15 (\init -> \last -> init |> push last)
-
-
-{-| **Should not be exposed.**
--}
-push :
-    element
-    -> Arr (In min max) element
-    -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
-push element =
-    Internal.push element (InNat.add nat1)
+    apply15 from15 (\init -> \last -> init |> inPush last)
 
 
 
@@ -536,7 +536,7 @@ push element =
 
 -}
 replaceAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
@@ -557,7 +557,7 @@ replaceAt index direction replacingElement =
 
 -}
 updateAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
     -> (element -> element)
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
@@ -591,7 +591,7 @@ takeMax :
     Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
     -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (In minTaken atLeastMaxTaken) element
 takeMax maxAmount takenAmount direction =
     Internal.takeMax maxAmount takenAmount direction
@@ -607,7 +607,7 @@ takeMax maxAmount takenAmount direction =
 take :
     Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (In taken atLeastTaken) element
 take takenAmount direction =
     Internal.take takenAmount direction
@@ -619,6 +619,7 @@ take takenAmount direction =
 
 {-| Change every element.
 
+    aToZ : Arr (In Nat26 (Nat26Plus a_)) Char
     aToZ =
         Arr.nats nat26
             |> Arr.map (val >> inABC)
@@ -627,40 +628,39 @@ take takenAmount direction =
         (+) ('a' |> Char.toCode)
             >> Char.fromCode
 
-`val` refers to `Typed.val`.
+`val` refers to [`Typed.val`](https://package.elm-lang.org/packages/lue-bird/elm-typed-value/latest/Typed#val).
 
 -}
 map :
-    (aElement -> bElement)
+    (aElement -> mappedElement)
     -> Arr length aElement
-    -> Arr length bElement
+    -> Arr length mappedElement
 map alter =
     Internal.map alter
 
 
-{-| Combine the elements of 2 `Arr`s to a new element.
-If one list is longer, the extra elements are dropped.
+{-| Combine the elements of 2 `Arr`s into new elements.
+If one list is longer, its extra elements are not used.
 
     teamLifes aBoard bBoard =
         Arr.map2 (\a b -> a.lifes + b.lifes)
             aBoard
             bBoard
 
-The length pf all `Arr`s must be in the same range.
+The length of all `Arr`s must be in the same range.
 
-  - If 1 `Arr` is a potential `Arr (Min ...)`, you have to
+  - If 1 `Arr`'s maximum length isn't known:
 
 ```
 Arr.map2 (\a b -> a.lifes + b.lifes)
     (aBoard |> MinArr.value)
     (bBoard |> MinArr.value)
 
-aBoard, bBoard : Arr (In Nat2 someMax) Field
+aBoard : Arr (In Nat2 someMax) Field
+bBoard : Arr (In Nat2 otherMax) Field
 ```
 
-for every non-`Arr (Min ...)`.
-
-  - If 1 `Arr` has a higher minimum length, you have to
+  - If 1 `Arr` has a higher minimum length:
 
 ```
 Arr.map2 (\a b -> a.lifes + b.lifes)
@@ -672,10 +672,10 @@ aBoard : Arr (In Nat5 Nat10) Field
 
 -}
 map2 :
-    (a -> b -> combined)
+    (a -> b -> combinedElement)
     -> Arr length a
     -> Arr length b
-    -> Arr length combined
+    -> Arr length combinedElement
 map2 combine aArr bArr =
     Internal.map2 combine aArr bArr
 
@@ -724,7 +724,7 @@ fold :
     LinearDirection
     -> (element -> result -> result)
     -> result
-    -> Arr (In min max) element
+    -> Arr length_ element
     -> result
 fold direction reduce initial =
     toArray >> Array.fold direction reduce initial
@@ -742,30 +742,20 @@ fold direction reduce initial =
 
 Often, calling `map` before `foldWith` is helpful.
 
-    allOfTheSameValue =
-        Arr.map
-            (\field ->
-                case field of
-                    EmptyField ->
-                        Nothing
+    Arr.map String.fromInt
+        >> Arr.foldWith FirstToLast (++)
 
-                    FieldSet x ->
-                        Just x
-            )
-            >> Arr.foldWith FirstToLast
-                (\field soFar ->
-                    if field == soFar then
-                        soFar
+instead of
 
-                    else
-                        Nothing
-                )
+    Arr.fold FirstToLast
+        (\int -> (++) (String.fromInt int))
+        ""
 
 -}
 foldWith :
     LinearDirection
     -> (element -> element -> element)
-    -> Arr (In (Nat1Plus minMinus1) max) element
+    -> Arr (In (Nat1Plus minMinus1_) max_) element
     -> element
 foldWith direction reduce =
     \inArr ->
@@ -784,7 +774,7 @@ foldWith direction reduce =
 
 {-| The amount of elements.
 -}
-length : Arr length element -> Nat length
+length : Arr length element_ -> Nat length
 length =
     Internal.length
 
@@ -801,9 +791,9 @@ length =
 
 -}
 at :
-    Nat (ArgIn indexMin minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) max) element
+    -> Arr (In (Nat1Plus minMinus1) max_) element
     -> element
 at index direction =
     Internal.at index direction
@@ -850,7 +840,7 @@ resize :
     LinearDirection
     -> Nat (ArgIn newMin newMax ifN_)
     -> element
-    -> Arr (In min max) element
+    -> Arr (In min_ max_) element
     -> Arr (In newMin newMax) element
 resize direction newLength defaultElement =
     Internal.resize direction newLength defaultElement
@@ -882,7 +872,7 @@ resize direction newLength defaultElement =
 groupsOf :
     Nat (ArgIn (Nat1Plus minGroupSizeMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min_ max) element
     ->
         { groups :
             Arr
@@ -965,13 +955,13 @@ restoreMaxLength maximumLength =
     -->     (In Nat2 (Nat10Plus a))
     -->     (Nat (In Nat0 (Nat9Plus a)))
 
-    from first length_ =
-        Arr.nats length_
+    from first length =
+        Arr.nats length
             |> Arr.map (InNat.add first)
 
 If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
 
-    Arr.minNats (Nat.intAtLeast nat5 someInt) -- error
+    Arr.nats (Nat.intAtLeast nat5 someInt) -- error
 
 use [minNats](Arr#minNats).
 
@@ -986,7 +976,7 @@ nats length_ =
     Internal.nats length_
 
 
-{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum of the length.
+{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum length.
 
     Arr.nats nat5
 
@@ -998,8 +988,8 @@ If not:
     --> : Arr (Min Nat10)
     -->     (Nat (Min Nat10))
 
-    from first length_ =
-        Arr.minNats length_
+    from first length =
+        Arr.minNats length
             |> Arr.map (MinNat.add first)
 
 -}
