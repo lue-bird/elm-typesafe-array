@@ -29,7 +29,7 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 -}
 
 import Arr exposing (Arr)
-import Internal.InArr as Internal
+import Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, N, Nat, Only, To)
@@ -45,7 +45,7 @@ import TypeNats exposing (..)
 
     arrWith5To10Elements
         |> InArr.push "becomes the last"
-    --> : Arr (In Nat6 Nat11) String
+    --> : Arr (In Nat6 (Nat11Plus a_)) String
 
 -}
 push :
@@ -53,7 +53,7 @@ push :
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
-    Internal.push element
+    Internal.inPush element
 
 
 {-| Put an element in the `Arr` at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -74,7 +74,7 @@ insertAt :
     -> Arr (In (Nat1Plus minMinus1) max) element
     -> Arr (In (Nat2Plus minMinus1) (Nat1Plus max)) element
 insertAt index direction element =
-    Internal.insertAt index direction element
+    Internal.inInsertAt index direction element
 
 
 {-| Append the elements of another `Arr (In ...)`.
@@ -107,7 +107,7 @@ extend :
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 extend addedLength arrExtension =
-    Internal.extend addedLength arrExtension
+    Internal.inExtend addedLength arrExtension
 
 
 {-| Kick an element out of the `Arr` at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -123,13 +123,13 @@ removeAt :
     -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
     -> Arr (In minMinus1 maxMinus1) element
 removeAt index direction =
-    Internal.removeAt index direction
+    Internal.inRemoveAt index direction
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     with6To10Elements
-        |> Arr.drop nat2 LastToFirst
+        |> InArr.drop nat2 LastToFirst
     --> : Arr (In Nat4 (Nat10Plus a)) ...
 
 -}
@@ -145,7 +145,7 @@ drop :
     -> Arr (In min max) element
     -> Arr (In minTaken maxTaken) element
 drop droppedAmount direction =
-    Internal.drop droppedAmount direction
+    Internal.inDrop droppedAmount direction
 
 
 
@@ -199,7 +199,7 @@ isLength :
             (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
             (Arr (In (Nat2Plus valueMinus1) max) element)
 isLength amount lowest =
-    Internal.isLength amount lowest
+    Internal.inIsLength amount lowest
 
 
 {-| Compared to a range from a lower to an upper bound, is its length `BelowOrInOrAboveRange`?
@@ -257,7 +257,7 @@ isLengthInRange :
             (Arr (In lowerBound atLeastUpperBound) element)
             (Arr (In (Nat1Plus upperBound) max) element)
 isLengthInRange lowerBound upperBound lowest =
-    Internal.isLengthInRange lowerBound upperBound lowest
+    Internal.inIsLengthInRange lowerBound upperBound lowest
 
 
 {-| Is its length `BelowOrAtLeast` as big as a `Nat`?
@@ -302,7 +302,7 @@ isLengthAtLeast :
             (Arr (In lowest atLeastLowerBoundMinus1) element)
             (Arr (In lowerBound max) element)
 isLengthAtLeast lowerBound lowest =
-    Internal.isLengthAtLeast lowerBound lowest
+    Internal.inIsLengthAtLeast lowerBound lowest
 
 
 {-| Is its length `AtMostOrAbove` a given length?
@@ -356,7 +356,7 @@ isLengthAtMost :
             (Arr (In lowest atLeastUpperBound) element)
             (Arr (In (Nat1Plus upperBound) max) element)
 isLengthAtMost upperBound lowest =
-    Internal.isLengthAtMost upperBound lowest
+    Internal.inIsLengthAtMost upperBound lowest
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s within a minimum & maximum length.
@@ -366,12 +366,12 @@ isLengthAtMost upperBound lowest =
     serialize10To15Ints :
         Serialize.Codec
             String
-            (Arr (In Nat10 (Nat15Plus a)) Int)
+            (Arr (In Nat10 (Nat15Plus a_)) Int)
     serialize10To15Ints =
         InArr.serialize Serialize.int nat10 nat15
 
     encode :
-        Arr (In (Nat10Plus orHigherMin) Nat15) Int
+        Arr (In (Nat10Plus orHigherMin_) Nat15) Int
         -> Bytes
     encode =
         Arr.lowerMinLength nat10
@@ -382,7 +382,7 @@ isLengthAtMost upperBound lowest =
         ->
             Result
                 (Serialize.Error String)
-                (Arr (In Nat10 (Nat15Plus a) Int))
+                (Arr (In Nat10 (Nat15Plus a_) Int))
     decode =
         Serialize.decodeFromBytes serialize10To15Ints
 
@@ -391,11 +391,11 @@ For decoded `Arr`s with a length outside of the expected bounds, the `Result` is
 -}
 serialize :
     Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
-    -> Nat (ArgIn minUpperBound maxUpperBoundPlusA upperBoundIfN_)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
     -> Serialize.Codec String element
     ->
         Serialize.Codec
             String
-            (Arr (In minLowerBound maxUpperBoundPlusA) element)
+            (Arr (In minLowerBound maxUpperBound) element)
 serialize lowerBound upperBound serializeElement =
-    Internal.serialize lowerBound upperBound serializeElement
+    Internal.serializeIn lowerBound upperBound serializeElement
