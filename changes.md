@@ -93,3 +93,8 @@
 - used more general `MinArr.serialize` length argument (`Nat (ArgIn ...)` instead of a `Nat (N ...)`)
 Updated `bounded-nat` to 17.0.0:
 - `MinArr.isLengthAtLeast` & `MinArr.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
+
+### 13.1.0
+
+- added `takeWhen`, `dropWhen` & `values` in `Arr`
+- updated `bounded-nat` to 18.0.0
