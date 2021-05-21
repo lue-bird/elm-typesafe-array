@@ -916,15 +916,16 @@ at index direction =
     --> { groups =
     -->     Arr.from1 (Arr.from5 1 2 3 4 5)
     -->     : Arr (In Nat0 (Nat7Plus a_))
-    -->         (Arr (In Nat5 (Nat5Plus b_)) number)
+    -->         (Arr (In Nat5 (Nat5Plus b_)) number_)
     --> , remaining =
-    -->     Arr.from2 6 7 : Arr (In Nat0 (Nat5Plus c_)) number
+    -->     Arr.from2 6 7
+    -->     : Arr (In Nat0 (Nat5Plus c_)) number_
     --> }
 
     Arr.from7 1 2 3 4 5 6 7
         |> Arr.groupsOf nat5 LastToFirst
     --> { groups = Arr.from1 (Arr.from5 3 4 5 6 7) : ...
-    --> , remaining = Arr.from2 1 2
+    --> , remaining = Arr.from2 1 2 : ...
     --> }
 
 -}
