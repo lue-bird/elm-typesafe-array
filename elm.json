@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-typesafe-array",
     "summary": "typed array that enables safe access",
     "license": "MIT",
-    "version": "13.0.0",
+    "version": "13.1.0",
     "exposed-modules": [
         "Arr",
         "MinArr",
@@ -15,7 +15,7 @@
         "elm/core": "1.0.5 <= v < 2.0.0",
         "elm/random": "1.0.0 <= v < 2.0.0",
         "elm-community/array-extra": "2.3.0 <= v < 3.0.0",
-        "lue-bird/elm-bounded-nat": "17.0.0 <= v < 18.0.0",
+        "lue-bird/elm-bounded-nat": "18.0.0 <= v < 19.0.0",
         "lue-bird/elm-linear-direction": "2.2.0 <= v < 3.0.0",
         "lue-bird/elm-typed-value": "5.0.0 <= v < 6.0.0"
     },
