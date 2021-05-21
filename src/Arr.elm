@@ -1052,7 +1052,11 @@ minNats length_ =
     Internal.minNats length_
 
 
-{-| Generate a given `amount` of elements and put them in an `Arr`.
+{-| Generate a given amount of elements and put them in an `Arr`.
+
+    Arr.random nat5 (Random.float 0 1)
+    --> : Random.Generator (Arr (In Nat5 (Nat5Plus a_)) Float)
+
 -}
 random :
     Nat (ArgIn min max ifN_)
