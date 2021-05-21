@@ -4,9 +4,9 @@ module Arr exposing
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
-    , replaceAt, updateAt
-    , take, groupsOf, takeMax
-    , map, fold, toArray, foldWith, reverse, resize
+    , replaceAt, updateAt, takeWhen, dropWhen
+    , take, takeMax, groupsOf
+    , map, fold, toArray, foldWith, reverse, resize, values
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
@@ -46,12 +46,12 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs Arr
 
 
-## create
+# create
 
 @docs fromArray, repeat, nats, minNats, random
 
 
-### exact
+## exact
 
 @docs empty, from1
 
@@ -60,27 +60,27 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
 
 
-## scan
+# scan
 
 @docs length, at
 
 
-### modify
+# modify
 
-@docs replaceAt, updateAt
+@docs replaceAt, updateAt, takeWhen, dropWhen
 
 
 ## part
 
-@docs take, groupsOf, takeMax
+@docs take, takeMax, groupsOf
 
 
-## transform
+# transform
 
-@docs map, fold, toArray, foldWith, reverse, resize
+@docs map, fold, toArray, foldWith, reverse, resize, values
 
 
-### combine
+## combine
 
 @docs map2, map3, map4
 
@@ -95,7 +95,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 @docs restoreMaxLength
 
 
-## extra
+# extra
 
 @docs serialize
 
@@ -570,6 +570,38 @@ updateAt index direction updateElement =
                 (updateElement (arr |> at index direction))
 
 
+{-| Only keep values that satisfy a test.
+
+    Arr.from5 1 2 3 4 5
+        |> Arr.takeWhen (\n -> n >= 3)
+    --> Arr.from3 3 4 5
+    --> : Arr (In Nat0 (Nat5Plus a_)) number_
+
+-}
+takeWhen :
+    (element -> Bool)
+    -> Arr (In min max) element
+    -> Arr (In Nat0 max) element
+takeWhen isGood =
+    Internal.takeWhen isGood
+
+
+{-| Remove values that satisfy a test.
+
+    Arr.from5 1 2 3 4 5
+        |> Arr.dropWhen (\n -> n < 3)
+    --> Arr.from3 3 4 5
+    --> : Arr (In Nat0 (Nat5Plus a_)) number_
+
+-}
+dropWhen :
+    (element -> Bool)
+    -> Arr (In min max) element
+    -> Arr (In Nat0 max) element
+dropWhen isBad =
+    takeWhen (not << isBad)
+
+
 
 -- ## part
 
@@ -639,6 +671,29 @@ map alter =
     Internal.map alter
 
 
+{-| Take every `Just value` & drop every `Nothing`.
+
+    Arr.from3 (Just "This") Nothing (Just "fine")
+        |> Arr.values
+    --> Arr.from2 "this" "fine"
+    --> : Arr (In Nat0 (Nat3Plus a_)) String
+
+Often, calling `map` before `values` is helpful. Many call this combination "filterMap".
+
+    Arr.from3 "1.2" "2" "hello"
+        |> Arr.map String.toInt
+        |> Arr.values
+    --> Arr.from1 2
+    --> : Arr (In Nat0 (Nat3Plus a_)) Int
+
+-}
+values :
+    Arr (In min max) (Maybe value)
+    -> Arr (In Nat0 max) value
+values maybes =
+    Internal.values maybes
+
+
 {-| Combine the elements of 2 `Arr`s into new elements.
 If one list is longer, its extra elements are not used.
 
@@ -680,7 +735,7 @@ map2 combine aArr bArr =
     Internal.map2 combine aArr bArr
 
 
-{-| Works like [map2](Arr#map2).
+{-| Combine the elements of 3 `Arr`s into new elements. Works like [map2](Arr#map2).
 -}
 map3 :
     (a -> b -> c -> combinedElement)
@@ -694,7 +749,7 @@ map3 combine aArr bArr cArr =
         cArr
 
 
-{-| Works like [map2](Arr#map2).
+{-| Combine the elements of 4 `Arr`s into new elements. Works like [map2](Arr#map2).
 -}
 map4 :
     (a -> b -> c -> d -> combinedElement)
@@ -745,12 +800,6 @@ Often, calling `map` before `foldWith` is helpful.
     Arr.map String.fromInt
         >> Arr.foldWith FirstToLast (++)
 
-instead of
-
-    Arr.fold FirstToLast
-        (\int -> (++) (String.fromInt int))
-        ""
-
 -}
 foldWith :
     LinearDirection
@@ -766,41 +815,6 @@ foldWith direction reduce =
                 (LinearDirection.opposite direction)
                 (inArr |> toArray)
             )
-
-
-
--- ## scan
-
-
-{-| The amount of elements.
--}
-length : Arr length element_ -> Nat length
-length =
-    Internal.length
-
-
-{-| The element at a valid position in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
-
-    Arr.from4 1 2 3 4
-        |> Arr.at nat1 FirstToLast
-    --> 2
-
-    Arr.from4 1 2 3 4
-        |> Arr.at nat1 LastToFirst
-    --> 3
-
--}
-at :
-    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
-    -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) max_) element
-    -> element
-at index direction =
-    Internal.at index direction
-
-
-
--- ## extra
 
 
 {-| Flip the order of the elements.
@@ -844,6 +858,41 @@ resize :
     -> Arr (In newMin newMax) element
 resize direction newLength defaultElement =
     Internal.resize direction newLength defaultElement
+
+
+
+-- ## scan
+
+
+{-| The amount of elements.
+-}
+length : Arr length element_ -> Nat length
+length =
+    Internal.length
+
+
+{-| The element at a valid position in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    Arr.from4 1 2 3 4
+        |> Arr.at nat1 FirstToLast
+    --> 2
+
+    Arr.from4 1 2 3 4
+        |> Arr.at nat1 LastToFirst
+    --> 3
+
+-}
+at :
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
+    -> LinearDirection
+    -> Arr (In (Nat1Plus minMinus1) max_) element
+    -> element
+at index direction =
+    Internal.at index direction
+
+
+
+-- ## extra
 
 
 {-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).

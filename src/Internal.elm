@@ -3,7 +3,7 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2, reverse
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop
+    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop, takeWhen, values
     , take, takeMax, groupsOf
     , serialize, serializeIn, serializeMin
     , ArrTag, Content, lowerMinLength, minValue, resize, restoreMaxLength
@@ -34,7 +34,7 @@ module Internal exposing
 
 ## modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop
+@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop, takeWhen, dropWhen, values
 
 
 ## part
@@ -190,6 +190,32 @@ map2 combine aArr bArr =
 reverse : Arr length element -> Arr length element
 reverse =
     mapArray Array.reverse >> isChecked Arr
+
+
+takeWhen :
+    (element -> Bool)
+    -> Arr (In min max) element
+    -> Arr (In Nat0 max) element
+takeWhen isGood =
+    mapArrayAndLength
+        (Array.filter isGood)
+        (Nat.lowerMin nat0)
+        >> isChecked Arr
+
+
+values :
+    Arr (In min max) (Maybe value)
+    -> Arr (In Nat0 max) value
+values maybes =
+    maybes
+        |> toArray
+        |> Array.Extra.filterMap identity
+        |> fromArray
+        |> mapLength
+            (Nat.atMost (length maybes)
+                { lowest = nat0 }
+            )
+        |> isChecked Arr
 
 
 
