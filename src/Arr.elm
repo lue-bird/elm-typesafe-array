@@ -865,6 +865,16 @@ resize direction newLength defaultElement =
 
 
 {-| The amount of elements.
+
+    Arr.length (Arr.from3 1 2 3)
+    --> nat3 : Nat (In Nat3 (Nat3Plus a_))
+
+    Arr.length between3And5Elements
+    --> : Nat (In Nat3 (Nat5Plus a_))
+
+    Arr.length atLeast3Elements
+    --> : Nat (Min Nat3)
+
 -}
 length : Arr length element_ -> Nat length
 length =
