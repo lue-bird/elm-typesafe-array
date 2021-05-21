@@ -7,7 +7,7 @@ module InArr exposing
 {-| If the maximum length is set to a specific value (also for `Only`),
 
     -- only up to 50 tags
-    tag : Arr (In min Nat50) String -> a -> Tagged a
+    tag : Arr (In min_ Nat50) String -> a -> Tagged a
 
 use these operations instead of the ones in `Arr` or `MinArr`.
 
@@ -77,11 +77,14 @@ insertAt index direction element =
     Internal.inInsertAt index direction element
 
 
-{-| Append the elements of another `Arr (In ...)`.
+{-| Append the elements of an `Arr (In ...)`.
 
     Arr.from3 1 2 3
-        |> extendIn nat3 nat5 arrWith3To5Elements
+        |> InArr.extendIn nat3 nat5
+            arrWith3To5Elements
     --> : Arr (In Nat6 (Nat8Plus a))
+
+Use [`extend`](InArr#extend) if the appended `Arr` has an exact amount of elements.
 
 -}
 extendIn :
@@ -94,10 +97,10 @@ extendIn extensionMin extensionMax extension =
     Internal.extendIn extensionMin extensionMax extension
 
 
-{-| Append the elements of an `Arr (Only ...)`.
+{-| Append the elements of an `Arr` with an exact amount of elements.
 
     Arr.from3 1 2 3
-        |> extend nat3 (Arr.from3 4 5 6)
+        |> InArr.extend nat3 (Arr.from3 4 5 6)
     --> Arr.from6 1 2 3 4 5 6
 
 -}
@@ -128,9 +131,13 @@ removeAt index direction =
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    with6To10Elements
+    Arr.from4 0 1 2 3
         |> InArr.drop nat2 LastToFirst
-    --> : Arr (In Nat4 (Nat10Plus a)) ...
+    --> Arr.from2 0 1
+
+    between6And10Elements
+        |> InArr.drop nat2 FirstToLast
+    --> : Arr (In Nat4 (Nat10Plus a_)) ...
 
 -}
 drop :

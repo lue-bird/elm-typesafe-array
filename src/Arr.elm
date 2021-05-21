@@ -675,7 +675,7 @@ map alter =
 
     Arr.from3 (Just "This") Nothing (Just "fine")
         |> Arr.values
-    --> Arr.from2 "this" "fine"
+    --> Arr.from2 "This" "fine"
     --> : Arr (In Nat0 (Nat3Plus a_)) String
 
 Often, calling `map` before `values` is helpful. Many call this combination "filterMap".
@@ -688,7 +688,7 @@ Often, calling `map` before `values` is helpful. Many call this combination "fil
 
 -}
 values :
-    Arr (In min max) (Maybe value)
+    Arr (In min_ max) (Maybe value)
     -> Arr (In Nat0 max) value
 values maybes =
     Internal.values maybes
@@ -854,10 +854,10 @@ resize :
     LinearDirection
     -> Nat (ArgIn newMin newMax ifN_)
     -> element
-    -> Arr (In min_ max_) element
+    -> Arr length_ element
     -> Arr (In newMin newMax) element
-resize direction newLength defaultElement =
-    Internal.resize direction newLength defaultElement
+resize direction newLength paddingValue =
+    Internal.resize direction newLength paddingValue
 
 
 

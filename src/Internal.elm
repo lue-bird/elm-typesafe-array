@@ -121,8 +121,8 @@ toArray =
 
 mapArrayAndLength :
     (Array element -> Array mappedElement)
-    -> (Nat (In min max) -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
-    -> Arr (In min max) element
+    -> (Nat length -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
+    -> Arr length element
     -> ArrAs Tagged (In mappedMin mappedMax) mappedElement
 mapArrayAndLength mapArray_ mapLength_ =
     Typed.map
@@ -134,8 +134,8 @@ mapArrayAndLength mapArray_ mapLength_ =
 
 
 mapLength :
-    (Nat (In min max) -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
-    -> Arr (In min max) element
+    (Nat length -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
+    -> Arr length element
     -> ArrAs Tagged (In mappedMin mappedMax) element
 mapLength mapLength_ =
     Typed.map
@@ -204,7 +204,7 @@ takeWhen isGood =
 
 
 values :
-    Arr (In min max) (Maybe value)
+    Arr (In min_ max) (Maybe value)
     -> Arr (In Nat0 max) value
 values maybes =
     maybes
@@ -633,12 +633,15 @@ resize :
     LinearDirection
     -> Nat (ArgIn newMin newMax ifN_)
     -> element
-    -> Arr (In min max) element
+    -> Arr length_ element
     -> Arr (In newMin newMax) element
-resize direction newLength defaultElement =
+resize direction newLength paddingValue =
     mapArrayAndLength
-        (Array.resize direction (val newLength) defaultElement)
-        (\_ -> newLength)
+        (Array.resize direction
+            (val newLength)
+            paddingValue
+        )
+        (\_ -> InNat.value newLength)
         >> isChecked Arr
 
 

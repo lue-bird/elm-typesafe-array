@@ -8,7 +8,7 @@ module MinArr exposing
 {-| If the maximum length is a type variable,
 
     first :
-        Arr (In (Nat1Plus orHigherMin) max) element
+        Arr (In (Nat1Plus minMinus1_) max_) element
         -> element
 
 use these operations instead of the ones in `Arr` or `InArr`
@@ -51,7 +51,7 @@ import Typed exposing (val)
 
 {-| Put a new element after the others.
 
-    arrWithAtLeast5Elements
+    atLeast5Elements
         |> MinArr.push "becomes the last"
     --> : Arr (Min Nat6) String
 
@@ -66,9 +66,9 @@ push element =
 
 {-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    arrWithAtLeast5Elements
-        |> MinArr.insertAt nat0 FirstToLast
-            "becomes the first"
+    atLeast5Elements
+        |> MinArr.insertAt nat0 LastToFirst
+            "becomes the last"
     --> : Arr (Min Nat6) String
 
 -}
@@ -108,7 +108,7 @@ removeAt index direction =
 extend :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
     -> Arr (In minAdded maxAdded) element
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 extend minAddedLength extension =
     Internal.minExtend minAddedLength extension
