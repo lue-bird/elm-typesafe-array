@@ -13,6 +13,36 @@ import TypeNats exposing (..)
 
 suite : Test
 suite =
+    describe "typesafe-array"
+        [ inArrTests
+        , arrTests
+        ]
+
+
+arrTests : Test
+arrTests =
+    describe "Arr"
+        [ test "takeWhen"
+            (\() ->
+                Arr.takeWhen (\n -> n >= 3)
+                    (Arr.from5 1 2 3 4 5)
+                    |> Arr.toArray
+                    |> Array.toList
+                    |> Expect.equal [ 3, 4, 5 ]
+            )
+        , test "dropWhen"
+            (\() ->
+                Arr.dropWhen (\n -> n < 3)
+                    (Arr.from5 1 2 3 4 5)
+                    |> Arr.toArray
+                    |> Array.toList
+                    |> Expect.equal [ 3, 4, 5 ]
+            )
+        ]
+
+
+inArrTests : Test
+inArrTests =
     describe "InArr"
         [ test "extend"
             (\() ->
