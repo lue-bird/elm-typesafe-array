@@ -609,14 +609,12 @@ dropWhen isBad =
 {-| A certain number of elements from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     Arr.from8 0 1 2 3 4 5 6 7
-        |> Arr.take nat3 nat3 LastToFirst
-    --> Arr.from3 5 6 7
-
-    Arr.from8 0 1 2 3 4 5 6 7
         |> Arr.takeMax nat7 between3And7 FirstToLast
     --> : Arr (In Nat3 Nat7) ...
 
 The first number is the maximum taken amount. The second number is the amount of taken elements.
+
+Use [`take`](Arr#take) if you know the exact amount of elements to take.
 
 -}
 takeMax :
@@ -634,6 +632,8 @@ takeMax maxAmount takenAmount direction =
     Arr.from8 0 1 2 3 4 5 6 7
         |> Arr.take nat7 FirstToLast
     --> : Arr (In Nat3 Nat7) ...
+
+Use [`takeMax`](Arr#takeMax) if you don't know the exact amount of elements to take.
 
 -}
 take :
