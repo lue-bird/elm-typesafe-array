@@ -785,7 +785,7 @@ fold direction reduce initial =
     toArray >> Array.fold direction reduce initial
 
 
-{-| A fold where the initial result is the first value in the `Arr`, looking from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/) where the initial result is the first value in the `Arr`.
 
     Arr.foldWith FirstToLast maximum
         (Arr.from3 234 345 543)
