@@ -98,3 +98,11 @@ Updated `bounded-nat` to 17.0.0:
 
 - added `takeWhen`, `dropWhen` & `values` in `Arr`
 - updated `bounded-nat` to 18.0.0
+
+## 14.0.0
+
+No breaking change! 
+
+- just doc changes
+
+The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_)` to `Arr length_`.
