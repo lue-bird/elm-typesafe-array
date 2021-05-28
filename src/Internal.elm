@@ -278,7 +278,7 @@ nats length_ =
 
 
 minNats :
-    Nat (ArgIn minLength maxLength lengthIfN_)
+    Nat (ArgIn minLength maxLength ifN_)
     ->
         Arr
             (In minLength maxLength)
@@ -602,11 +602,11 @@ groupsOf groupSize direction =
 
 
 lowerMinLength :
-    Nat (ArgIn lowerMin min lowerIfN_)
+    Nat (ArgIn newMin min lowerIfN_)
     -> Arr (In min max) element
-    -> Arr (In lowerMin max) element
-lowerMinLength validMinimumLength =
-    mapLength (Nat.lowerMin validMinimumLength)
+    -> Arr (In newMin max) element
+lowerMinLength newMinimumLength =
+    mapLength (Nat.lowerMin newMinimumLength)
         >> isChecked Arr
 
 
@@ -614,8 +614,8 @@ restoreMaxLength :
     Nat (ArgIn max newMax ifN_)
     -> Arr (In min max) element
     -> Arr (In min newMax) element
-restoreMaxLength maximumLength =
-    mapLength (Nat.restoreMax maximumLength)
+restoreMaxLength newMaximumLength =
+    mapLength (Nat.restoreMax newMaximumLength)
         >> isChecked Arr
 
 

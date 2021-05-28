@@ -975,9 +975,9 @@ Elm complains:
 
 -}
 lowerMinLength :
-    Nat (ArgIn lowerMin min lowerIfN_)
+    Nat (ArgIn newMin min lowerIfN_)
     -> Arr (In min max) element
-    -> Arr (In lowerMin max) element
+    -> Arr (In newMin max) element
 lowerMinLength =
     Internal.lowerMinLength
 
@@ -1060,7 +1060,7 @@ If not:
 
 -}
 minNats :
-    Nat (ArgIn minLength maxLength lengthIfN_)
+    Nat (ArgIn minLength maxLength ifN_)
     ->
         Arr
             (In minLength maxLength)
