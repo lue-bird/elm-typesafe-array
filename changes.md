@@ -105,4 +105,9 @@ No breaking change!
 
 - just doc changes
 
-The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_)` to `Arr length_`.
+The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_) ...` to `Arr length_ ...`.
+
+#### 14.0.1
+
+- just doc changes
+
