@@ -4,6 +4,7 @@ import Arr exposing (Arr)
 import Array
 import Expect
 import InArr
+import InNat
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
 import Nat exposing (In, Only)
@@ -92,6 +93,22 @@ num1234 =
     Arr.from4 1 2 3 4
 
 
+maybePush :
+    Maybe a
+    -> Arr (In min max) a
+    -> Arr (In min (Nat1Plus max)) a
+maybePush maybePushedElement =
+    InArr.extendIn nat0
+        nat1
+        (Arr.from1 maybePushedElement
+            |> Arr.values
+        )
+
+
+
+-- : Arr (In min (Nat1Plus max)) a
+
+
 startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
 startBoard =
     let
@@ -123,21 +140,3 @@ type Field
 type Piece
     = Pawn
     | Other
-
-
-type alias TicTacToeBoard =
-    Arr
-        (Only Nat3)
-        (Arr (Only Nat3) TicTacToeField)
-
-
-initialTicTacToeBoard : TicTacToeBoard
-initialTicTacToeBoard =
-    Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty)
-
-
-type TicTacToeField
-    = FieldEmpty
-    | X
-    | O
