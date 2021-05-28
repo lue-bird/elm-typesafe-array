@@ -244,6 +244,11 @@ maybePush :
     Maybe a
     -> Arr (In min max) a
     -> Arr (In min (Nat1Plus max)) a
+maybePush maybePushedElement =
+    InArr.extendIn nat0 nat1
+        (Arr.from1 maybePushedElement
+            |> Arr.values
+        )
 ```
 
 ### and now?
