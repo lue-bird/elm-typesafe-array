@@ -4,9 +4,10 @@ module Arr exposing
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
-    , replaceAt, updateAt, takeWhen, dropWhen
+    , replaceAt, updateAt, reverse, resize
+    , takeWhen, dropWhen
     , take, takeMax, groupsOf
-    , map, fold, toArray, foldWith, reverse, resize, values
+    , map, fold, toArray, foldWith, values
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
@@ -67,17 +68,22 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 # modify
 
-@docs replaceAt, updateAt, takeWhen, dropWhen
+@docs replaceAt, updateAt, reverse, resize
 
 
-## part
+## filter
+
+@docs takeWhen, dropWhen
+
+
+## slice
 
 @docs take, takeMax, groupsOf
 
 
 # transform
 
-@docs map, fold, toArray, foldWith, reverse, resize, values
+@docs map, fold, toArray, foldWith, values
 
 
 ## combine
