@@ -10,9 +10,9 @@
             "elm/core": "1.0.5",
             "elm/html": "1.0.0",
             "elm-community/maybe-extra": "5.2.0",
-            "lue-bird/elm-bounded-nat": "15.0.0",
+            "lue-bird/elm-bounded-nat": "18.0.0",
             "lue-bird/elm-linear-direction": "2.2.0",
-            "lue-bird/elm-typesafe-array": "12.0.0",
+            "lue-bird/elm-typesafe-array": "14.0.0",
             "mdgriffith/elm-ui": "1.1.8"
         },
         "indirect": {
@@ -28,7 +28,7 @@
             "elm/virtual-dom": "1.0.2",
             "elm-community/array-extra": "2.3.0",
             "indique/n": "2.0.0",
-            "lue-bird/elm-typed-value": "5.0.0"
+            "lue-bird/elm-typed-value": "5.0.2"
         }
     },
     "test-dependencies": {
