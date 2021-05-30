@@ -4,8 +4,8 @@ import Arr exposing (Arr)
 import Array
 import Browser
 import Element as Ui
-import Element.Background as UiBackground
-import Element.Font as UiFont
+import Element.Background as Background
+import Element.Font as Font
 import Element.Input as UiInput
 import LinearDirection exposing (LinearDirection(..))
 import Maybe.Extra as Maybe
@@ -221,7 +221,8 @@ view { board, gameStage } =
                 |> Ui.text
                 |> Ui.el
                     [ Ui.centerX
-                    , UiFont.size 40
+                    , Font.size 40
+                    , Font.color (Ui.rgb 1 1 1)
                     ]
             , viewBoard board { gameStage = gameStage }
             ]
@@ -229,12 +230,12 @@ view { board, gameStage } =
                 { options =
                     [ Ui.focusStyle
                         { borderColor = Nothing
-                        , backgroundColor = Just (Ui.rgb 0.5 1 0.6)
+                        , backgroundColor = Just (Ui.rgb 0 0.6 0.3)
                         , shadow = Nothing
                         }
                     ]
                 }
-                []
+                [ Background.color (Ui.rgb 0 0 0) ]
             |> List.singleton
     }
 
@@ -262,13 +263,13 @@ viewBoard board { gameStage } =
                                     [ Ui.centerX
                                     , Ui.centerY
                                     , Ui.moveDown 5
-                                    , UiFont.size ((fieldSize * 0.7) |> round)
+                                    , Font.size ((fieldSize * 0.7) |> round)
                                     ]
             in
             UiInput.button
                 [ Ui.width Ui.fill
                 , Ui.height Ui.fill
-                , UiBackground.color (Ui.rgb 1 1 1)
+                , Background.color (Ui.rgb 0 0 0)
                 ]
                 { onPress =
                     case gameStage of
@@ -287,24 +288,23 @@ viewBoard board { gameStage } =
         boardSize =
             fieldSize * 3 + spacing * 2
     in
-    Ui.row
-        [ Ui.width (Ui.px boardSize)
-        , Ui.height (Ui.px boardSize)
-        , Ui.centerX
-        , Ui.centerY
-        , UiBackground.color (Ui.rgb 0 0 0)
-        , Ui.spacing spacing
-        ]
-        (Nat.range nat0 nat2
-            |> List.map
-                (\x ->
-                    Ui.column
+    Nat.range nat0 nat2
+        |> List.map
+            (\x ->
+                Nat.range nat0 nat2
+                    |> List.map (\y -> viewField x y)
+                    |> Ui.column
                         [ Ui.width Ui.fill
                         , Ui.height Ui.fill
                         , Ui.spacing spacing
                         ]
-                        (Nat.range nat0 nat2
-                            |> List.map (\y -> viewField x y)
-                        )
-                )
-        )
+            )
+        |> Ui.row
+            [ Ui.width (Ui.px boardSize)
+            , Ui.height (Ui.px boardSize)
+            , Ui.centerX
+            , Ui.centerY
+            , Background.color (Ui.rgb 1 1 1)
+            , Ui.spacing spacing
+            , Font.color (Ui.rgb 1 1 1)
+            ]
