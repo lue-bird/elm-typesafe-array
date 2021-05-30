@@ -4,7 +4,6 @@ import Arr exposing (Arr)
 import Array
 import Expect
 import InArr
-import InNat
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
 import Nat exposing (In, Only)
@@ -88,7 +87,7 @@ inArrTests =
         ]
 
 
-num1234 : Arr (In Nat4 (Nat4Plus a)) number
+num1234 : Arr (In Nat4 (Nat4Plus a_)) number_
 num1234 =
     Arr.from4 1 2 3 4
 
