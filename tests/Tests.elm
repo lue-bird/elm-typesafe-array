@@ -105,10 +105,6 @@ maybePush maybePushedElement =
         )
 
 
-
--- : Arr (In min (Nat1Plus max)) a
-
-
 startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
 startBoard =
     let
