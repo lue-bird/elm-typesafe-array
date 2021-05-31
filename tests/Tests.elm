@@ -26,16 +26,14 @@ arrTests =
             (\() ->
                 Arr.takeWhen (\n -> n >= 3)
                     (Arr.from5 1 2 3 4 5)
-                    |> Arr.toArray
-                    |> Array.toList
+                    |> Arr.toList
                     |> Expect.equal [ 3, 4, 5 ]
             )
         , test "dropWhen"
             (\() ->
                 Arr.dropWhen (\n -> n < 3)
                     (Arr.from5 1 2 3 4 5)
-                    |> Arr.toArray
-                    |> Array.toList
+                    |> Arr.toList
                     |> Expect.equal [ 3, 4, 5 ]
             )
         ]
@@ -48,11 +46,9 @@ inArrTests =
             (\() ->
                 Arr.from3 1 1 1
                     |> InArr.extend nat3 (Arr.from3 0 0 0)
-                    |> Arr.toArray
+                    |> Arr.toList
                     |> Expect.equal
-                        ([ 1, 1, 1, 0, 0, 0 ]
-                            |> Array.fromList
-                        )
+                        [ 1, 1, 1, 0, 0, 0 ]
             )
         , describe "resize"
             [ describe "FirstToLast"

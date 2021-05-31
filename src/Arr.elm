@@ -206,7 +206,7 @@ toArray =
     Internal.toArray
 
 
-{-| Short for `Array.toList (Arr.toArray arr)`. Convert the `Arr` to a `List`.
+{-| Short for `Arr.toArray arr |> Array.toList`. Convert the `Arr` to a `List`.
 Just do this in the end.
 Try to keep extra information as long as you can.
 
@@ -269,7 +269,7 @@ fromArray array =
     Internal.fromArray array
 
 
-{-| Short for `Arr.fromArray (Array.fromList list)`. Create an `Arr` from a `List`. As every `List` has `>= 0` elements:
+{-| Short for `Array.fromList list |> Arr.fromArray`. Create an `Arr` from a `List`. As every `List` has `>= 0` elements:
 
     Arr.fromList listFromSomewhere
     --> : Arr (Min Nat0)

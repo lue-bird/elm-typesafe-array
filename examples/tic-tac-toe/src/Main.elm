@@ -153,9 +153,8 @@ isGameOver board =
                 |> allXorO
 
         noEmptyFields =
-            Arr.map (Arr.toArray >> Array.toList)
-                >> Arr.toArray
-                >> Array.toList
+            Arr.map (Arr.toList)
+                >> Arr.toList
                 >> List.concat
                 >> List.all ((/=) FieldNotSet)
     in

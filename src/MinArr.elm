@@ -146,8 +146,7 @@ drop droppedAmount direction =
         let
             wordArr =
                 String.words arguments
-                    |> Array.fromList
-                    |> Arr.fromArray
+                    |> Arr.fromList
         in
         case
             wordArr
@@ -209,8 +208,7 @@ Is it `BelowOrAtLeast` that value?
         let
             wordArr =
                 String.words arguments
-                    |> Array.fromList
-                    |> Arr.fromArray
+                    |> Arr.fromList
         in
         case
             wordArr
