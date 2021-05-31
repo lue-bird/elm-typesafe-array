@@ -107,10 +107,6 @@ No breaking change!
 
 The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_) ...` to `Arr length_ ...`.
 
-#### 14.0.1
-
-- just doc changes
-
 ### 14.1.0
 
 - added `Arr.from-` & `-toList`
