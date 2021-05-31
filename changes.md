@@ -111,3 +111,6 @@ The reason this is called a "major" change is that the `resize` argument went fr
 
 - just doc changes
 
+### 14.1.0
+
+- added `Arr.from-` & `-toList`
