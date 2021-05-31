@@ -1,13 +1,13 @@
 module Arr exposing
     ( Arr
-    , fromArray, repeat, nats, minNats, random
+    , fromArray, fromList, repeat, nats, minNats, random
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , replaceAt, updateAt, reverse, resize
     , takeWhen, dropWhen
     , take, takeMax, groupsOf
-    , map, fold, toArray, foldWith, values
+    , map, fold, toArray, foldWith, values, toList
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
@@ -49,7 +49,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 # create
 
-@docs fromArray, repeat, nats, minNats, random
+@docs fromArray, fromList, repeat, nats, minNats, random
 
 
 ## exact
@@ -83,7 +83,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 # transform
 
-@docs map, fold, toArray, foldWith, values
+@docs map, fold, toArray, foldWith, values, toList
 
 
 ## combine
@@ -206,6 +206,21 @@ toArray =
     Internal.toArray
 
 
+{-| Short for `Array.toList (Arr.toArray arr)`. Convert the `Arr` to a `List`.
+Just do this in the end.
+Try to keep extra information as long as you can.
+
+    Arr.nats nat5
+        |> Arr.map val
+        |> Arr.toList
+    --> [ 0, 1, 2, 3, 4 ]
+
+-}
+toList : Arr length_ element -> List element
+toList =
+    toArray >> Array.toList
+
+
 
 -- ## create
 
@@ -250,8 +265,32 @@ Tell the compiler if you know the amount of elements. Make sure the it knows as 
 
 -}
 fromArray : Array element -> Arr (Min Nat0) element
-fromArray =
-    Internal.fromArray
+fromArray array =
+    Internal.fromArray array
+
+
+{-| Short for `Arr.fromArray (Array.fromList list)`. Create an `Arr` from a `List`. As every `List` has `>= 0` elements:
+
+    Arr.fromList listFromSomewhere
+    --> : Arr (Min Nat0)
+
+Don't use it this way:
+
+    Arr.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
+    --> big no!
+
+Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
+
+    Arr.from7 0 1 2 3 4 5 6
+    --> ok
+
+    Arr.nats nat7
+    --> big yes
+
+-}
+fromList : List element -> Arr (Min Nat0) element
+fromList list =
+    list |> Array.fromList |> fromArray
 
 
 {-| No elements.
@@ -592,7 +631,7 @@ takeWhen isGood =
     Internal.takeWhen isGood
 
 
-{-| Remove values that satisfy a test.
+{-| Remove values when a condition is met.
 
     Arr.from5 1 2 3 4 5
         |> Arr.dropWhen (\n -> n < 3)
@@ -670,8 +709,8 @@ take takenAmount direction =
 
 -}
 map :
-    (aElement -> mappedElement)
-    -> Arr length aElement
+    (element -> mappedElement)
+    -> Arr length element
     -> Arr length mappedElement
 map alter =
     Internal.map alter
