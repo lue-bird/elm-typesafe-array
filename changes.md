@@ -110,3 +110,9 @@ The reason this is called a "major" change is that the `resize` argument went fr
 ### 14.1.0
 
 - added `fromList` & `toList` in `Arr`
+
+## 15.0.0
+
+- renamed `Arr.values` to `whenJust` and moved it into the `filter` doc tag group
+- renamed `InArr.extend` & `MinArr.extend` to `append`
+- renamed `InArr.extendIn` to `appendIn`
