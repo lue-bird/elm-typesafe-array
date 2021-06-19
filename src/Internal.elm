@@ -3,13 +3,13 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2, reverse
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop, takeWhen, values
+    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, appendIn, inDrop, minDrop, when
     , take, takeMax, groupsOf
     , serialize, serializeIn, serializeMin
-    , ArrTag, Content, lowerMinLength, minValue, resize, restoreMaxLength
+    , ArrTag, Content, lowerMinLength, minAppend, minValue, resize, restoreMaxLength, whenJust
     )
 
-{-| Only use it in `Internal.Arr. ...` modules.
+{-| Contains stuff that is unsafe to use locally.
 
 
 ## create
@@ -34,7 +34,7 @@ module Internal exposing
 
 ## modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, extendIn, minExtend, inDrop, minDrop, takeWhen, dropWhen, values
+@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, appendIn, minExtend, inDrop, minDrop, when, dropWhen, values
 
 
 ## part
@@ -192,21 +192,21 @@ reverse =
     mapArray Array.reverse >> isChecked Arr
 
 
-takeWhen :
+when :
     (element -> Bool)
     -> Arr (In min max) element
     -> Arr (In Nat0 max) element
-takeWhen isGood =
+when isGood =
     mapArrayAndLength
         (Array.filter isGood)
         (Nat.lowerMin nat0)
         >> isChecked Arr
 
 
-values :
+whenJust :
     Arr (In min_ max) (Maybe value)
     -> Arr (In Nat0 max) value
-values maybes =
+whenJust maybes =
     maybes
         |> toArray
         |> Array.Extra.filterMap identity
@@ -438,37 +438,37 @@ inExtend :
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 inExtend addedLength extension =
-    extend extension (\_ -> InNat.add addedLength)
+    append extension (\_ -> InNat.add addedLength)
 
 
-extendIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To extendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To extendedMax) addedMaxIs_)
+appendIn :
+    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
     -> Arr (In addedMin addedMax) element
     -> Arr (In min max) element
-    -> Arr (In extendedMin extendedMax) element
-extendIn extensionMin extensionMax extension =
-    extend extension
+    -> Arr (In appendedMin appendedMax) element
+appendIn extensionMin extensionMax extension =
+    append extension
         (InNat.addIn extensionMin extensionMax)
 
 
-minExtend :
+minAppend :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
     -> Arr (In minAdded maxAdded) element
     -> Arr (In min max) element
     -> Arr (Min sumMin) element
-minExtend minAddedLength extension =
-    extend extension (\_ -> MinNat.add minAddedLength)
+minAppend minAddedLength extension =
+    append extension (\_ -> MinNat.add minAddedLength)
 
 
 {-| **Should not be exposed.**
 -}
-extend :
+append :
     Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
     -> Arr lengthSum element
-extend extension addLength =
+append extension addLength =
     let
         appendVal a b =
             { array = Array.append b.array a.array

@@ -22,9 +22,9 @@ suite =
 arrTests : Test
 arrTests =
     describe "Arr"
-        [ test "takeWhen"
+        [ test "when"
             (\() ->
-                Arr.takeWhen (\n -> n >= 3)
+                Arr.when (\n -> n >= 3)
                     (Arr.from5 1 2 3 4 5)
                     |> Arr.toList
                     |> Expect.equal [ 3, 4, 5 ]
@@ -42,10 +42,10 @@ arrTests =
 inArrTests : Test
 inArrTests =
     describe "InArr"
-        [ test "extend"
+        [ test "append"
             (\() ->
                 Arr.from3 1 1 1
-                    |> InArr.extend nat3 (Arr.from3 0 0 0)
+                    |> InArr.append nat3 (Arr.from3 0 0 0)
                     |> Arr.toList
                     |> Expect.equal
                         [ 1, 1, 1, 0, 0, 0 ]
@@ -93,10 +93,10 @@ maybePush :
     -> Arr (In min max) a
     -> Arr (In min (Nat1Plus max)) a
 maybePush maybePushedElement =
-    InArr.extendIn nat0
+    InArr.appendIn nat0
         nat1
         (Arr.from1 maybePushedElement
-            |> Arr.values
+            |> Arr.whenJust
         )
 
 
@@ -112,7 +112,7 @@ startBoard =
     Arr.empty
         |> InArr.push (firstRow White)
         |> InArr.push (pawnRow White)
-        |> InArr.extend nat4
+        |> InArr.append nat4
             (Arr.repeat nat4 (Arr.repeat nat8 Empty))
         |> InArr.push (pawnRow Black)
         |> InArr.push (firstRow Black)

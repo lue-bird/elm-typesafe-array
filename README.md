@@ -127,7 +127,7 @@ initialChessBoard =
     Arr.empty
         |> InArr.push (firstRow White)
         |> InArr.push (pawnRow White)
-        |> InArr.extend nat4
+        |> InArr.append nat4
             (Arr.repeat nat4 (Arr.repeat nat8 Empty))
         |> InArr.push (pawnRow Black)
         |> InArr.push (firstRow Black)
@@ -217,7 +217,7 @@ vs
 ```elm
 arr1, arr2 : Arr (In Nat6 (Nat6Plus a_)) ...
 
-arr1 |> InArr.extend nat6 arr2
+arr1 |> InArr.append nat6 arr2
 -- : Arr (In Nat12 (Nat12Plus a_)) ...
 ```
 
@@ -245,7 +245,7 @@ maybePush :
     -> Arr (In min max) a
     -> Arr (In min (Nat1Plus max)) a
 maybePush maybePushedElement =
-    InArr.extendIn nat0 nat1
+    InArr.appendIn nat0 nat1
         (Arr.from1 maybePushedElement
             |> Arr.values
         )

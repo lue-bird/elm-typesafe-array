@@ -1,5 +1,5 @@
 module MinArr exposing
-    ( push, removeAt, insertAt, extend, drop
+    ( push, removeAt, insertAt, append, drop
     , isLength, isLengthAtLeast, isLengthAtMost
     , value
     , serialize
@@ -16,7 +16,7 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 ## modify
 
-@docs push, removeAt, insertAt, extend, drop
+@docs push, removeAt, insertAt, append, drop
 
 
 ## scan length
@@ -101,17 +101,17 @@ removeAt index direction =
 {-| Append an `Arr`.
 
     Arr.from3 1 2 3
-        |> MinArr.extend nat3 arrWithAtLeast3Elements
+        |> MinArr.append nat3 arrWithAtLeast3Elements
     --> : Arr (Min Nat6) ...
 
 -}
-extend :
+append :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
     -> Arr (In minAdded maxAdded) element
     -> Arr (In min max_) element
     -> Arr (Min sumMin) element
-extend minAddedLength extension =
-    Internal.minExtend minAddedLength extension
+append minAddedLength extension =
+    Internal.minAppend minAddedLength extension
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).

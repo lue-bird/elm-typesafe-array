@@ -1,5 +1,5 @@
 module InArr exposing
-    ( push, extend, extendIn, removeAt, insertAt, drop
+    ( push, append, appendIn, removeAt, insertAt, drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
     , serialize
     )
@@ -14,7 +14,7 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 ## modify
 
-@docs push, extend, extendIn, removeAt, insertAt, drop
+@docs push, append, appendIn, removeAt, insertAt, drop
 
 
 ## scan length
@@ -80,36 +80,36 @@ insertAt index direction element =
 {-| Append the elements of an `Arr (In ...)`.
 
     Arr.from3 1 2 3
-        |> InArr.extendIn nat3 nat5
+        |> InArr.appendIn nat3 nat5
             arrWith3To5Elements
     --> : Arr (In Nat6 (Nat8Plus a))
 
-Use [`extend`](InArr#extend) if the appended `Arr` has an exact amount of elements.
+Use [`append`](InArr#append) if the appended `Arr` has an exact amount of elements.
 
 -}
-extendIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To extendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To extendedMax) addedMaxIs_)
+appendIn :
+    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
     -> Arr (In addedMin addedMax) element
     -> Arr (In min max) element
-    -> Arr (In extendedMin extendedMax) element
-extendIn extensionMin extensionMax extension =
-    Internal.extendIn extensionMin extensionMax extension
+    -> Arr (In appendedMin appendedMax) element
+appendIn extensionMin extensionMax extension =
+    Internal.appendIn extensionMin extensionMax extension
 
 
 {-| Append the elements of an `Arr` with an exact amount of elements.
 
     Arr.from3 1 2 3
-        |> InArr.extend nat3 (Arr.from3 4 5 6)
+        |> InArr.append nat3 (Arr.from3 4 5 6)
     --> Arr.from6 1 2 3 4 5 6
 
 -}
-extend :
+append :
     Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
-extend addedLength arrExtension =
+append addedLength arrExtension =
     Internal.inExtend addedLength arrExtension
 
 

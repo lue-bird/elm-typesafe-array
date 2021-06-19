@@ -5,9 +5,9 @@ module Arr exposing
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , replaceAt, updateAt, reverse, resize
-    , takeWhen, dropWhen
+    , when, dropWhen, whenJust
     , take, takeMax, groupsOf
-    , map, fold, toArray, foldWith, values, toList
+    , map, fold, toArray, foldWith, toList
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
@@ -20,29 +20,31 @@ module Arr exposing
     --> Nothing
 
     Arr.empty |> Arr.at nat0 FirstToLast
-    --> compile time error
+    --> compile-time error
 
 Is this any useful? Let's look at an example:
 
-> 0 to 100 joined by a space
+> You have an array of 1+ elements. Get us the greatest value.
 
-    joinBy between =
-        \before after -> before ++ between ++ after
+    withArray : Array comparable -> Maybe comparable
+    withArray array =
+        array
+            |> Array.foldl
+                (\a mayB ->
+                    case maybeC of
+                        Just b ->
+                            max a b
 
-    let
-        intStringsAfter =
-            Array.fromList (List.range 1 100)
-                String.fromInt
-    in
-    Array.foldl (joinBy " ") "0" intStringsAfter
-    --> "0 1 2 3 4 5 ..."
+                        Nothing ->
+                            a
+                )
+                Nothing
 
-    Arr.nats nat100
-        |> Arr.map (val >> String.fromInt)
-        |> Arr.foldWith FirstToLast (joinBy " ")
-    --> "0 1 2 3 4 5 ..."
+    withArr : Arr (In (Nat1Plus minMinus1_) max_) comparable -> comparable
+    withArr =
+        Arr.foldWith FirstToLast max
 
-The `Array` version just seems hacky and is less readable. `Arr` simply knows more about the length at compile time, so you can e.g. call `foldWith` without a worry.
+The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` simply knows more about the length at compile time, so you can e.g. call `foldWith` without a worry.
 
 @docs Arr
 
@@ -73,7 +75,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 ## filter
 
-@docs takeWhen, dropWhen
+@docs when, dropWhen, whenJust
 
 
 ## slice
@@ -83,7 +85,7 @@ The `Array` version just seems hacky and is less readable. `Arr` simply knows mo
 
 # transform
 
-@docs map, fold, toArray, foldWith, values, toList
+@docs map, fold, toArray, foldWith, toList
 
 
 ## combine
@@ -162,7 +164,7 @@ Arr (In (Nat4Plus minMinus4_) Nat15) ...
 
 ## as storage types
 
-For example to store in your `Model`
+To store in your `Model` for example (which means: no any type variables)
 
   - = 15
 
@@ -618,17 +620,17 @@ updateAt index direction updateElement =
 {-| Only keep values that satisfy a test.
 
     Arr.from5 1 2 3 4 5
-        |> Arr.takeWhen (\n -> n >= 3)
+        |> Arr.when (\n -> n >= 3)
     --> Arr.from3 3 4 5
     --> : Arr (In Nat0 (Nat5Plus a_)) number_
 
 -}
-takeWhen :
+when :
     (element -> Bool)
     -> Arr (In min max) element
     -> Arr (In Nat0 max) element
-takeWhen isGood =
-    Internal.takeWhen isGood
+when isGood =
+    Internal.when isGood
 
 
 {-| Remove values when a condition is met.
@@ -641,10 +643,33 @@ takeWhen isGood =
 -}
 dropWhen :
     (element -> Bool)
-    -> Arr (In min max) element
+    -> Arr (In min_ max) element
     -> Arr (In Nat0 max) element
 dropWhen isBad =
-    takeWhen (not << isBad)
+    when (not << isBad)
+
+
+{-| Take every `Just value` & drop every `Nothing`.
+
+    Arr.from3 (Just "This") Nothing (Just "fine")
+        |> Arr.whenJust
+    --> Arr.from2 "This" "fine"
+    --> : Arr (In Nat0 (Nat3Plus a_)) String
+
+Often, calling `map` before `values` is helpful. Many call this combination "filterMap".
+
+    Arr.from3 "1.2" "2" "hello"
+        |> Arr.map String.toInt
+        |> Arr.whenJust
+    --> Arr.from1 2
+    --> : Arr (In Nat0 (Nat3Plus a_)) Int
+
+-}
+whenJust :
+    Arr (In min_ max) (Maybe value)
+    -> Arr (In Nat0 max) value
+whenJust maybes =
+    Internal.whenJust maybes
 
 
 
@@ -701,9 +726,10 @@ take takenAmount direction =
         Arr.nats nat26
             |> Arr.map (val >> inABC)
 
-    inABC =
-        (+) ('a' |> Char.toCode)
-            >> Char.fromCode
+    inABC index =
+        ('a' |> Char.toCode)
+            + index
+            |> Char.fromCode
 
 `val` refers to [`Typed.val`](https://package.elm-lang.org/packages/lue-bird/elm-typed-value/latest/Typed#val).
 
@@ -714,29 +740,6 @@ map :
     -> Arr length mappedElement
 map alter =
     Internal.map alter
-
-
-{-| Take every `Just value` & drop every `Nothing`.
-
-    Arr.from3 (Just "This") Nothing (Just "fine")
-        |> Arr.values
-    --> Arr.from2 "This" "fine"
-    --> : Arr (In Nat0 (Nat3Plus a_)) String
-
-Often, calling `map` before `values` is helpful. Many call this combination "filterMap".
-
-    Arr.from3 "1.2" "2" "hello"
-        |> Arr.map String.toInt
-        |> Arr.values
-    --> Arr.from1 2
-    --> : Arr (In Nat0 (Nat3Plus a_)) Int
-
--}
-values :
-    Arr (In min_ max) (Maybe value)
-    -> Arr (In Nat0 max) value
-values maybes =
-    Internal.values maybes
 
 
 {-| Combine the elements of 2 `Arr`s into new elements.
