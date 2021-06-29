@@ -118,4 +118,4 @@ The reason this is called a "major" change is that the `resize` argument went fr
 - renamed `InArr.extendIn` to `appendIn`
 - added `InArr.prepend` & `MinArr.prepend`
 - added `InArr.prependIn`
-- regroup doc tags
+- regrouped doc tags
