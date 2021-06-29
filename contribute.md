@@ -1,22 +1,21 @@
-## Contribute
+## contribute
 
 **Contributing is appreciated! 💙**
 
-- Changes may be suggested through pull requests.
-- To discuss major changes, open up a feature request issue.
+- suggest changes through pull requests
+- discuss bigger changes in an issue or in a github Discussion 
 
-## What you can do
+## you
 
 - share your thoughts
 - add operations that might be useful
     - `Array` has no native sort function. If you find a good way, please add it through a PR
 
-### Summary Guide
+### guide
 
 commits look like this:
 > do details, make other details & this
 
-#### Category
 | mark     | means   |
 | :------- | :------ |
 | + ...    | add     |
@@ -27,7 +26,7 @@ commits look like this:
 | -< ...   | split   |
 | >- ...   | merge   |
 
-#### Others
+#### others
 | mark        | means         |
 | :---------- | :------------ |
 | #...        | see           |
