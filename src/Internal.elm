@@ -2,11 +2,12 @@ module Internal exposing
     ( empty, fromArray, repeat, nats, minNats, random
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
-    , toArray, map, map2, reverse
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, appendIn, inDrop, minDrop, when
-    , take, takeMax, groupsOf
+    , toArray, map, map2
     , serialize, serializeIn, serializeMin
-    , ArrTag, Content, lowerMinLength, minAppend, minValue, resize, restoreMaxLength, whenJust
+    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, appendIn, inAppend, minAppend, reverse, resize, minPrepend, inPrepend, prependIn
+    , when, whenJust
+    , take, takeMax, inDrop, minDrop, groupsOf
+    , ArrTag, Content, lowerMinLength, minValue, restoreMaxLength
     )
 
 {-| Contains stuff that is unsafe to use locally.
@@ -29,22 +30,23 @@ module Internal exposing
 
 ## transform
 
-@docs toArray, map, map2, reverse
+@docs toArray, map, map2
+@docs serialize, serializeIn, serializeMin
 
 
 ## modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, inExtend, appendIn, minExtend, inDrop, minDrop, when, dropWhen, values
+@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, appendIn, inAppend, minAppend, reverse, resize, minPrepend, inPrepend, prependIn
 
 
-## part
+### filter
 
-@docs take, takeMax, groupsOf
+@docs when, dropWhen, whenJust
 
 
-## extra
+### part
 
-@docs serialize, serializeIn, serializeMin
+@docs take, takeMax, inDrop, minDrop, groupsOf
 
 -}
 
@@ -432,12 +434,12 @@ removeAt index direction sub1 =
         >> isChecked Arr
 
 
-inExtend :
+inAppend :
     Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
-inExtend addedLength extension =
+inAppend addedLength extension =
     append extension (\_ -> InNat.add addedLength)
 
 
@@ -472,6 +474,54 @@ append extension addLength =
     let
         appendVal a b =
             { array = Array.append b.array a.array
+            , length = addLength a.length b.length
+            }
+    in
+    internalVal2 appendVal Arr extension Arr
+        >> tag
+        >> isChecked Arr
+
+
+inPrepend :
+    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    -> Arr (Only added) element
+    -> Arr (In min max) element
+    -> Arr (In sumMin sumMax) element
+inPrepend addedLength extension =
+    prepend extension (\_ -> InNat.add addedLength)
+
+
+prependIn :
+    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
+    -> Arr (In addedMin addedMax) element
+    -> Arr (In min max) element
+    -> Arr (In appendedMin appendedMax) element
+prependIn extensionMin extensionMax extension =
+    prepend extension
+        (InNat.addIn extensionMin extensionMax)
+
+
+minPrepend :
+    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    -> Arr (In minAdded maxAdded) element
+    -> Arr (In min max) element
+    -> Arr (Min sumMin) element
+minPrepend minAddedLength extension =
+    prepend extension (\_ -> MinNat.add minAddedLength)
+
+
+{-| **Should not be exposed.**
+-}
+prepend :
+    Arr addedLength element
+    -> (Nat addedLength -> Nat length -> Nat lengthSum)
+    -> Arr length element
+    -> Arr lengthSum element
+prepend extension addLength =
+    let
+        appendVal a b =
+            { array = Array.append a.array b.array
             , length = addLength a.length b.length
             }
     in

@@ -1,8 +1,10 @@
 module MinArr exposing
-    ( push, removeAt, insertAt, append, drop
+    ( push, removeAt, insertAt
+    , append, prepend
+    , drop
     , isLength, isLengthAtLeast, isLengthAtMost
-    , value
     , serialize
+    , value
     )
 
 {-| If the maximum length is a type variable,
@@ -14,24 +16,34 @@ module MinArr exposing
 use these operations instead of the ones in `Arr` or `InArr`
 
 
-## modify
+# modify
 
-@docs push, removeAt, insertAt, append, drop
+@docs push, removeAt, insertAt
 
 
-## scan length
+## glue
+
+@docs append, prepend
+
+
+## part
+
+@docs drop
+
+
+# scan length
 
 @docs isLength, isLengthAtLeast, isLengthAtMost
+
+
+# transform
+
+@docs serialize
 
 
 ## drop information
 
 @docs value
-
-
-## extra
-
-@docs serialize
 
 -}
 
@@ -98,7 +110,7 @@ removeAt index direction =
     Internal.minRemoveAt index direction
 
 
-{-| Append an `Arr`.
+{-| Attach elements of an `Arr` to the right.
 
     Arr.from3 1 2 3
         |> MinArr.append nat3 arrWithAtLeast3Elements
@@ -112,6 +124,22 @@ append :
     -> Arr (Min sumMin) element
 append minAddedLength extension =
     Internal.minAppend minAddedLength extension
+
+
+{-| Add elements of an `Arr` to the left.
+
+    Arr.from3 1 2 3
+        |> MinArr.prepend nat3 arrWithAtLeast3Elements
+    --> : Arr (Min Nat6) ...
+
+-}
+prepend :
+    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    -> Arr (In minAdded maxAdded) element
+    -> Arr (In min max_) element
+    -> Arr (Min sumMin) element
+prepend minAddedLength extension =
+    Internal.minPrepend minAddedLength extension
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).

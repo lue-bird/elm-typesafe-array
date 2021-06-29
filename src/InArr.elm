@@ -1,5 +1,7 @@
 module InArr exposing
-    ( push, append, appendIn, removeAt, insertAt, drop
+    ( push, removeAt, insertAt
+    , append, appendIn, prepend, prependIn
+    , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
     , serialize
     )
@@ -12,17 +14,27 @@ module InArr exposing
 use these operations instead of the ones in `Arr` or `MinArr`.
 
 
-## modify
+# modify
 
-@docs push, append, appendIn, removeAt, insertAt, drop
+@docs push, removeAt, insertAt
 
 
-## scan length
+## glue
+
+@docs append, appendIn, prepend, prependIn
+
+
+## part
+
+@docs drop
+
+
+# scan length
 
 @docs isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
 
 
-## extra
+# transform
 
 @docs serialize
 
@@ -77,7 +89,7 @@ insertAt index direction element =
     Internal.inInsertAt index direction element
 
 
-{-| Append the elements of an `Arr (In ...)`.
+{-| Attach elements of an `Arr` which has multiple possible amounts to the right.
 
     Arr.from3 1 2 3
         |> InArr.appendIn nat3 nat5
@@ -97,7 +109,27 @@ appendIn extensionMin extensionMax extension =
     Internal.appendIn extensionMin extensionMax extension
 
 
-{-| Append the elements of an `Arr` with an exact amount of elements.
+{-| Add elements of an `Arr` which has multiple possible amounts to the left.
+
+    Arr.from3 1 2 3
+        |> InArr.prependIn nat3 nat5
+            arrWith3To5Elements
+    --> : Arr (In Nat6 (Nat8Plus a))
+
+Use [`prepend`](InArr#prepend) if the appended `Arr` has an exact amount of elements.
+
+-}
+prependIn :
+    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
+    -> Arr (In addedMin addedMax) element
+    -> Arr (In min max) element
+    -> Arr (In appendedMin appendedMax) element
+prependIn extensionMin extensionMax extension =
+    Internal.prependIn extensionMin extensionMax extension
+
+
+{-| Attach elements of an `Arr` with an exact amount of elements to the right.
 
     Arr.from3 1 2 3
         |> InArr.append nat3 (Arr.from3 4 5 6)
@@ -110,7 +142,23 @@ append :
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 append addedLength arrExtension =
-    Internal.inExtend addedLength arrExtension
+    Internal.inAppend addedLength arrExtension
+
+
+{-| Add elements of an `Arr` with an exact amount of elements to the left.
+
+    Arr.from3 1 2 3
+        |> InArr.prepend nat3 (Arr.from3 4 5 6)
+    --> Arr.from6 4 5 6 1 2 3
+
+-}
+prepend :
+    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    -> Arr (Only added) element
+    -> Arr (In min max) element
+    -> Arr (In sumMin sumMax) element
+prepend addedLength arrExtension =
+    Internal.inPrepend addedLength arrExtension
 
 
 {-| Kick an element out of the `Arr` at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
