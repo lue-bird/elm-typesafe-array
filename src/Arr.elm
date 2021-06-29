@@ -7,11 +7,10 @@ module Arr exposing
     , replaceAt, updateAt, reverse, resize
     , when, dropWhen, whenJust
     , take, takeMax, groupsOf
-    , map, fold, toArray, foldWith, toList
+    , map, fold, foldWith, toArray, toList, serialize
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
-    , serialize
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -78,14 +77,14 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 @docs when, dropWhen, whenJust
 
 
-## slice
+## part
 
 @docs take, takeMax, groupsOf
 
 
 # transform
 
-@docs map, fold, toArray, foldWith, toList
+@docs map, fold, foldWith, toArray, toList, serialize
 
 
 ## combine
@@ -101,11 +100,6 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 ## restore information
 
 @docs restoreMaxLength
-
-
-# extra
-
-@docs serialize
 
 -}
 
