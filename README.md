@@ -143,13 +143,13 @@ initialChessBoard
   
 ```elm
 -- the max tag count should be 53
-tag : Arr (In min_ Nat53) Tag -> a -> Tagged a
+tag : Arr (In min_ Nat53) String -> a -> Tagged a
 tag tags toTag = --...
 
 tag (Arr.from3 "fun" "easy" "fresh")
 --> valid
 
-tag (Arr.repeat nat100 EmptyTag)
+tag (Arr.repeat nat100 "please-get-me-into-the-trends")
 --> compile-time error
 ```
 
