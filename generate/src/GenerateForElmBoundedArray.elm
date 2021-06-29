@@ -298,13 +298,13 @@ argumentsModule =
                         lastTypeVar
                     )
                     ("apply" ++ String.fromInt x)
-                    [ varPattern "fun", varPattern "more" ]
+                    [ varPattern "f", varPattern "more" ]
                     (lambda [ varPattern "a" ]
                         applyXMinus1
                     )
         in
         applyPreset 1
-            (applyBinOp (parens (construct "fun" [ val "a" ]))
+            (applyBinOp (parens (construct "f" [ val "a" ]))
                 piper
                 (val "more")
             )
@@ -313,7 +313,7 @@ argumentsModule =
                         (\x ->
                             applyPreset x
                                 (construct ("apply" ++ String.fromInt (x - 1))
-                                    [ parens (construct "fun" [ val "a" ])
+                                    [ parens (construct "f" [ val "a" ])
                                     , val "more"
                                     ]
                                 )
