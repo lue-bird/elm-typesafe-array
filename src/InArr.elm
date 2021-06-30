@@ -80,7 +80,7 @@ push element =
 
 -}
 insertAt :
-    Nat (ArgIn indexMin minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In (Nat1Plus minMinus1) max) element
@@ -137,7 +137,7 @@ prependIn extensionMin extensionMax extension =
 
 -}
 append :
-    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
@@ -153,7 +153,7 @@ append addedLength arrExtension =
 
 -}
 prepend :
-    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
@@ -169,7 +169,7 @@ prepend addedLength arrExtension =
 
 -}
 removeAt :
-    Nat (ArgIn indexMin minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
     -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
     -> Arr (In minMinus1 maxMinus1) element

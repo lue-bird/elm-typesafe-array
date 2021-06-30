@@ -119,7 +119,7 @@ removeAt index direction =
 -}
 append :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
-    -> Arr (In minAdded maxAdded) element
+    -> Arr (In minAdded maxAdded_) element
     -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 append minAddedLength extension =
@@ -135,7 +135,7 @@ append minAddedLength extension =
 -}
 prepend :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
-    -> Arr (In minAdded maxAdded) element
+    -> Arr (In minAdded maxAdded_) element
     -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 prepend minAddedLength extension =
