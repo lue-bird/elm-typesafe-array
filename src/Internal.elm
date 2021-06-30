@@ -4,13 +4,16 @@ module Internal exposing
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
     , serialize, serializeIn, serializeMin
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, appendIn, inAppend, minAppend, reverse, resize, minPrepend, inPrepend, prependIn
+    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, reverse, resize, order
+    , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust
     , take, takeMax, inDrop, minDrop, groupsOf
     , ArrTag, Content, lowerMinLength, minValue, restoreMaxLength
     )
 
-{-| Contains stuff that is unsafe to use locally.
+{-| Contains stuff that is unsafe to use.
+
+Calling `isChecked Arr` marks unsafe operations.
 
 
 ## create
@@ -36,7 +39,12 @@ module Internal exposing
 
 ## modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, appendIn, inAppend, minAppend, reverse, resize, minPrepend, inPrepend, prependIn
+@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, reverse, resize, order
+
+
+### glue
+
+@docs appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
 
 
 ### filter
@@ -61,7 +69,7 @@ import MinNat
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Random
-import Serialize
+import Serialize exposing (Codec)
 import TypeNats exposing (..)
 import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
 
@@ -194,6 +202,15 @@ reverse =
     mapArray Array.reverse >> isChecked Arr
 
 
+order :
+    LinearDirection
+    -> Arr length element
+    -> Arr length element
+order direction =
+    mapArray (Array.order direction)
+        >> isChecked Arr
+
+
 when :
     (element -> Bool)
     -> Arr (In min max) element
@@ -302,9 +319,10 @@ random :
     -> Random.Generator (Arr (In min max) element)
 random amount generateElement =
     Random.list (val amount) generateElement
+        |> Random.map Array.fromList
         |> Random.map
-            (\list ->
-                { array = Array.fromList list
+            (\array ->
+                { array = array
                 , length = amount |> InNat.value
                 }
                     |> tag
@@ -322,9 +340,9 @@ replaceAt :
     -> element
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
     -> Arr (In (Nat1Plus minLengthMinus1) max) element
-replaceAt index direction replacingElement =
+replaceAt index direction replacement =
     mapArray
-        (Array.replaceAt (index |> val) direction replacingElement)
+        (Array.replaceAt (val index) direction replacement)
         >> isChecked Arr
 
 
@@ -334,6 +352,7 @@ inPush :
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 inPush element =
     push element (InNat.add nat1)
+        >> isChecked Arr
 
 
 minPush :
@@ -342,6 +361,7 @@ minPush :
     -> Arr (Min (Nat1Plus min)) element
 minPush element =
     push element (MinNat.add nat1)
+        >> isChecked Arr
 
 
 {-| **Should not be exposed.**
@@ -350,10 +370,9 @@ push :
     element
     -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
     -> Arr (In min max) element
-    -> Arr (In (Nat1Plus min) maxPlus1) element
+    -> ArrAs Tagged (In (Nat1Plus min) maxPlus1) element
 push elementToPush add1 =
     mapArrayAndLength (Array.push elementToPush) add1
-        >> isChecked Arr
 
 
 inInsertAt :
@@ -367,6 +386,7 @@ inInsertAt index direction insertedElement =
         direction
         insertedElement
         (InNat.add nat1)
+        >> isChecked Arr
 
 
 minInsertAt :
@@ -380,6 +400,7 @@ minInsertAt index direction elementToInsert =
         direction
         elementToInsert
         (MinNat.add nat1)
+        >> isChecked Arr
 
 
 {-| **Should not be exposed.**
@@ -390,12 +411,11 @@ insertAt :
     -> element
     -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
     -> Arr (In min max) element
-    -> Arr (In (Nat1Plus min) maxPlus1) element
+    -> ArrAs Tagged (In (Nat1Plus min) maxPlus1) element
 insertAt index direction inserted add1 =
     mapArrayAndLength
-        (Array.insertAt (index |> val) direction inserted)
+        (Array.insertAt (val index) direction inserted)
         add1
-        >> isChecked Arr
 
 
 inRemoveAt :
@@ -405,6 +425,7 @@ inRemoveAt :
     -> Arr (In minMinus1 maxMinus1) element
 inRemoveAt index direction =
     removeAt index direction (InNat.sub nat1)
+        >> isChecked Arr
 
 
 minRemoveAt :
@@ -414,6 +435,7 @@ minRemoveAt :
     -> Arr (In lengthMinus1 max) element
 minRemoveAt index direction =
     removeAt index direction (MinNat.sub nat1)
+        >> isChecked Arr
 
 
 {-| **Should not be exposed.**
@@ -426,12 +448,11 @@ removeAt :
          -> Nat (ArgIn minMinus1 maxMinus1 minus1IfN_)
         )
     -> Arr (In (Nat1Plus minMinus1) max) element
-    -> Arr (In minMinus1 maxMinus1) element
+    -> ArrAs Tagged (In minMinus1 maxMinus1) element
 removeAt index direction sub1 =
     mapArrayAndLength
         (Array.removeAt (val index) direction)
         sub1
-        >> isChecked Arr
 
 
 inAppend :
@@ -441,6 +462,7 @@ inAppend :
     -> Arr (In sumMin sumMax) element
 inAppend addedLength extension =
     append extension (\_ -> InNat.add addedLength)
+        >> isChecked Arr
 
 
 appendIn :
@@ -452,6 +474,7 @@ appendIn :
 appendIn extensionMin extensionMax extension =
     append extension
         (InNat.addIn extensionMin extensionMax)
+        >> isChecked Arr
 
 
 minAppend :
@@ -461,6 +484,26 @@ minAppend :
     -> Arr (Min sumMin) element
 minAppend minAddedLength extension =
     append extension (\_ -> MinNat.add minAddedLength)
+        >> isChecked Arr
+
+
+{-| **Should not be exposed.**
+-}
+glue :
+    ((Array element -> Array element -> Array element) -> Array element -> Array element -> Array element)
+    -> Arr addedLength element
+    -> (Nat addedLength -> Nat length -> Nat lengthSum)
+    -> Arr length element
+    -> ArrAs Tagged lengthSum element
+glue direction extension addLength =
+    let
+        appendVal a b =
+            { array = direction Array.append b.array a.array
+            , length = addLength a.length b.length
+            }
+    in
+    internalVal2 appendVal Arr extension Arr
+        >> tag
 
 
 {-| **Should not be exposed.**
@@ -469,17 +512,9 @@ append :
     Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
-    -> Arr lengthSum element
+    -> ArrAs Tagged lengthSum element
 append extension addLength =
-    let
-        appendVal a b =
-            { array = Array.append b.array a.array
-            , length = addLength a.length b.length
-            }
-    in
-    internalVal2 appendVal Arr extension Arr
-        >> tag
-        >> isChecked Arr
+    glue (\app a b -> app a b) extension addLength
 
 
 inPrepend :
@@ -489,6 +524,18 @@ inPrepend :
     -> Arr (In sumMin sumMax) element
 inPrepend addedLength extension =
     prepend extension (\_ -> InNat.add addedLength)
+        >> isChecked Arr
+
+
+{-| **Should not be exposed.**
+-}
+prepend :
+    Arr addedLength element
+    -> (Nat addedLength -> Nat length -> Nat lengthSum)
+    -> Arr length element
+    -> ArrAs Tagged lengthSum element
+prepend extension addLength =
+    glue (\app a b -> app b a) extension addLength
 
 
 prependIn :
@@ -500,6 +547,7 @@ prependIn :
 prependIn extensionMin extensionMax extension =
     prepend extension
         (InNat.addIn extensionMin extensionMax)
+        >> isChecked Arr
 
 
 minPrepend :
@@ -509,24 +557,6 @@ minPrepend :
     -> Arr (Min sumMin) element
 minPrepend minAddedLength extension =
     prepend extension (\_ -> MinNat.add minAddedLength)
-
-
-{-| **Should not be exposed.**
--}
-prepend :
-    Arr addedLength element
-    -> (Nat addedLength -> Nat length -> Nat lengthSum)
-    -> Arr length element
-    -> Arr lengthSum element
-prepend extension addLength =
-    let
-        appendVal a b =
-            { array = Array.append a.array b.array
-            , length = addLength a.length b.length
-            }
-    in
-    internalVal2 appendVal Arr extension Arr
-        >> tag
         >> isChecked Arr
 
 
@@ -537,6 +567,7 @@ inDrop :
     -> Arr (In minTaken maxTaken) element
 inDrop droppedAmount direction =
     drop droppedAmount direction InNat.sub
+        >> isChecked Arr
 
 
 minDrop :
@@ -546,6 +577,7 @@ minDrop :
     -> Arr (In minTaken max) element
 minDrop droppedAmount direction =
     drop droppedAmount direction MinNat.sub
+        >> isChecked Arr
 
 
 {-| **Should not be exposed.**
@@ -559,12 +591,11 @@ drop :
          -> Nat (In minTaken maxTaken)
         )
     -> Arr (In min max) element
-    -> Arr (In minTaken maxTaken) element
+    -> ArrAs Tagged (In minTaken maxTaken) element
 drop droppedAmount direction subDropped =
     mapArrayAndLength
-        (Array.drop (droppedAmount |> val) direction)
+        (Array.drop (val droppedAmount) direction)
         (\len -> len |> subDropped droppedAmount)
-        >> isChecked Arr
 
 
 
@@ -579,7 +610,7 @@ takeMax :
     -> Arr (In minTaken atLeastMaxTaken) element
 takeMax maxTakenAmount amount direction =
     mapArrayAndLength
-        (Array.take (amount |> val) direction)
+        (Array.take (val amount) direction)
         (\_ ->
             amount
                 |> Nat.restoreMax maxTakenAmount
@@ -594,7 +625,7 @@ take :
     -> Arr (In taken atLeastTaken) element
 take takenAmount direction =
     mapArrayAndLength
-        (Array.take (takenAmount |> val) direction)
+        (Array.take (val takenAmount) direction)
         (\_ -> takenAmount)
         >> isChecked Arr
 
@@ -615,6 +646,7 @@ groupsOf :
         }
 groupsOf groupSize direction =
     \arr ->
+        -- find a better way
         let
             { groups, less } =
                 toArray arr
@@ -675,10 +707,6 @@ minValue =
         >> isChecked Arr
 
 
-
--- something
-
-
 resize :
     LinearDirection
     -> Nat (ArgIn newMin newMax ifN_)
@@ -727,18 +755,17 @@ inIsLength amount lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
-                    |> isChecked Arr
+                { array = toArray arr, length = len } |> tag
         in
         case length arr |> InNat.is amount lowest of
             Nat.Less less ->
-                Nat.Less (withLength less)
+                Nat.Less (withLength less |> isChecked Arr)
 
             Nat.Equal equal ->
-                Nat.Equal (withLength equal)
+                Nat.Equal (withLength equal |> isChecked Arr)
 
             Nat.Greater greater ->
-                Nat.Greater (withLength greater)
+                Nat.Greater (withLength greater |> isChecked Arr)
 
 
 inIsLengthInRange :
@@ -777,21 +804,23 @@ inIsLengthInRange lowerBound upperBound lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
-                    |> isChecked Arr
+                { array = toArray arr, length = len } |> tag
         in
         case
             length arr
                 |> InNat.isInRange lowerBound upperBound lowest
         of
             Nat.BelowRange below ->
-                Nat.BelowRange (withLength below)
+                Nat.BelowRange
+                    (withLength below |> isChecked Arr)
 
             Nat.InRange inRange ->
-                Nat.InRange (withLength inRange)
+                Nat.InRange
+                    (withLength inRange |> isChecked Arr)
 
             Nat.AboveRange above ->
-                Nat.AboveRange (withLength above)
+                Nat.AboveRange
+                    (withLength above |> isChecked Arr)
 
 
 inIsLengthAtLeast :
@@ -821,18 +850,19 @@ inIsLengthAtLeast lowerBound lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
-                    |> isChecked Arr
+                { array = toArray arr, length = len } |> tag
         in
         case
             length arr
                 |> InNat.isAtLeast lowerBound lowest
         of
             Nat.Below below ->
-                Nat.Below (withLength below)
+                Nat.Below
+                    (withLength below |> isChecked Arr)
 
             Nat.EqualOrGreater atLeast ->
-                Nat.EqualOrGreater (withLength atLeast)
+                Nat.EqualOrGreater
+                    (withLength atLeast |> isChecked Arr)
 
 
 inIsLengthAtMost :
@@ -862,19 +892,19 @@ inIsLengthAtMost upperBound lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len }
-                    |> tag
-                    |> isChecked Arr
+                { array = toArray arr, length = len } |> tag
         in
         case
             length arr
                 |> InNat.isAtMost upperBound lowest
         of
             Nat.EqualOrLess atMost ->
-                Nat.EqualOrLess (withLength atMost)
+                Nat.EqualOrLess
+                    (withLength atMost |> isChecked Arr)
 
             Nat.Above above ->
-                Nat.Above (withLength above)
+                Nat.Above
+                    (withLength above |> isChecked Arr)
 
 
 minIsLength :
@@ -905,18 +935,20 @@ minIsLength amount lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
-                    |> isChecked Arr
+                { array = toArray arr, length = len } |> tag
         in
         case length arr |> MinNat.is amount lowest of
             Nat.Equal equal ->
-                Nat.Equal (withLength equal)
+                Nat.Equal
+                    (withLength equal |> isChecked Arr)
 
             Nat.Greater greater ->
-                Nat.Greater (withLength greater)
+                Nat.Greater
+                    (withLength greater |> isChecked Arr)
 
             Nat.Less less ->
-                Nat.Less (withLength less)
+                Nat.Less
+                    (withLength less |> isChecked Arr)
 
 
 minIsLengthAtLeast :
@@ -946,15 +978,15 @@ minIsLengthAtLeast lowerBound lowest =
         let
             withLength len =
                 tag { array = toArray arr, length = len }
-                    |> isChecked Arr
         in
         case length arr |> MinNat.isAtLeast lowerBound lowest of
             Nat.Below less ->
                 Nat.Below
-                    (withLength less)
+                    (withLength less |> isChecked Arr)
 
             Nat.EqualOrGreater atLeast ->
-                Nat.EqualOrGreater (withLength atLeast)
+                Nat.EqualOrGreater
+                    (withLength atLeast |> isChecked Arr)
 
 
 minIsLengthAtMost :
@@ -990,86 +1022,92 @@ minIsLengthAtMost upperBound lowest =
 
 
 
--- ## extra
+-- ## serialize
+
+
+{-| **Should not be exposed**
+-}
+serializeValid :
+    (Array element
+     -> Result ( String, Int ) (Arr length element)
+    )
+    -> Codec String element
+    -> Codec String (Arr length element)
+serializeValid mapValid serializeElement =
+    Serialize.array serializeElement
+        |> Serialize.mapValid
+            (\array ->
+                mapValid array
+                    |> Result.mapError
+                        (\( reason, bound ) ->
+                            [ "Array length "
+                            , String.fromInt (Array.length array)
+                            , " was "
+                            , reason
+                            , " "
+                            , String.fromInt bound
+                            ]
+                                |> String.concat
+                        )
+            )
+            toArray
 
 
 serialize :
     Nat (ArgIn min max ifN_)
-    -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (In min max) element)
+    -> Codec String element
+    -> Codec String (Arr (In min max) element)
 serialize length_ serializeElement =
-    Serialize.array serializeElement
-        |> Serialize.mapValid
-            (\array ->
-                let
-                    decodedLength =
-                        Array.length array
-                in
-                if decodedLength == val length_ then
-                    { array = array
-                    , length = length_ |> InNat.value
-                    }
-                        |> tag
-                        |> isChecked Arr
-                        |> Ok
+    serializeValid
+        (\array ->
+            if Array.length array == val length_ then
+                { array = array
+                , length = length_ |> InNat.value
+                }
+                    |> tag
+                    |> isChecked Arr
+                    |> Ok
 
-                else
-                    "Array length "
-                        ++ String.fromInt decodedLength
-                        ++ " was different from the expected length "
-                        ++ String.fromInt (val length_)
-                        |> Err
-            )
-            toArray
+            else
+                Err ( "different from the expected length", val length_ )
+        )
+        serializeElement
 
 
 serializeIn :
     Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
     -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
-    -> Serialize.Codec String element
+    -> Codec String element
     ->
-        Serialize.Codec
+        Codec
             String
             (Arr (In minLowerBound maxUpperBound) element)
 serializeIn lowerBound upperBound serializeElement =
-    Serialize.array serializeElement
-        |> Serialize.mapValid
-            (\array ->
-                let
-                    decodedLength =
-                        Array.length array
+    serializeValid
+        (\array ->
+            case
+                Array.length array
+                    |> Nat.isIntInRange lowerBound upperBound
+            of
+                Nat.BelowRange () ->
+                    Err ( "less than the expected minimum", val lowerBound )
 
-                    err reason bound =
-                        "Array length "
-                            ++ String.fromInt decodedLength
-                            ++ " was "
-                            ++ reason
-                            ++ " "
-                            ++ String.fromInt (val bound)
-                            |> Err
-                in
-                case
-                    decodedLength
-                        |> Nat.isIntInRange lowerBound upperBound
-                of
-                    Nat.BelowRange () ->
-                        err "less than the expected minimum" lowerBound
+                Nat.AboveRange _ ->
+                    Err ( "greater than the expected maximum", val upperBound )
 
-                    Nat.AboveRange _ ->
-                        err "greater than the expected maximum" upperBound
-
-                    Nat.InRange lengthInRange ->
-                        tag { array = array, length = lengthInRange }
-                            |> isChecked Arr
-                            |> Ok
-            )
-            toArray
+                Nat.InRange lengthInRange ->
+                    { array = array, length = lengthInRange }
+                        |> tag
+                        |> isChecked Arr
+                        |> Ok
+        )
+        serializeElement
 
 
 serializeMin :
     Nat (ArgIn min max_ ifN_)
-    -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (Min min) element)
+    -> Codec String element
+    -> Codec String (Arr (Min min) element)
 serializeMin lowerBound serializeElement =
     Serialize.array serializeElement
         |> Serialize.mapValid
