@@ -50,6 +50,14 @@ inArrTests =
                     |> Expect.equal
                         [ 1, 1, 1, 0, 0, 0 ]
             )
+        , test "prepend"
+            (\() ->
+                Arr.from3 1 1 1
+                    |> InArr.prepend nat3 (Arr.from3 0 0 0)
+                    |> Arr.toList
+                    |> Expect.equal
+                        [ 0, 0, 0, 1, 1, 1 ]
+            )
         , describe "resize"
             [ describe "FirstToLast"
                 [ test "length less than current"
