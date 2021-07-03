@@ -3,7 +3,7 @@ module InArr exposing
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , serialize
+    , serialize, serializeErrorToString
     )
 
 {-| If the maximum length is set to a specific value (also for `Only`),
@@ -36,7 +36,7 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 # transform
 
-@docs serialize
+@docs serialize, serializeErrorToString
 
 -}
 
@@ -45,8 +45,9 @@ import Internal
 import LinearDirection exposing (LinearDirection(..))
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, N, Nat, Only, To)
-import Serialize
+import Serialize exposing (Codec)
 import TypeNats exposing (..)
+import Typed exposing (val)
 
 
 
@@ -419,7 +420,7 @@ isLengthAtMost upperBound lowest =
     import Serialize
 
     serialize10To15Ints :
-        Serialize.Codec
+        Codec
             String
             (Arr (In Nat10 (Nat15Plus a_)) Int)
     serialize10To15Ints =
@@ -445,12 +446,70 @@ For decoded `Arr`s with a length outside of the expected bounds, the `Result` is
 
 -}
 serialize :
-    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
-    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
-    -> Serialize.Codec String element
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
     ->
-        Serialize.Codec
-            String
+        ({ actualLength : Int
+         , expectedLength :
+            SerializeError
+                (ArgIn minLowerBound minUpperBound lowerBoundIfN)
+                (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
+    ->
+        Codec
+            serializeError
             (Arr (In minLowerBound maxUpperBound) element)
-serialize lowerBound upperBound serializeElement =
-    Internal.serializeIn lowerBound upperBound serializeElement
+serialize lowerBound upperBound toSerializeError serializeElement =
+    Internal.serializeIn lowerBound
+        upperBound
+        (\{ actualLength, expectedLength } ->
+            toSerializeError
+                { actualLength = actualLength
+                , expectedLength =
+                    expectedLength
+                        |> internalToSerializeError
+                }
+        )
+        serializeElement
+
+
+type SerializeError minimum maximum
+    = AtLeast (Nat minimum)
+    | AtMost (Nat maximum)
+
+
+internalToSerializeError :
+    Internal.SerializeInRangeError minimum maximum
+    -> SerializeError minimum maximum
+internalToSerializeError internalError =
+    case internalError of
+        Internal.AtLeast min ->
+            AtLeast min
+
+        Internal.AtMost max ->
+            AtMost max
+
+
+{-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+-}
+serializeErrorToString :
+    { expectedLength : SerializeError minimum_ maximum_
+    , actualLength : Int
+    }
+    -> String
+serializeErrorToString error =
+    Internal.serializeErrorToString
+        (\expectedLength ->
+            (case expectedLength of
+                AtLeast minimum ->
+                    [ ">=", val minimum |> String.fromInt ]
+
+                AtMost maximum ->
+                    [ "<=", val maximum |> String.fromInt ]
+            )
+                |> String.join " "
+        )
+        error

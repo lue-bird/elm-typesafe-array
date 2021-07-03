@@ -3,8 +3,8 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
-    , serialize, serializeIn, serializeMin
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, reverse, resize, order
+    , serialize, serializeIn, serializeMin, SerializeInRangeError(..), serializeErrorToString
+    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust
     , take, takeMax, inDrop, minDrop, groupsOf
@@ -34,12 +34,16 @@ Calling `isChecked Arr` marks unsafe operations.
 ## transform
 
 @docs toArray, map, map2
-@docs serialize, serializeIn, serializeMin
+
+
+### serialize
+
+@docs serialize, serializeIn, serializeMin, SerializeInRangeError, serializeErrorToString
 
 
 ## modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, reverse, resize, order
+@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
 
 
 ### glue
@@ -86,10 +90,21 @@ type alias Content length element =
     { array : Array element, length : Nat length }
 
 
-{-| **Constructor should not be exposed.**
+{-| **Constructor should not be exposed!**
 -}
 type ArrTag
     = Arr
+
+
+from :
+    Array element
+    -> { length : Nat (ArgIn minLength maxLength ifN_) }
+    -> ArrAs Tagged (In minLength maxLength) element
+from array length_ =
+    { array = array
+    , length = length_.length |> InNat.value
+    }
+        |> tag
 
 
 
@@ -111,7 +126,8 @@ at index direction =
             Nothing ->
                 -- if not, we crash with a
                 -- RangeError: Maximum call stack size exceeded
-                -- instead of failing silently like Orasund's static-array does
+                -- instead of failing silently
+                -- like Orasund's static-array does
                 at index direction arr
 
 
@@ -132,7 +148,7 @@ toArray =
 mapArrayAndLength :
     (Array element -> Array mappedElement)
     -> (Nat length -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
-    -> Arr length element
+    -> ArrAs whoCreated_ length element
     -> ArrAs Tagged (In mappedMin mappedMax) mappedElement
 mapArrayAndLength mapArray_ mapLength_ =
     Typed.map
@@ -145,20 +161,15 @@ mapArrayAndLength mapArray_ mapLength_ =
 
 mapLength :
     (Nat length -> Nat (ArgIn mappedMin mappedMax mappedIfN_))
-    -> Arr length element
+    -> ArrAs whoCreated_ length element
     -> ArrAs Tagged (In mappedMin mappedMax) element
 mapLength mapLength_ =
-    Typed.map
-        (\v ->
-            { array = v.array
-            , length = mapLength_ v.length |> InNat.value
-            }
-        )
+    mapArrayAndLength identity mapLength_
 
 
 mapArray :
     (Array element -> Array mappedElement)
-    -> Arr length element
+    -> ArrAs whoCreated_ length element
     -> ArrAs Tagged length mappedElement
 mapArray mapArray_ =
     Typed.map
@@ -195,11 +206,6 @@ map2 combine aArr bArr =
     internalVal2 map2Val Arr aArr Arr bArr
         |> tag
         |> isChecked Arr
-
-
-reverse : Arr length element -> Arr length element
-reverse =
-    mapArray Array.reverse >> isChecked Arr
 
 
 order :
@@ -243,10 +249,7 @@ whenJust maybes =
 
 empty : Arr (In Nat0 atLeast0) element
 empty =
-    { array = Array.empty
-    , length = nat0 |> InNat.value
-    }
-        |> tag
+    from Array.empty { length = nat0 }
         |> isChecked Arr
 
 
@@ -255,21 +258,18 @@ repeat :
     -> element
     -> Arr (In min max) element
 repeat amount element =
-    { array = Array.repeat (val amount) element
-    , length = amount |> InNat.value
-    }
-        |> tag
+    from (Array.repeat (val amount) element)
+        { length = amount }
         |> isChecked Arr
 
 
 fromArray : Array element -> Arr (Min Nat0) element
 fromArray array =
-    { array = array
-    , length =
-        Array.length array
-            |> Nat.intAtLeast nat0
-    }
-        |> tag
+    from array
+        { length =
+            Array.length array
+                |> Nat.intAtLeast nat0
+        }
         |> isChecked Arr
 
 
@@ -280,19 +280,20 @@ nats :
             (In minLength (Nat1Plus maxLengthMinus1))
             (Nat (In Nat0 maxLengthMinus1))
 nats length_ =
-    { array =
-        case length_ |> InNat.isAtLeast nat1 { lowest = nat0 } of
+    from
+        (case length_ |> InNat.isAtLeast nat1 { lowest = nat0 } of
             Nat.EqualOrGreater lengthAtLeast1 ->
                 List.range 0 (val length_ - 1)
                     |> List.map
-                        (Nat.intInRange nat0 (lengthAtLeast1 |> InNat.sub nat1))
+                        (Nat.intInRange nat0
+                            (lengthAtLeast1 |> InNat.sub nat1)
+                        )
                     |> Array.fromList
 
             Nat.Below _ ->
                 Array.empty
-    , length = length_ |> InNat.value
-    }
-        |> tag
+        )
+        { length = length_ }
         |> isChecked Arr
 
 
@@ -303,13 +304,12 @@ minNats :
             (In minLength maxLength)
             (Nat (In Nat0 maxLength))
 minNats length_ =
-    { array =
-        Nat.range nat0 length_
+    from
+        (Nat.range nat0 length_
             |> List.dropFrom LastToFirst 1
             |> Array.fromList
-    , length = length_ |> InNat.value
-    }
-        |> tag
+        )
+        { length = length_ }
         |> isChecked Arr
 
 
@@ -319,13 +319,9 @@ random :
     -> Random.Generator (Arr (In min max) element)
 random amount generateElement =
     Random.list (val amount) generateElement
-        |> Random.map Array.fromList
         |> Random.map
-            (\array ->
-                { array = array
-                , length = amount |> InNat.value
-                }
-                    |> tag
+            (\list ->
+                from (Array.fromList list) { length = amount }
                     |> isChecked Arr
             )
 
@@ -335,11 +331,11 @@ random amount generateElement =
 
 
 replaceAt :
-    Nat (ArgIn indexMin minLengthMinus1 indexIfN_)
+    Nat index_
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+    -> Arr length element
+    -> Arr length element
 replaceAt index direction replacement =
     mapArray
         (Array.replaceAt (val index) direction replacement)
@@ -364,7 +360,7 @@ minPush element =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 push :
     element
@@ -403,7 +399,7 @@ minInsertAt index direction elementToInsert =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 insertAt :
     Nat range
@@ -438,7 +434,7 @@ minRemoveAt index direction =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 removeAt :
     Nat (ArgIn minIndex minMinus1 indexIfN_)
@@ -487,10 +483,14 @@ minAppend minAddedLength extension =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 glue :
-    ((Array element -> Array element -> Array element) -> Array element -> Array element -> Array element)
+    ((Array element -> Array element -> Array element)
+     -> Array element
+     -> Array element
+     -> Array element
+    )
     -> Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
@@ -506,7 +506,7 @@ glue direction extension addLength =
         >> tag
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 append :
     Arr addedLength element
@@ -527,7 +527,7 @@ inPrepend addedLength extension =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 prepend :
     Arr addedLength element
@@ -580,7 +580,7 @@ minDrop droppedAmount direction =
         >> isChecked Arr
 
 
-{-| **Should not be exposed.**
+{-| Should not be exposed.
 -}
 drop :
     Nat (N dropped atLeastDropped (Is minTaken To min) is)
@@ -602,19 +602,29 @@ drop droppedAmount direction subDropped =
 -- ## part
 
 
+{-| Should not be exposed.
+-}
+takeTemplate :
+    Nat (ArgIn minTaken maxTaken mappedIfN_)
+    -> LinearDirection
+    -> Arr length element
+    -> ArrAs Tagged (In minTaken maxTaken) element
+takeTemplate amountToTake direction =
+    mapArrayAndLength
+        (Array.take (val amountToTake) direction)
+        (\_ -> amountToTake)
+
+
 takeMax :
     Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
     -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In minTaken atLeastMaxTaken) element
-takeMax maxTakenAmount amount direction =
-    mapArrayAndLength
-        (Array.take (val amount) direction)
-        (\_ ->
-            amount
-                |> Nat.restoreMax maxTakenAmount
-        )
+takeMax maxTakenAmount amountToTake direction =
+    takeTemplate
+        (amountToTake |> Nat.restoreMax maxTakenAmount)
+        direction
         >> isChecked Arr
 
 
@@ -623,10 +633,8 @@ take :
     -> LinearDirection
     -> Arr (In min max) element
     -> Arr (In taken atLeastTaken) element
-take takenAmount direction =
-    mapArrayAndLength
-        (Array.take (val takenAmount) direction)
-        (\_ -> takenAmount)
+take amountToTake direction =
+    takeTemplate amountToTake direction
         >> isChecked Arr
 
 
@@ -646,35 +654,29 @@ groupsOf :
         }
 groupsOf groupSize direction =
     \arr ->
-        -- find a better way
+        -- find a safer (less isChecked Arr) way
         let
             { groups, less } =
                 toArray arr
                     |> Array.group (val groupSize) direction
-
-            remaining =
-                less
         in
         { groups =
-            { array =
-                groups
+            from
+                (groups
                     |> Array.map
                         (\array ->
-                            { array = array
-                            , length = groupSize |> InNat.value
-                            }
-                                |> tag
+                            from array { length = groupSize }
                                 |> isChecked Arr
                         )
-            , length = length arr |> Nat.div groupSize
-            }
-                |> tag
+                )
+                { length = length arr |> Nat.div groupSize }
                 |> isChecked Arr
         , remaining =
-            { array = remaining
-            , length = length arr |> Nat.remainderBy groupSize
-            }
-                |> tag
+            from less
+                { length =
+                    length arr
+                        |> Nat.remainderBy groupSize
+                }
                 |> isChecked Arr
         }
 
@@ -703,8 +705,7 @@ restoreMaxLength newMaximumLength =
 
 minValue : Arr (In min max) element -> Arr (Min min) element
 minValue =
-    mapLength MinNat.value
-        >> isChecked Arr
+    mapLength MinNat.value >> isChecked Arr
 
 
 resize :
@@ -719,7 +720,7 @@ resize direction newLength paddingValue =
             (val newLength)
             paddingValue
         )
-        (\_ -> InNat.value newLength)
+        (\_ -> newLength)
         >> isChecked Arr
 
 
@@ -755,7 +756,7 @@ inIsLength amount lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len } |> tag
+                from (toArray arr) { length = len }
         in
         case length arr |> InNat.is amount lowest of
             Nat.Less less ->
@@ -804,7 +805,7 @@ inIsLengthInRange lowerBound upperBound lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len } |> tag
+                from (toArray arr) { length = len }
         in
         case
             length arr
@@ -850,7 +851,7 @@ inIsLengthAtLeast lowerBound lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len } |> tag
+                from (toArray arr) { length = len }
         in
         case
             length arr
@@ -892,7 +893,7 @@ inIsLengthAtMost upperBound lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len } |> tag
+                from (toArray arr) { length = len }
         in
         case
             length arr
@@ -935,7 +936,7 @@ minIsLength amount lowest =
     \arr ->
         let
             withLength len =
-                { array = toArray arr, length = len } |> tag
+                from (toArray arr) { length = len }
         in
         case length arr |> MinNat.is amount lowest of
             Nat.Equal equal ->
@@ -977,7 +978,7 @@ minIsLengthAtLeast lowerBound lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
+                from (toArray arr) { length = len }
         in
         case length arr |> MinNat.isAtLeast lowerBound lowest of
             Nat.Below less ->
@@ -1010,124 +1011,162 @@ minIsLengthAtMost upperBound lowest =
     \arr ->
         let
             withLength len =
-                tag { array = toArray arr, length = len }
-                    |> isChecked Arr
+                from (toArray arr) { length = len }
         in
         case length arr |> MinNat.isAtMost upperBound lowest of
             Nat.EqualOrLess atMost ->
-                Nat.EqualOrLess (withLength atMost)
+                Nat.EqualOrLess
+                    (withLength atMost |> isChecked Arr)
 
             Nat.Above above ->
-                Nat.Above (withLength above)
+                Nat.Above
+                    (withLength above |> isChecked Arr)
 
 
 
 -- ## serialize
 
 
-{-| **Should not be exposed**
+{-| Should not be exposed.
 -}
 serializeValid :
     (Array element
-     -> Result ( String, Int ) (Arr length element)
+     -> Result expectedLength (Arr length element)
     )
-    -> Codec String element
-    -> Codec String (Arr length element)
-serializeValid mapValid serializeElement =
-    Serialize.array serializeElement
+    -> Codec serializeError element
+    ->
+        ({ expectedLength : expectedLength
+         , actualLength : Int
+         }
+         -> serializeError
+        )
+    -> Codec serializeError (Arr length element)
+serializeValid mapValid serializeElement toSerializeError =
+    Serialize.array
+        serializeElement
         |> Serialize.mapValid
             (\array ->
                 mapValid array
                     |> Result.mapError
-                        (\( reason, bound ) ->
-                            [ "Array length "
-                            , String.fromInt (Array.length array)
-                            , " was "
-                            , reason
-                            , " "
-                            , String.fromInt bound
-                            ]
-                                |> String.concat
+                        (\expectedLength ->
+                            { expectedLength = expectedLength
+                            , actualLength = Array.length array
+                            }
+                                |> toSerializeError
                         )
             )
             toArray
 
 
 serialize :
-    Nat (ArgIn min max ifN_)
-    -> Codec String element
-    -> Codec String (Arr (In min max) element)
-serialize length_ serializeElement =
+    Nat (ArgIn min max ifN)
+    ->
+        ({ expectedLength : Nat (ArgIn min max ifN)
+         , actualLength : Int
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
+    -> Codec serializeError (Arr (In min max) element)
+serialize length_ toSerializeError serializeElement =
     serializeValid
         (\array ->
             if Array.length array == val length_ then
-                { array = array
-                , length = length_ |> InNat.value
-                }
-                    |> tag
+                from array { length = length_ }
                     |> isChecked Arr
                     |> Ok
 
             else
-                Err ( "different from the expected length", val length_ )
+                Err length_
         )
         serializeElement
+        toSerializeError
+
+
+type SerializeInRangeError minimum maximum
+    = AtLeast (Nat minimum)
+    | AtMost (Nat maximum)
 
 
 serializeIn :
-    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
-    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
-    -> Codec String element
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+    ->
+        ({ expectedLength :
+            SerializeInRangeError
+                (ArgIn minLowerBound minUpperBound lowerBoundIfN)
+                (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+         , actualLength : Int
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
     ->
         Codec
-            String
+            serializeError
             (Arr (In minLowerBound maxUpperBound) element)
-serializeIn lowerBound upperBound serializeElement =
+serializeIn lowerBound upperBound toSerializeError serializeElement =
     serializeValid
         (\array ->
             case
                 Array.length array
                     |> Nat.isIntInRange lowerBound upperBound
             of
-                Nat.BelowRange () ->
-                    Err ( "less than the expected minimum", val lowerBound )
-
-                Nat.AboveRange _ ->
-                    Err ( "greater than the expected maximum", val upperBound )
-
                 Nat.InRange lengthInRange ->
-                    { array = array, length = lengthInRange }
-                        |> tag
+                    from array { length = lengthInRange }
                         |> isChecked Arr
                         |> Ok
+
+                Nat.BelowRange () ->
+                    Err (AtLeast lowerBound)
+
+                Nat.AboveRange _ ->
+                    Err (AtMost upperBound)
         )
         serializeElement
+        toSerializeError
 
 
 serializeMin :
-    Nat (ArgIn min max_ ifN_)
-    -> Codec String element
-    -> Codec String (Arr (Min min) element)
-serializeMin lowerBound serializeElement =
-    Serialize.array serializeElement
-        |> Serialize.mapValid
-            (\array ->
-                let
-                    decodedLength =
-                        Array.length array
-                in
-                if decodedLength >= val lowerBound then
-                    fromArray array
-                        |> mapLength (val >> Nat.intAtLeast lowerBound)
+    Nat (ArgIn min max ifN)
+    ->
+        ({ expectedLength : { atLeast : Nat (ArgIn min max ifN) }
+         , actualLength : Int
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
+    -> Codec serializeError (Arr (Min min) element)
+serializeMin lowerBound toSerializeError serializeElement =
+    serializeValid
+        (\array ->
+            case
+                Array.length array
+                    |> Nat.isIntAtLeast lowerBound
+            of
+                Just validLength ->
+                    from array { length = validLength }
                         |> isChecked Arr
                         |> Ok
 
-                else
-                    Err
-                        ("Array length "
-                            ++ String.fromInt decodedLength
-                            ++ " was less than the expected minimum "
-                            ++ String.fromInt (val lowerBound)
-                        )
-            )
-            toArray
+                Nothing ->
+                    Err { atLeast = lowerBound }
+        )
+        serializeElement
+        toSerializeError
+
+
+serializeErrorToString :
+    (expectedLength -> String)
+    ->
+        { expectedLength : expectedLength
+        , actualLength : Int
+        }
+    -> String
+serializeErrorToString expectedLengthToString error =
+    [ "expected an array of length"
+    , expectedLengthToString error.expectedLength
+    , "but the actual length was"
+    , String.fromInt error.actualLength
+    ]
+        |> String.join " "

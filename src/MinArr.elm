@@ -3,8 +3,8 @@ module MinArr exposing
     , append, prepend
     , drop
     , isLength, isLengthAtLeast, isLengthAtMost
-    , serialize
     , value
+    , serialize, serializeErrorToString
     )
 
 {-| If the maximum length is a type variable,
@@ -38,21 +38,24 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 # transform
 
-@docs serialize
-
 
 ## drop information
 
 @docs value
 
+
+## serialize
+
+@docs serialize, serializeErrorToString
+
 -}
 
-import Arr exposing (Arr, fromArray, length, toArray)
+import Arr exposing (Arr)
 import Internal
 import LinearDirection exposing (LinearDirection)
 import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
-import Serialize
+import Serialize exposing (Codec)
 import TypeNats exposing (..)
 import Typed exposing (val)
 
@@ -357,7 +360,7 @@ value =
 
 
     -- we can't start if we have no worlds to choose from!
-    serializeSaves : Serialize.Codec String (Arr (Min Nat1) World)
+    serializeSaves : Codec String (Arr (Min Nat1) World)
     serializeSaves =
         MinArr.serialize nat1 serializeWorld
 
@@ -378,8 +381,30 @@ value =
 
 -}
 serialize :
-    Nat (ArgIn min max_ ifN_)
-    -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (Min min) element)
-serialize lowerBound serializeElement =
-    Internal.serializeMin lowerBound serializeElement
+    Nat (ArgIn min max ifN)
+    ->
+        ({ expectedLength : { atLeast : Nat (ArgIn min max ifN) }
+         , actualLength : Int
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
+    -> Codec serializeError (Arr (Min min) element)
+serialize lowerBound toSerializeError serializeElement =
+    Internal.serializeMin lowerBound toSerializeError serializeElement
+
+
+{-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+-}
+serializeErrorToString :
+    { expectedLength : { atLeast : Nat minimum_ }
+    , actualLength : Int
+    }
+    -> String
+serializeErrorToString error =
+    Internal.serializeErrorToString
+        (\{ atLeast } ->
+            [ ">=", val atLeast |> String.fromInt ]
+                |> String.join " "
+        )
+        error

@@ -4,13 +4,14 @@ module Arr exposing
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
-    , replaceAt, updateAt, reverse, resize
+    , replaceAt, updateAt, resize, reverse, order
     , when, dropWhen, whenJust
     , take, takeMax, groupsOf
-    , map, fold, foldWith, toArray, toList, serialize
+    , map, fold, foldWith, toArray, toList
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
+    , serialize, serializeErrorToString
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -69,7 +70,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # modify
 
-@docs replaceAt, updateAt, reverse, resize
+@docs replaceAt, updateAt, resize, reverse, order
 
 
 ## filter
@@ -84,7 +85,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # transform
 
-@docs map, fold, foldWith, toArray, toList, serialize
+@docs map, fold, foldWith, toArray, toList
 
 
 ## combine
@@ -101,6 +102,11 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 @docs restoreMaxLength
 
+
+## serialize
+
+@docs serialize, serializeErrorToString
+
 -}
 
 import Arguments exposing (..)
@@ -112,9 +118,9 @@ import NNat exposing (..)
 import NNats exposing (nat0)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
-import Serialize
+import Serialize exposing (Codec)
 import TypeNats exposing (..)
-import Typed exposing (Checked, Internal, Typed)
+import Typed exposing (Checked, Internal, Typed, val)
 
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -575,13 +581,19 @@ from16 =
         |> Arr.replaceAt nat1 LastToFirst "feel"
     --> Arr.from3 "I" "feel" "ok"
 
+An invalid index is ignored.
+
+    Arr.from3 "I" "am" "ok"
+        |> Arr.replaceAt nat3 LastToFirst "feel"
+    --> Arr.from3 "I" "am" "ok"
+
 -}
 replaceAt :
-    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
+    Nat index_
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+    -> Arr length element
+    -> Arr length element
 replaceAt index direction replacingElement =
     Internal.replaceAt index direction replacingElement
 
@@ -592,23 +604,34 @@ replaceAt index direction replacingElement =
         |> Arr.updateAt nat0 FirstToLast ((*) 10)
     --> Arr.from3 10 20 30
 
-    Arr.from3 10 20 -30
+    Arr.from3 1 20 30
         |> Arr.updateAt nat0 LastToFirst (\x -> -x)
-    --> Arr.from3 10 20 30
+    --> Arr.from3 1 20 -30
+
+An invalid index is ignored.
+
+    Arr.from3 1 20 30
+        |> Arr.updateAt nat3 FirstToLast ((*) 10)
+    --> Arr.from3 1 20 30
 
 -}
 updateAt :
-    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
+    Nat index_
     -> LinearDirection
     -> (element -> element)
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
-    -> Arr (In (Nat1Plus minLengthMinus1) max) element
+    -> Arr length element
+    -> Arr length element
 updateAt index direction updateElement =
     \arr ->
-        arr
-            |> replaceAt index
-                direction
-                (updateElement (arr |> at index direction))
+        (arr |> toArray |> Array.at (val index) direction)
+            |> Maybe.map
+                (\atIndex ->
+                    arr
+                        |> replaceAt index
+                            direction
+                            (updateElement atIndex)
+                )
+            |> Maybe.withDefault arr
 
 
 {-| Only keep values that satisfy a test.
@@ -621,7 +644,7 @@ updateAt index direction updateElement =
 -}
 when :
     (element -> Bool)
-    -> Arr (In min max) element
+    -> Arr (In min_ max) element
     -> Arr (In Nat0 max) element
 when isGood =
     Internal.when isGood
@@ -859,7 +882,7 @@ foldWith direction reduce =
             )
 
 
-{-| Flip the order of the elements.
+{-| Alias to `Arr.order LastToFirst`: flip the order of the elements.
 
     Arr.from5 "l" "i" "v" "e"
         |> Arr.reverse
@@ -868,7 +891,27 @@ foldWith direction reduce =
 -}
 reverse : Arr length element -> Arr length element
 reverse =
-    Internal.reverse
+    order LastToFirst
+
+
+{-| Keep the order if [`FirstToLast`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/LinearDirection#LinearDirection),
+reverse if [`LastToFirst`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/LinearDirection#LinearDirection).
+
+    Arr.from3 1 2 3
+        |> Array.order LastToFirst
+    --> Arr.from3 3 2 1
+
+    Arr.from3 1 2 3
+        |> Array.order FirstToLast
+    --> Arr.from3 1 2 3
+
+-}
+order :
+    LinearDirection
+    -> Arr length element
+    -> Arr length element
+order direction =
+    Internal.order direction
 
 
 {-| Resize an `Arr` in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/), padding with a given value.
@@ -925,13 +968,13 @@ length =
 
 {-| The element at a valid position in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    Arr.from4 1 2 3 4
+    Arr.from4 0 1 2 3
         |> Arr.at nat1 FirstToLast
-    --> 2
+    --> 1
 
-    Arr.from4 1 2 3 4
+    Arr.from4 0 1 2 3
         |> Arr.at nat1 LastToFirst
-    --> 3
+    --> 2
 
 -}
 at :
@@ -1121,16 +1164,16 @@ random amount generateElement =
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a specific amount of elements.
 
-    import Serialize
+    import Serialize exposing (Codec)
 
-
-    -- we can't start if we have no worlds to choose from!
     serializeGameRow :
-        Serialize.Codec
+        Codec
             String
             (Arr (Only Nat10) GameField)
     serializeGameRow =
-        Arr.serialize nat10 serializeGameField
+        Arr.serialize nat10
+            Arr.serializeErrorToString
+            serializeGameField
 
     encode : Arr (Only Nat10) GameField -> Bytes
     encode =
@@ -1147,8 +1190,27 @@ random amount generateElement =
 
 -}
 serialize :
-    Nat (ArgIn min max ifN_)
-    -> Serialize.Codec String element
-    -> Serialize.Codec String (Arr (In min max) element)
-serialize length_ serializeElement =
-    Internal.serialize length_ serializeElement
+    Nat (ArgIn min max ifN)
+    ->
+        ({ actualLength : Int
+         , expectedLength : Nat (ArgIn min max ifN)
+         }
+         -> serializeError
+        )
+    -> Codec serializeError element
+    -> Codec serializeError (Arr (In min max) element)
+serialize length_ toSerializeError serializeElement =
+    Internal.serialize length_ toSerializeError serializeElement
+
+
+{-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+-}
+serializeErrorToString :
+    { actualLength : Int
+    , expectedLength : Nat range_
+    }
+    -> String
+serializeErrorToString error =
+    Internal.serializeErrorToString
+        (val >> String.fromInt)
+        error
