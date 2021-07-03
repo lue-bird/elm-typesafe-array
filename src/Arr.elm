@@ -202,6 +202,8 @@ Try to keep extra information as long as you can.
         |> Arr.toArray
     --> Array.fromList [ 0, 1, 2, 3, 4 ]
 
+`val` refers to [`Typed.val`](https://package.elm-lang.org/packages/lue-bird/elm-typed-value/latest/Typed#val).
+
 -}
 toArray : Arr length_ element -> Array element
 toArray =
@@ -217,6 +219,8 @@ Try to keep extra information as long as you can.
         |> Arr.toList
     --> [ 0, 1, 2, 3, 4 ]
 
+`val` refers to [`Typed.val`](https://package.elm-lang.org/packages/lue-bird/elm-typed-value/latest/Typed#val).
+
 -}
 toList : Arr length_ element -> List element
 toList =
@@ -224,7 +228,7 @@ toList =
 
 
 
--- ## create
+-- # create
 
 
 {-| An `Arr` with a given amount of same elements.
@@ -298,9 +302,9 @@ fromList list =
 {-| No elements.
 
     Arr.empty
-    --> : Arr (In Nat0 atLeast0) element
+    --> : Arr (In Nat0 atLeast0_) element
         |> InArr.push ":)"
-    --> : Arr (In Nat1 (Nat1Plus atLeast0)) String
+    --> : Arr (In Nat1 (Nat1Plus atLeast0_)) String
 
 -}
 empty : Arr (In Nat0 atLeast0_) element_
@@ -567,6 +571,77 @@ from16 =
     apply15 from15 (\init -> \last -> init |> inPush last)
 
 
+{-| Increasing natural numbers. In the end, there are `length` numbers.
+
+    Arr.nats between2And10
+    --> : Arr
+    -->     (In Nat2 (Nat10Plus a))
+    -->     (Nat (In Nat0 (Nat9Plus a)))
+
+    from first length =
+        Arr.nats length
+            |> Arr.map (InNat.add first)
+
+If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
+
+    Arr.nats (Nat.intAtLeast nat5 someInt) -- error
+
+use [minNats](Arr#minNats).
+
+-}
+nats :
+    Nat (ArgIn minLength (Nat1Plus maxLengthMinus1) lengthIfN_)
+    ->
+        Arr
+            (In minLength (Nat1Plus maxLengthMinus1))
+            (Nat (In Nat0 maxLengthMinus1))
+nats length_ =
+    Internal.nats length_
+
+
+{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum length.
+
+    Arr.nats nat5
+
+    Arr.nats between2And10
+
+If not:
+
+    Arr.minNats atLeast10
+    --> : Arr (Min Nat10)
+    -->     (Nat (Min Nat10))
+
+    from first length =
+        Arr.minNats length
+            |> Arr.map (MinNat.add first)
+
+-}
+minNats :
+    Nat (ArgIn minLength maxLength ifN_)
+    ->
+        Arr
+            (In minLength maxLength)
+            (Nat (In Nat0 maxLength))
+minNats length_ =
+    Internal.minNats length_
+
+
+{-| Generate a given amount of elements and put them in an `Arr`.
+
+    Arr.random nat5 (Random.float 0 1)
+
+    --> : Random.Generator (Arr (In Nat5 (Nat5Plus a_)) Float)
+    Nat.random
+
+-}
+random :
+    Nat (ArgIn min max ifN_)
+    -> Random.Generator element
+    -> Random.Generator (Arr (In min max) element)
+random amount generateElement =
+    Internal.random amount generateElement
+
+
 
 -- ## modify
 
@@ -650,7 +725,7 @@ when isGood =
     Internal.when isGood
 
 
-{-| Remove values when a condition is met.
+{-| Remove values where a condition is met.
 
     Arr.from5 1 2 3 4 5
         |> Arr.dropWhen (\n -> n < 3)
@@ -673,7 +748,7 @@ dropWhen isBad =
     --> Arr.from2 "This" "fine"
     --> : Arr (In Nat0 (Nat3Plus a_)) String
 
-Often, calling `map` before `values` is helpful. Many call this combination "filterMap".
+[Call `map` and then `whenJust` to get the same functionality as "filterMap"](https://github.com/lue-bird/elm-typesafe-array/blob/master/Q%20%26%20A.md#why-no-filtermap-but-only-whenjust).
 
     Arr.from3 "1.2" "2" "hello"
         |> Arr.map String.toInt
@@ -697,7 +772,7 @@ whenJust maybes =
 
     Arr.from8 0 1 2 3 4 5 6 7
         |> Arr.takeMax nat7 between3And7 FirstToLast
-    --> : Arr (In Nat3 Nat7) ...
+    --> : Arr (In Nat3 (Nat7Plus a_)) ...
 
 The first number is the maximum taken amount. The second number is the amount of taken elements.
 
@@ -718,7 +793,7 @@ takeMax maxAmount takenAmount direction =
 
     Arr.from8 0 1 2 3 4 5 6 7
         |> Arr.take nat7 FirstToLast
-    --> : Arr (In Nat3 Nat7) ...
+    --> Arr.from7 0 1 2 3 4 5 6
 
 Use [`takeMax`](Arr#takeMax) if you don't know the exact amount of elements to take.
 
@@ -776,8 +851,8 @@ Arr.map2 (\a b -> a.lifes + b.lifes)
     (aBoard |> MinArr.value)
     (bBoard |> MinArr.value)
 
-aBoard : Arr (In Nat2 someMax) Field
-bBoard : Arr (In Nat2 otherMax) Field
+aBoard : Arr (In Nat2 someMax_) Field
+bBoard : Arr (In Nat2 otherMax_) Field
 ```
 
   - If 1 `Arr` has a higher minimum length:
@@ -859,11 +934,6 @@ fold direction reduce initial =
     Arr.foldWith LastToFirst (++)
         (Arr.from3 "m" "l" "e")
     --> "elm"
-
-Often, calling `map` before `foldWith` is helpful.
-
-    Arr.map String.fromInt
-        >> Arr.foldWith FirstToLast (++)
 
 -}
 foldWith :
@@ -986,10 +1056,6 @@ at index direction =
     Internal.at index direction
 
 
-
--- ## extra
-
-
 {-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
     { groups : the Arr divided into equal-sized Arrs
@@ -1033,6 +1099,7 @@ groupsOf groupSize direction =
 
 
 
+-- # transform
 -- ## drop information
 
 
@@ -1090,76 +1157,7 @@ restoreMaxLength maximumLength =
 
 
 
--- ## create
-
-
-{-| Increasing natural numbers. In the end, there are `length` numbers.
-
-    Arr.nats between2And10
-    --> : Arr
-    -->     (In Nat2 (Nat10Plus a))
-    -->     (Nat (In Nat0 (Nat9Plus a)))
-
-    from first length =
-        Arr.nats length
-            |> Arr.map (InNat.add first)
-
-If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
-
-    Arr.nats (Nat.intAtLeast nat5 someInt) -- error
-
-use [minNats](Arr#minNats).
-
--}
-nats :
-    Nat (ArgIn minLength (Nat1Plus maxLengthMinus1) lengthIfN_)
-    ->
-        Arr
-            (In minLength (Nat1Plus maxLengthMinus1))
-            (Nat (In Nat0 maxLengthMinus1))
-nats length_ =
-    Internal.nats length_
-
-
-{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum length.
-
-    Arr.nats nat5
-
-    Arr.nats between2And10
-
-If not:
-
-    Arr.minNats atLeast10
-    --> : Arr (Min Nat10)
-    -->     (Nat (Min Nat10))
-
-    from first length =
-        Arr.minNats length
-            |> Arr.map (MinNat.add first)
-
--}
-minNats :
-    Nat (ArgIn minLength maxLength ifN_)
-    ->
-        Arr
-            (In minLength maxLength)
-            (Nat (In Nat0 maxLength))
-minNats length_ =
-    Internal.minNats length_
-
-
-{-| Generate a given amount of elements and put them in an `Arr`.
-
-    Arr.random nat5 (Random.float 0 1)
-    --> : Random.Generator (Arr (In Nat5 (Nat5Plus a_)) Float)
-
--}
-random :
-    Nat (ArgIn min max ifN_)
-    -> Random.Generator element
-    -> Random.Generator (Arr (In min max) element)
-random amount generateElement =
-    Internal.random amount generateElement
+-- ## serialize
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a specific amount of elements.
@@ -1172,8 +1170,11 @@ random amount generateElement =
             (Arr (Only Nat10) GameField)
     serializeGameRow =
         Arr.serialize nat10
+            -- just give us the error back as a String
             Arr.serializeErrorToString
             serializeGameField
+
+The encode/decode functions can be extracted if needed.
 
     encode : Arr (Only Nat10) GameField -> Bytes
     encode =
@@ -1204,6 +1205,13 @@ serialize length_ toSerializeError serializeElement =
 
 
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+
+    { expectedLength = nat11
+    , actualLength = 10
+    }
+        |> Arr.serializeErrorToString
+    --> expected an array of length 11 but the actual length was 10
+
 -}
 serializeErrorToString :
     { actualLength : Int

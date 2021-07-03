@@ -3,7 +3,7 @@ module InArr exposing
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , serialize, serializeErrorToString
+    , serialize, SerializeError(..), serializeErrorToString
     )
 
 {-| If the maximum length is set to a specific value (also for `Only`),
@@ -36,7 +36,10 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 # transform
 
-@docs serialize, serializeErrorToString
+
+## serialize
+
+@docs serialize, SerializeError, serializeErrorToString
 
 -}
 
@@ -417,14 +420,21 @@ isLengthAtMost upperBound lowest =
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s within a minimum & maximum length.
 
-    import Serialize
+    import Serialize exposing (Codec)
 
     serialize10To15Ints :
         Codec
             String
             (Arr (In Nat10 (Nat15Plus a_)) Int)
     serialize10To15Ints =
-        InArr.serialize Serialize.int nat10 nat15
+        InArr.serialize
+            nat10
+            nat15
+            -- just give us the error back as a String
+            InArr.serializeErrorToString
+            Serialize.int
+
+The encode/decode functions can be extracted if needed.
 
     encode :
         Arr (In (Nat10Plus orHigherMin_) Nat15) Int
@@ -476,6 +486,14 @@ serialize lowerBound upperBound toSerializeError serializeElement =
         serializeElement
 
 
+{-| An expectation that hasn't been met for the decoded array length.
+
+We expected the length to be
+
+  - `AtLeast` some minimum in a range
+  - `AtMost` some maximum in a range
+
+-}
 type SerializeError minimum maximum
     = AtLeast (Nat minimum)
     | AtMost (Nat maximum)
@@ -494,6 +512,13 @@ internalToSerializeError internalError =
 
 
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+
+    { expectedLength = MinArr.AtLeast nat11
+    , actualLength = 10
+    }
+        |> MinArr.serializeErrorToString
+    --> expected an array of length >= 11 but the actual length was 10
+
 -}
 serializeErrorToString :
     { expectedLength : SerializeError minimum_ maximum_

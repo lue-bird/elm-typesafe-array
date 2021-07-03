@@ -362,7 +362,12 @@ value =
     -- we can't start if we have no worlds to choose from!
     serializeSaves : Codec String (Arr (Min Nat1) World)
     serializeSaves =
-        MinArr.serialize nat1 serializeWorld
+        MinArr.serialize nat1
+            -- just give us the error back as a String
+            MinArr.serializeErrorToString
+            serializeWorld
+
+The encode/decode functions can be extracted if needed.
 
     encode : Arr (In (Nat1Plus minMinus1_) max_) World -> Bytes
     encode =
@@ -395,6 +400,13 @@ serialize lowerBound toSerializeError serializeElement =
 
 
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
+
+    { expectedLength = { atLeast = nat11 }
+    , actualLength = 10
+    }
+        |> MinArr.serializeErrorToString
+    --> expected an array of length >= 11 but the actual length was 10
+
 -}
 serializeErrorToString :
     { expectedLength : { atLeast : Nat minimum_ }

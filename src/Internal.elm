@@ -1156,6 +1156,11 @@ serializeMin lowerBound toSerializeError serializeElement =
         toSerializeError
 
 
+{-|
+
+> expected an array of length {} but the actual length was {}
+
+-}
 serializeErrorToString :
     (expectedLength -> String)
     ->
