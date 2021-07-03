@@ -1,7 +1,6 @@
 module Main exposing (Field(..), GameOver(..), Player(..), isGameOver, main)
 
 import Arr exposing (Arr)
-import Array
 import Browser
 import Element as Ui
 import Element.Background as Background
@@ -153,16 +152,19 @@ isGameOver board =
                 |> allXorO
 
         noEmptyFields =
-            Arr.map (Arr.toList)
+            Arr.map Arr.toList
                 >> Arr.toList
                 >> List.concat
                 >> List.all ((/=) FieldNotSet)
     in
     Maybe.orList
-        (wonDiagonally FirstToLast
-            :: wonDiagonally LastToFirst
-            :: wonInRow
-            ++ wonInColumn
+        ([ [ wonDiagonally FirstToLast
+           , wonDiagonally LastToFirst
+           ]
+         , wonInRow
+         , wonInColumn
+         ]
+            |> List.concat
         )
         |> Maybe.map PlayerWon
         |> Maybe.orElse
