@@ -7,7 +7,7 @@ The "_" at the end shows that this type variable is used nowhere else.
 Our types have a lot of type variables, most of them only used once.
 If you see a -_ you know not to focus on these.
 
-#### Why no `filterMap` but only `whenJust`
+#### No `filterMap`, only `whenJust`?
 
-- I dislike `filterMap identity`
+- `whenJust` is easier to understand than `filterMap identity`
 - `whenJust` only filters, whereas `filterMap` maps _and_ filters
