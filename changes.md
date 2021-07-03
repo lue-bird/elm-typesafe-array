@@ -119,3 +119,9 @@ The reason this is called a "major" change is that the `resize` argument went fr
 - added `InArr.prepend` & `MinArr.prepend`
 - added `InArr.prependIn`
 - regrouped doc tags
+
+## 16.0.0
+
+- made `Arr.replaceAt` & `.updateAt` index type more general → allow indices out of bounds (not a breaking change)
+- added `Arr.order`
+- use custom serialize errors instead of directly converting every error to a `String`
