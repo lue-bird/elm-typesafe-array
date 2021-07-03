@@ -1,7 +1,6 @@
 module Tests exposing (startBoard, suite)
 
 import Arr exposing (Arr)
-import Array
 import Expect
 import InArr
 import LinearDirection exposing (LinearDirection(..))
