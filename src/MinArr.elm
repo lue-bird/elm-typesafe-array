@@ -156,7 +156,7 @@ prepend minAddedLength extension =
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    withAtLeast6Elements
+    atLeast6Elements
         |> MinArr.drop nat2 LastToFirst
     --> : Arr (Min Nat4) ...
 
