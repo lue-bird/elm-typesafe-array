@@ -1,8 +1,8 @@
-## why this, why that
+## Why this, why that
 
-#### What is with these `something_` type variables?
+#### These `something_` type variables
 
-The "_" at the end shows that this type variable is used nowhere else.
+The "_" at the end shows that this type variable is used only in this place.
 
 Our types have a lot of type variables, most of them only used once.
 If you see a -_ you know not to focus on these.
