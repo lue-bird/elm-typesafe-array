@@ -86,21 +86,28 @@ push element =
             "becomes the last"
     --> : Arr (Min Nat6) String
 
+    cons :
+        element
+        -> Arr (In minLength maxLength_) element
+        -> Arr (Min (Nat1Plus minLength)) element
+    cons =
+        MinArr.insertAt nat0 FirstToLast
+
 -}
 insertAt :
-    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLength indexIfN_)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minLengthMinus1) maxLength_) element
-    -> Arr (Min (Nat2Plus minLengthMinus1)) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min (Nat1Plus minLength)) element
 insertAt index direction inserted =
     Internal.minInsertAt index direction inserted
 
 
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    removeLast arrWithAtLeast1Element =
-        arrWithAtLeast1Element
+    removeLast atLeast1Element =
+        atLeast1Element
             |> MinArr.removeAt nat0 LastToFirst
 
 -}
@@ -116,7 +123,8 @@ removeAt index direction =
 {-| Attach elements of an `Arr` to the right.
 
     Arr.from3 1 2 3
-        |> MinArr.append nat3 arrWithAtLeast3Elements
+        |> MinArr.append nat3
+            atLeast3Elements
     --> : Arr (Min Nat6) ...
 
 -}
@@ -132,7 +140,8 @@ append minAddedLength extension =
 {-| Add elements of an `Arr` to the left.
 
     Arr.from3 1 2 3
-        |> MinArr.prepend nat3 arrWithAtLeast3Elements
+        |> MinArr.prepend nat3
+            atLeast3Elements
     --> : Arr (Min Nat6) ...
 
 -}

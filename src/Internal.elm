@@ -3,12 +3,12 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
-    , serialize, serializeIn, serializeMin, SerializeInRangeError(..), serializeErrorToString
+    , serialize, serializeIn, serializeMin, serializeErrorToString
     , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust
     , take, takeMax, inDrop, minDrop, groupsOf
-    , ArrTag, Content, lowerMinLength, minValue, restoreMaxLength
+    , ArrTag, Content, ExpectedLengthInRange(..), lowerMinLength, minValue, restoreMaxLength
     )
 
 {-| Contains stuff that is unsafe to use.
@@ -372,11 +372,11 @@ push elementToPush add1 =
 
 
 inInsertAt :
-    Nat (ArgIn indexMin minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLength indexIfN_)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minMinus1) max) element
-    -> Arr (In (Nat2Plus minMinus1) (Nat1Plus max)) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
 inInsertAt index direction insertedElement =
     insertAt index
         direction
@@ -386,11 +386,11 @@ inInsertAt index direction insertedElement =
 
 
 minInsertAt :
-    Nat (ArgIn indexMin lengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLength indexIfN_)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus lengthMinus1) max) element
-    -> Arr (Min (Nat2Plus lengthMinus1)) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min (Nat1Plus minLength)) element
 minInsertAt index direction elementToInsert =
     insertAt index
         direction
@@ -1083,7 +1083,7 @@ serialize length_ toSerializeError serializeElement =
         toSerializeError
 
 
-type SerializeInRangeError minimum maximum
+type ExpectedLengthInRange minimum maximum
     = AtLeast (Nat minimum)
     | AtMost (Nat maximum)
 
@@ -1093,7 +1093,7 @@ serializeIn :
     -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
     ->
         ({ expectedLength :
-            SerializeInRangeError
+            ExpectedLengthInRange
                 (ArgIn minLowerBound minUpperBound lowerBoundIfN)
                 (ArgIn minUpperBound maxUpperBound upperBoundIfN)
          , actualLength : Int

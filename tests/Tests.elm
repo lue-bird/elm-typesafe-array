@@ -4,8 +4,9 @@ import Arr exposing (Arr)
 import Expect
 import InArr
 import LinearDirection exposing (LinearDirection(..))
+import MinArr
 import NNats exposing (..)
-import Nat exposing (In, Only)
+import Nat exposing (In, Min, Only)
 import Test exposing (Test, describe, test)
 import TypeNats exposing (..)
 
@@ -105,6 +106,22 @@ maybePush maybePushedElement =
         (Arr.from1 maybePushedElement
             |> Arr.whenJust
         )
+
+
+minCons :
+    element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min (Nat1Plus minLength)) element
+minCons =
+    MinArr.insertAt nat0 FirstToLast
+
+
+inCons :
+    element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
+inCons =
+    InArr.insertAt nat0 FirstToLast
 
 
 startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)

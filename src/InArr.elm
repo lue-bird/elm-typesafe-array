@@ -3,7 +3,7 @@ module InArr exposing
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , serialize, SerializeError(..), serializeErrorToString
+    , serialize, ExpectedLength(..), serializeErrorToString
     )
 
 {-| If the maximum length is set to a specific value (also for `Only`),
@@ -39,7 +39,7 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 ## serialize
 
-@docs serialize, SerializeError, serializeErrorToString
+@docs serialize, ExpectedLength, serializeErrorToString
 
 -}
 
@@ -57,7 +57,7 @@ import Typed exposing (val)
 -- ## modify
 
 
-{-| Put a new element after the others.
+{-| Equivalent to `insertAt nat0 LastToFirst`. Put a new element after all the others.
 
     arrWith5To10Elements
         |> InArr.push "becomes the last"
@@ -84,11 +84,11 @@ push element =
 
 -}
 insertAt :
-    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLength indexIfN_)
     -> LinearDirection
     -> element
-    -> Arr (In (Nat1Plus minMinus1) max) element
-    -> Arr (In (Nat2Plus minMinus1) (Nat1Plus max)) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
 insertAt index direction element =
     Internal.inInsertAt index direction element
 
@@ -461,7 +461,7 @@ serialize :
     ->
         ({ actualLength : Int
          , expectedLength :
-            SerializeError
+            ExpectedLength
                 (ArgIn minLowerBound minUpperBound lowerBoundIfN)
                 (ArgIn minUpperBound maxUpperBound upperBoundIfN)
          }
@@ -493,15 +493,17 @@ We expected the length to be
   - `AtLeast` some minimum in a range
   - `AtMost` some maximum in a range
 
+See [serializeErrorToString](InArr#serializeErrorToString) & [serialize](InArr#serialize).
+
 -}
-type SerializeError minimum maximum
+type ExpectedLength minimum maximum
     = AtLeast (Nat minimum)
     | AtMost (Nat maximum)
 
 
 internalToSerializeError :
-    Internal.SerializeInRangeError minimum maximum
-    -> SerializeError minimum maximum
+    Internal.ExpectedLengthInRange minimum maximum
+    -> ExpectedLength minimum maximum
 internalToSerializeError internalError =
     case internalError of
         Internal.AtLeast min ->
@@ -521,7 +523,7 @@ internalToSerializeError internalError =
 
 -}
 serializeErrorToString :
-    { expectedLength : SerializeError minimum_ maximum_
+    { expectedLength : ExpectedLength minimum_ maximum_
     , actualLength : Int
     }
     -> String
