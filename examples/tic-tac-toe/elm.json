@@ -1,7 +1,8 @@
 {
     "type": "application",
     "source-directories": [
-        "src"
+        "src",
+        "../../src"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
@@ -12,7 +13,6 @@
             "elm-community/maybe-extra": "5.2.0",
             "lue-bird/elm-bounded-nat": "18.0.0",
             "lue-bird/elm-linear-direction": "2.2.0",
-            "lue-bird/elm-typesafe-array": "14.1.0",
             "mdgriffith/elm-ui": "1.1.8"
         },
         "indirect": {
@@ -26,7 +26,6 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.2",
-            "elm-community/array-extra": "2.3.0",
             "indique/n": "2.0.0",
             "lue-bird/elm-typed-value": "5.0.2"
         }
