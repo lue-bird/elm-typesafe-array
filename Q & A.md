@@ -18,6 +18,8 @@ when alwaysTrue
 --> gets inferred as a_ -> Maybe a_
 ```
 
+Because of cases like that, The `elm-review` rules in [`elm-review-single-use-type-vars-end-with-underscore`](https://package.elm-lang.org/packages/lue-bird/elm-review-single-use-type-vars-end-with-underscore/latest/) are useful.
+
 #### No `filterMap`, only `whenJust`?
 
 - `whenJust` is easier to understand than `filterMap identity`
