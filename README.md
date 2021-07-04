@@ -247,7 +247,7 @@ maybePush :
 maybePush maybePushedElement =
     InArr.appendIn nat0 nat1
         (Arr.from1 maybePushedElement
-            |> Arr.values
+            |> Arr.whenJust
         )
 ```
 
