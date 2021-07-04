@@ -59,7 +59,7 @@ import Typed exposing (val)
 
 {-| Equivalent to `insertAt nat0 LastToFirst`. Put a new element after all the others.
 
-    with5To10Elements
+    between5And10Elements
         |> InArr.push "becomes the last"
     --> : Arr (In Nat6 (Nat11Plus a_)) String
 
@@ -97,7 +97,7 @@ insertAt index direction element =
 
     Arr.from3 1 2 3
         |> InArr.appendIn nat3 nat5
-            with3To5Elements
+            between3And5Elements
     --> : Arr (In Nat6 (Nat8Plus a))
 
 Use [`append`](InArr#append) if the appended `Arr` has an exact amount of elements.
@@ -117,7 +117,7 @@ appendIn extensionMin extensionMax extension =
 
     Arr.from3 1 2 3
         |> InArr.prependIn nat3 nat5
-            with3To5Elements
+            between3And5Elements
     --> : Arr (In Nat6 (Nat8Plus a))
 
 Use [`prepend`](InArr#prepend) if the appended `Arr` has an exact amount of elements.
@@ -167,8 +167,8 @@ prepend addedLength arrExtension =
 
 {-| Kick an element out of the `Arr` at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    removeLast with1To10Elements =
-        with1To10Elements
+    removeLast between1And10Elements =
+        between1And10Elements
             |> InArr.removeAt nat0 LastToFirst
 
 -}
