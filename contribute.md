@@ -9,7 +9,8 @@
 
 - share your thoughts
 - add operations that might be useful
-    - `Array` has no native sort function. If you find a good way, please add it through a PR
+    - `Array` has no native sort function
+        - if `elm-community/array-extra` or `core` ([issue for elm-community](https://github.com/elm-community/array-extra/issues/25), [issue for core](https://github.com/elm/core/issues/1112)) introduce sorting operations, these will also be added here
 
 ### guide
 
