@@ -1021,13 +1021,13 @@ resize direction newLength paddingValue =
 
 {-| The amount of elements.
 
-    Arr.length (Arr.from3 1 2 3)
+    Arr.from3 1 2 3 |> Arr.length
     --> nat3 : Nat (In Nat3 (Nat3Plus a_))
 
-    Arr.length between3And5Elements
+    between3And5Elements |> Arr.length
     --> : Nat (In Nat3 (Nat5Plus a_))
 
-    Arr.length atLeast3Elements
+    atLeast3Elements |> Arr.length
     --> : Nat (Min Nat3)
 
 -}
