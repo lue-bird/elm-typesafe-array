@@ -350,8 +350,8 @@ isLengthAtLeast :
             Nat
                 (N
                     lowest
-                    atLeastLowest
-                    (Is lowestToMin To min)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
                     (Is (Nat1Plus lowestToLowerBound_) To lowerBound)
                 )
         }
@@ -370,12 +370,12 @@ isLengthAtLeast lowerBound lowest =
 
     -- at least 3 and only up to 50 tags
     tag :
-        Arr (In (Nat3Plus orHigherMin) Nat50) String
+        Arr (In (Nat3Plus orHigherMin_) Nat50) String
         -> a
         -> Tagged a
 
     tagIfValidTags :
-        Arr (In (Nat3Plus orHigherMin) max)
+        Arr (In (Nat3Plus orHigherMin_) max)
         -> a
         -> Maybe (Tagged a)
     tagIfValidTags array value =

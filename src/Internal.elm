@@ -112,9 +112,9 @@ from array length_ =
 
 
 at :
-    Nat (ArgIn indexMin minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) max) element
+    -> Arr (In (Nat1Plus minMinus1) max_) element
     -> element
 at index direction =
     \arr ->
@@ -131,7 +131,7 @@ at index direction =
                 at index direction arr
 
 
-length : Arr length element -> Nat length
+length : Arr length element_ -> Nat length
 length =
     internalVal Arr >> .length
 
@@ -140,7 +140,7 @@ length =
 -- ## transform
 
 
-toArray : Arr length element -> Array element
+toArray : Arr length_ element -> Array element
 toArray =
     internalVal Arr >> .array
 
@@ -219,7 +219,7 @@ order direction =
 
 when :
     (element -> Bool)
-    -> Arr (In min max) element
+    -> Arr (In min_ max) element
     -> Arr (In Nat0 max) element
 when isGood =
     mapArrayAndLength
@@ -247,7 +247,7 @@ whenJust maybes =
 -- ## create
 
 
-empty : Arr (In Nat0 atLeast0) element
+empty : Arr (In Nat0 atLeast0_) element_
 empty =
     from Array.empty { length = nat0 }
         |> isChecked Arr
@@ -353,7 +353,7 @@ inPush element =
 
 minPush :
     element
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (Min (Nat1Plus min)) element
 minPush element =
     push element (MinNat.add nat1)
@@ -402,7 +402,7 @@ minInsertAt index direction elementToInsert =
 {-| Should not be exposed.
 -}
 insertAt :
-    Nat range
+    Nat range_
     -> LinearDirection
     -> element
     -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
@@ -425,7 +425,7 @@ inRemoveAt index direction =
 
 
 minRemoveAt :
-    Nat (ArgIn indexMin lengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ lengthMinus1 indexIfN_)
     -> LinearDirection
     -> Arr (In (Nat1Plus lengthMinus1) max) element
     -> Arr (In lengthMinus1 max) element
@@ -437,7 +437,7 @@ minRemoveAt index direction =
 {-| Should not be exposed.
 -}
 removeAt :
-    Nat (ArgIn minIndex minMinus1 indexIfN_)
+    Nat (ArgIn minIndex_ minMinus1 indexIfN_)
     -> LinearDirection
     ->
         (Nat (In (Nat1Plus minMinus1) max)
@@ -452,7 +452,7 @@ removeAt index direction sub1 =
 
 
 inAppend :
-    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
@@ -475,8 +475,8 @@ appendIn extensionMin extensionMax extension =
 
 minAppend :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
-    -> Arr (In minAdded maxAdded) element
-    -> Arr (In min max) element
+    -> Arr (In minAdded maxAdded_) element
+    -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 minAppend minAddedLength extension =
     append extension (\_ -> MinNat.add minAddedLength)
@@ -518,7 +518,7 @@ append extension addLength =
 
 
 inPrepend :
-    Nat (N added atLeastAdded (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
     -> Arr (Only added) element
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
@@ -552,8 +552,8 @@ prependIn extensionMin extensionMax extension =
 
 minPrepend :
     Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
-    -> Arr (In minAdded maxAdded) element
-    -> Arr (In min max) element
+    -> Arr (In minAdded maxAdded_) element
+    -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 minPrepend minAddedLength extension =
     prepend extension (\_ -> MinNat.add minAddedLength)
@@ -607,7 +607,7 @@ drop droppedAmount direction subDropped =
 takeTemplate :
     Nat (ArgIn minTaken maxTaken mappedIfN_)
     -> LinearDirection
-    -> Arr length element
+    -> Arr length_ element
     -> ArrAs Tagged (In minTaken maxTaken) element
 takeTemplate amountToTake direction =
     mapArrayAndLength
@@ -619,7 +619,7 @@ takeMax :
     Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
     -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (In minTaken atLeastMaxTaken) element
 takeMax maxTakenAmount amountToTake direction =
     takeTemplate
@@ -631,7 +631,7 @@ takeMax maxTakenAmount amountToTake direction =
 take :
     Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min max_) element
     -> Arr (In taken atLeastTaken) element
 take amountToTake direction =
     takeTemplate amountToTake direction
@@ -641,7 +641,7 @@ take amountToTake direction =
 groupsOf :
     Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In min_ max) element
     ->
         { groups :
             Arr
@@ -703,7 +703,7 @@ restoreMaxLength newMaximumLength =
         >> isChecked Arr
 
 
-minValue : Arr (In min max) element -> Arr (Min min) element
+minValue : Arr (In min max_) element -> Arr (Min min) element
 minValue =
     mapLength MinNat.value >> isChecked Arr
 
@@ -837,8 +837,8 @@ inIsLengthAtLeast :
             Nat
                 (N
                     lowest
-                    atLeastLowest
-                    (Is lowestToMin To min)
+                    atLeastLowest_
+                    (Is lowestToMin_ To min)
                     (Is (Nat1Plus lowestToLowerBound_) To lowerBound)
                 )
         }

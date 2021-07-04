@@ -1136,7 +1136,7 @@ lowerMinLength =
 
 While designing argument annotations as general as possible:
 
-    atMost18Elements : Arr (In min Nat18) ...
+    atMost18Elements : Arr (In min_ Nat18) ...
 
 The argument in `atMost18Elements` should also fit in `atMost19Elements`.
 
