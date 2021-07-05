@@ -7,10 +7,10 @@
     "dependencies": {
         "direct": {
             "elm/core": "1.0.5",
-            "jfmengels/elm-review": "2.4.1",
-            "jfmengels/elm-review-unused": "1.1.9",
-            "lue-bird/elm-review-single-use-type-vars-end-with-underscore": "1.0.0",
-            "stil4m/elm-syntax": "7.2.3"
+            "jfmengels/elm-review": "2.4.2",
+            "jfmengels/elm-review-unused": "1.1.13",
+            "lue-bird/elm-review-single-use-type-vars-end-with-underscore": "2.0.0",
+            "stil4m/elm-syntax": "7.2.5"
         },
         "indirect": {
             "elm/html": "1.0.0",
