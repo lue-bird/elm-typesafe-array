@@ -2,10 +2,11 @@ module Arr exposing
     ( Arr
     , fromArray, fromList, repeat, nats, minNats, random
     , empty, from1
-    , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
+    , from2
+    , from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at
     , replaceAt, updateAt, resize, reverse, order
-    , when, dropWhen, whenJust
+    , when, dropWhen, whenJust, whenAllJust
     , take, takeMax, groupsOf
     , map, fold, foldWith, toArray, toList
     , map2, map3, map4
@@ -60,7 +61,11 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 [Skip to `from16`](Arr#from16).
 
-@docs from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
+@docs from2
+
+[Skip to `from16`](Arr#from16).
+
+@docs from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
 
 
 # scan
@@ -75,7 +80,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 ## filter
 
-@docs when, dropWhen, whenJust
+@docs when, dropWhen, whenJust, whenAllJust
 
 
 ## part
@@ -764,6 +769,43 @@ whenJust maybes =
     Internal.whenJust maybes
 
 
+{-| If every `Maybe` is present, return all of the values. Return `Nothing` when any element is `Nothing`.
+
+    Arr.empty |> Arr.whenAllJust
+    --> Just Arr.empty
+
+    Arr.from3 (Just 1) (Just 2) (Just 3)
+        |> Arr.whenAllJust
+    --> Just (Arr.from3 1 2 3)
+
+    Arr.from3 (Just 1) Nothing (Just 3)
+        |> Arr.whenAllJust
+    --> Nothing
+
+Funnily, this can sometimes even be nicer than `Maybe.mapN`:
+
+    groupCall =
+        Arr.from5 aUser bUser cUser dUser eUser
+            |> Arr.map .phoneNumber
+            |> Arr.whenAllJust
+
+    -- vs
+    groupCall =
+        Maybe.map5 Toop.T5
+            aUser.phoneNumber
+            bUser.phoneNumber
+            cUser.phoneNumber
+            dUser.phoneNumber
+            eUser.phoneNumber
+
+-}
+whenAllJust :
+    Arr length (Maybe value)
+    -> Maybe (Arr length value)
+whenAllJust maybes =
+    Internal.whenAllJust maybes
+
+
 
 -- ## part
 
@@ -913,6 +955,12 @@ map4 combine aArr bArr cArr dArr =
     Arr.from5 "l" "i" "v" "e"
         |> Arr.fold LastToFirst (++) ""
     --> "evil"
+
+    sum =
+        Arr.fold FirstToLast (+) 0
+
+    product =
+        Arr.fold FirstToLast (*) 0
 
 -}
 fold :

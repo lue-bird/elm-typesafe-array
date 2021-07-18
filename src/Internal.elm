@@ -6,7 +6,7 @@ module Internal exposing
     , serialize, serializeIn, serializeMin, serializeErrorToString
     , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
-    , when, whenJust
+    , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
     , ArrTag, Content, ExpectedLengthInRange(..), lowerMinLength, minValue, restoreMaxLength
     )
@@ -53,7 +53,7 @@ Calling `isChecked Arr` marks unsafe operations.
 
 ### filter
 
-@docs when, dropWhen, whenJust
+@docs when, dropWhen, whenJust, whenAllJust
 
 
 ### part
@@ -241,6 +241,21 @@ whenJust maybes =
                 { lowest = nat0 }
             )
         |> isChecked Arr
+
+
+whenAllJust : Arr length (Maybe value) -> Maybe (Arr length value)
+whenAllJust maybes =
+    maybes
+        |> toArray
+        |> Array.whenAllJust
+        |> Maybe.map
+            (\array ->
+                { array = array
+                , length = length maybes
+                }
+                    |> tag
+                    |> isChecked Arr
+            )
 
 
 

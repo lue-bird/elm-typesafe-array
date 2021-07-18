@@ -88,6 +88,23 @@ inArrTests =
                     )
                 ]
             ]
+        , describe "whenAllJust"
+            [ test "all are Just"
+                (\() ->
+                    Arr.from3 (Just 1) (Just 2) (Just 3)
+                        |> Arr.whenAllJust
+                        |> Maybe.map
+                            (Arr.toList >> Expect.equalLists [ 1, 2, 3 ])
+                        |> Maybe.withDefault
+                            (Expect.fail "was Nothing, expected Just")
+                )
+            , test "one is Nothing"
+                (\() ->
+                    Arr.from3 (Just 1) Nothing (Just 3)
+                        |> Arr.whenAllJust
+                        |> Expect.equal Nothing
+                )
+            ]
         ]
 
 
