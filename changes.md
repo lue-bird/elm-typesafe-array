@@ -126,3 +126,7 @@ The reason this is called a "major" change is that the `resize` argument went fr
 - allow `In-/MinArr.insertAt length ...`
 - added `Arr.order`
 - used custom serialize errors instead of directly converting every error to a `String` thanks to [MartinSStewart](https://github.com/MartinSStewart)'s help
+
+### 16.1.0
+
+- added `Arr.whenAllJust`
