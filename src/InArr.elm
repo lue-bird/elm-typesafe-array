@@ -480,7 +480,7 @@ serialize lowerBound upperBound toSerializeError serializeElement =
                 { actualLength = actualLength
                 , expectedLength =
                     expectedLength
-                        |> internalToSerializeError
+                        |> internalToExpectedLength
                 }
         )
         serializeElement
@@ -501,18 +501,6 @@ type ExpectedLength minimum maximum
     | AtMost (Nat maximum)
 
 
-internalToSerializeError :
-    Internal.ExpectedLengthInRange minimum maximum
-    -> ExpectedLength minimum maximum
-internalToSerializeError internalError =
-    case internalError of
-        Internal.AtLeast min ->
-            AtLeast min
-
-        Internal.AtMost max ->
-            AtMost max
-
-
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
 
     { expectedLength = MinArr.AtLeast nat11
@@ -529,14 +517,35 @@ serializeErrorToString :
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (\expectedLength ->
-            (case expectedLength of
-                AtLeast minimum ->
-                    [ ">=", val minimum |> String.fromInt ]
-
-                AtMost maximum ->
-                    [ "<=", val maximum |> String.fromInt ]
-            )
-                |> String.join " "
+        (Internal.InBound
+            << toInternalExpectedLength
         )
         error
+
+
+
+-- ### ↓ not important
+
+
+internalToExpectedLength :
+    Internal.ExpectedLengthIn minimum maximum
+    -> ExpectedLength minimum maximum
+internalToExpectedLength internalError =
+    case internalError of
+        Internal.AtLeast min ->
+            AtLeast min
+
+        Internal.AtMost max ->
+            AtMost max
+
+
+toInternalExpectedLength :
+    ExpectedLength minimum maximum
+    -> Internal.ExpectedLengthIn minimum maximum
+toInternalExpectedLength expectedLength =
+    case expectedLength of
+        AtLeast minimum ->
+            Internal.AtLeast minimum
+
+        AtMost maximum ->
+            Internal.AtMost maximum

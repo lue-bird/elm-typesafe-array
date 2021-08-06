@@ -424,8 +424,8 @@ serializeErrorToString :
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (\{ atLeast } ->
-            [ ">=", val atLeast |> String.fromInt ]
-                |> String.join " "
+        (Internal.InBound
+            << Internal.AtLeast
+            << .atLeast
         )
         error

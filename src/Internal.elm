@@ -3,12 +3,12 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
-    , serialize, serializeIn, serializeMin, serializeErrorToString
+    , serialize, serializeIn, serializeMin, ExpectedLength(..), ExpectedLengthIn(..), serializeErrorToString
     , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
-    , ArrTag, Content, ExpectedLengthInRange(..), lowerMinLength, minValue, restoreMaxLength
+    , ArrTag, Content, lowerMinLength, minValue, restoreMaxLength
     )
 
 {-| Contains stuff that is unsafe to use.
@@ -38,7 +38,7 @@ Calling `isChecked Arr` marks unsafe operations.
 
 ### serialize
 
-@docs serialize, serializeIn, serializeMin, SerializeInRangeError, serializeErrorToString
+@docs serialize, serializeIn, serializeMin, ExpectedLength, ExpectedLengthIn, serializeErrorToString
 
 
 ## modify
@@ -1098,7 +1098,12 @@ serialize length_ toSerializeError serializeElement =
         toSerializeError
 
 
-type ExpectedLengthInRange minimum maximum
+type ExpectedLength exact minimum maximum
+    = Exact (Nat exact)
+    | InBound (ExpectedLengthIn minimum maximum)
+
+
+type ExpectedLengthIn minimum maximum
     = AtLeast (Nat minimum)
     | AtMost (Nat maximum)
 
@@ -1108,7 +1113,7 @@ serializeIn :
     -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
     ->
         ({ expectedLength :
-            ExpectedLengthInRange
+            ExpectedLengthIn
                 (ArgIn minLowerBound minUpperBound lowerBoundIfN)
                 (ArgIn minUpperBound maxUpperBound upperBoundIfN)
          , actualLength : Int
@@ -1177,7 +1182,7 @@ serializeMin lowerBound toSerializeError serializeElement =
 
 -}
 serializeErrorToString :
-    (expectedLength -> String)
+    (expectedLength -> ExpectedLength exact_ minimum_ maximum_)
     ->
         { expectedLength : expectedLength
         , actualLength : Int
@@ -1185,7 +1190,17 @@ serializeErrorToString :
     -> String
 serializeErrorToString expectedLengthToString error =
     [ "expected an array of length"
-    , expectedLengthToString error.expectedLength
+    , case expectedLengthToString error.expectedLength of
+        Exact expected ->
+            val expected |> String.fromInt
+
+        InBound (AtLeast minimum) ->
+            [ ">=", val minimum |> String.fromInt ]
+                |> String.join " "
+
+        InBound (AtMost maximum) ->
+            [ "<=", val maximum |> String.fromInt ]
+                |> String.join " "
     , "but the actual length was"
     , String.fromInt error.actualLength
     ]

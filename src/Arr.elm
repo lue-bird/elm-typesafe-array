@@ -1241,8 +1241,8 @@ The encode/decode functions can be extracted if needed.
 serialize :
     Nat (ArgIn min max ifN)
     ->
-        ({ actualLength : Int
-         , expectedLength : Nat (ArgIn min max ifN)
+        ({ expectedLength : Nat (ArgIn min max ifN)
+         , actualLength : Int
          }
          -> serializeError
         )
@@ -1262,11 +1262,11 @@ serialize length_ toSerializeError serializeElement =
 
 -}
 serializeErrorToString :
-    { actualLength : Int
-    , expectedLength : Nat range_
+    { expectedLength : Nat range_
+    , actualLength : Int
     }
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (val >> String.fromInt)
+        (\expected -> Internal.Exact expected)
         error
