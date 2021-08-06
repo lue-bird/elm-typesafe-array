@@ -365,7 +365,7 @@ value =
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a minimum amount of elements.
 
-    import Serialize
+    import Serialize exposing (Codec)
 
 
     -- we can't start if we have no worlds to choose from!
