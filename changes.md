@@ -130,3 +130,4 @@ The reason this is called a "major" change is that the `resize` argument went fr
 ### 16.1.0
 
 - added `Arr.whenAllJust`
+- updated `bounded-nat` to 19.0.0
