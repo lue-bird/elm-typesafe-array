@@ -120,10 +120,10 @@ isGameOver : Board -> Maybe GameOver
 isGameOver board =
     let
         allXorO fields =
-            if fields == Arr.repeat nat3 (FieldSet O) then
+            if fields |> Arr.all (FieldSet O) then
                 Just O
 
-            else if fields == Arr.repeat nat3 (FieldSet X) then
+            else if fields |> Arr.all (FieldSet X) then
                 Just X
 
             else
