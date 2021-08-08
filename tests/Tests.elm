@@ -35,6 +35,30 @@ arrTests =
                     |> Arr.toList
                     |> Expect.equal [ 3, 4, 5 ]
             )
+        , describe "all"
+            [ test "True"
+                (\() ->
+                    Arr.all isEven (Arr.from2 2 4)
+                        |> Expect.equal True
+                )
+            , test "False"
+                (\() ->
+                    Arr.all isEven (Arr.from2 2 3)
+                        |> Expect.equal False
+                )
+            ]
+        , describe "any"
+            [ test "True"
+                (\() ->
+                    Arr.any isEven (Arr.from2 1 2)
+                        |> Expect.equal True
+                )
+            , test "False"
+                (\() ->
+                    Arr.any isEven (Arr.from2 1 3)
+                        |> Expect.equal False
+                )
+            ]
         ]
 
 
@@ -46,7 +70,7 @@ inArrTests =
                 Arr.from3 1 1 1
                     |> InArr.append nat3 (Arr.from3 0 0 0)
                     |> Arr.toList
-                    |> Expect.equal
+                    |> Expect.equalLists
                         [ 1, 1, 1, 0, 0, 0 ]
             )
         , test "prepend"
@@ -54,7 +78,7 @@ inArrTests =
                 Arr.from3 1 1 1
                     |> InArr.prepend nat3 (Arr.from3 0 0 0)
                     |> Arr.toList
-                    |> Expect.equal
+                    |> Expect.equalLists
                         [ 0, 0, 0, 1, 1, 1 ]
             )
         , describe "resize"

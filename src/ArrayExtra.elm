@@ -1,4 +1,7 @@
-module ArrayExtra exposing (reverse, whenAllJust)
+module ArrayExtra exposing (reverse, whenAllJust, any, all)
+
+{-| Should be replaced by Array.Extra functions if they are added there.
+-}
 
 import Array exposing (Array)
 
@@ -19,3 +22,13 @@ whenAllJust maybes =
         |> Array.toList
         |> whenAllJustInList
         |> Maybe.map Array.fromList
+
+any : (a -> Bool) -> Array a -> Bool
+any isOkay =
+    Array.toList
+        >> List.any isOkay
+
+all : (a -> Bool) -> Array a -> Bool
+all isOkay =
+    Array.toList
+        >> List.all isOkay

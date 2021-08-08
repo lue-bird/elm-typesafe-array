@@ -4,7 +4,7 @@ module Arr exposing
     , empty, from1
     , from2
     , from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
-    , length, at
+    , length, at, all, any
     , replaceAt, updateAt, resize, reverse, order
     , when, dropWhen, whenJust, whenAllJust
     , take, takeMax, groupsOf
@@ -70,7 +70,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # scan
 
-@docs length, at
+@docs length, at, all, any
 
 
 # modify
@@ -1101,6 +1101,41 @@ at :
 at index direction =
     Internal.at index direction
 
+{-| Whether all elements satisfy a test.
+
+    Arr.all isEven (Arr.from2 2 4)
+    --> True
+
+    Arr.all isEven (Arr.from2 2 3)
+    --> False
+
+    Arr.all isEven Arr.empty
+    --> True
+    
+-}
+all : (element -> Bool) -> Arr length_ element -> Bool
+all isOkay =
+    toArray >> Array.all isOkay
+
+
+{-| Whether any elements satisfy a test.
+
+    Arr.any isEven (Arr.from2 1 3)
+    --> True
+
+    Arr.any isEven (Arr.from2 1 2)
+    --> False
+
+    Arr.any isEven Arr.empty
+    --> False
+    
+-}
+any : (element -> Bool) -> Arr length_ element -> Bool
+any isOkay =
+    toArray >> Array.any isOkay
+
+
+-- ## part
 
 {-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
