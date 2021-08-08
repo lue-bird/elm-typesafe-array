@@ -1,9 +1,6 @@
 module Main exposing (Field(..), GameOver(..), Player(..), isGameOver, main)
 
 import Arr exposing (Arr)
-import Array exposing (Array)
-import Array.Extra as Array
-import Array.LinearDirection
 import Browser
 import Element as Ui
 import Element.Background as Background
