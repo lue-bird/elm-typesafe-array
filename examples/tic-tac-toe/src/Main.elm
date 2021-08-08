@@ -1,6 +1,9 @@
 module Main exposing (Field(..), GameOver(..), Player(..), isGameOver, main)
 
 import Arr exposing (Arr)
+import Array exposing (Array)
+import Array.Extra as Array
+import Array.LinearDirection
 import Browser
 import Element as Ui
 import Element.Background as Background
@@ -62,14 +65,18 @@ main =
 
 
 type Msg
-    = PlayerSetsField (Nat (In Nat0 Nat2)) (Nat (In Nat0 Nat2)) Player
+    = PlayerSetsField
+        ( Nat (In Nat0 Nat2)
+        , Nat (In Nat0 Nat2)
+        )
+        Player
     | ClearBoard
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PlayerSetsField x y player ->
+        PlayerSetsField ( x, y ) player ->
             ( let
                 field =
                     model.board
@@ -199,33 +206,34 @@ view : Model -> Browser.Document Msg
 view { board, gameStage } =
     { title = "tic tac toe"
     , body =
-        Ui.column
-            [ Ui.centerX
-            , Ui.centerY
-            , Ui.spacing 30
-            ]
-            [ (case gameStage of
-                Playing playing ->
-                    playerToString playing ++ "'s turn!"
+        [ (case gameStage of
+            Playing playing ->
+                playerToString playing ++ "'s turn!"
 
-                GameOver gameOver ->
-                    (case gameOver of
-                        PlayerWon winner ->
-                            playerToString winner ++ " won!"
+            GameOver gameOver ->
+                [ case gameOver of
+                    PlayerWon winner ->
+                        playerToString winner ++ " won!"
 
-                        Draw ->
-                            "Draw!"
-                    )
-                        ++ " Click any field to reset."
-              )
-                |> Ui.text
-                |> Ui.el
-                    [ Ui.centerX
-                    , Font.size 40
-                    , Font.color (Ui.rgb 1 1 1)
-                    ]
-            , viewBoard board { gameStage = gameStage }
-            ]
+                    Draw ->
+                        "Draw!"
+                , " Click any field to reset."
+                ]
+                    |> String.concat
+          )
+            |> Ui.text
+            |> Ui.el
+                [ Ui.centerX
+                , Font.size 40
+                , Font.color (Ui.rgb 1 1 1)
+                ]
+        , board |> viewBoard { gameStage = gameStage }
+        ]
+            |> Ui.column
+                [ Ui.centerX
+                , Ui.centerY
+                , Ui.spacing 30
+                ]
             |> Ui.layoutWith
                 { options =
                     [ Ui.focusStyle
@@ -235,13 +243,14 @@ view { board, gameStage } =
                         }
                     ]
                 }
-                [ Background.color (Ui.rgb 0 0 0) ]
+                [ Background.color (Ui.rgb 0 0 0)
+                ]
             |> List.singleton
     }
 
 
-viewBoard : Board -> { gameStage : GameStage } -> Ui.Element Msg
-viewBoard board { gameStage } =
+viewBoard : { gameStage : GameStage } -> Board -> Ui.Element Msg
+viewBoard { gameStage } board =
     let
         spacing =
             6
@@ -272,12 +281,14 @@ viewBoard board { gameStage } =
                 , Background.color (Ui.rgb 0 0 0)
                 ]
                 { onPress =
-                    case gameStage of
+                    (case gameStage of
                         Playing playing ->
-                            PlayerSetsField x y playing |> Just
+                            PlayerSetsField x y playing
 
                         GameOver _ ->
-                            ClearBoard |> Just
+                            ClearBoard
+                    )
+                        |> Just
                 , label =
                     board
                         |> Arr.at x FirstToLast
