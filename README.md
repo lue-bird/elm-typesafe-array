@@ -13,8 +13,8 @@ returns a **_value, not a `Maybe`_** if `ticTacToeBoard`'s type can promise that
 A type that can hold that promise could be:
 
 ```elm
-{-| 3 by 3 -}
 type alias TicTacToeBoard =
+    -- 3 by 3
     Arr (Only Nat3) (Arr (Only Nat3) Field)
 
 type Field =
@@ -54,7 +54,6 @@ elm install lue-bird/elm-typesafe-array
 import LinearDirection exposing (LinearDirection(..))
 
 import Nat exposing (Nat, Only, In, Min)
-import InNat
 import Nats exposing (..)
     -- nat0-160, Nat0-160 & -Plus
 
@@ -98,18 +97,18 @@ The types are explained in more detail in [`bounded-nat`][bounded-nat] (only `In
 
 ## an exact length?
 
-As we've seen in the tic-tac-toe example.
+Like in the tic-tac-toe example.
 
 ```elm
-{-| 8 by 8 -}
 type alias ChessBoard =
+    -- 8 by 8
     Arr (Only Nat8) (Arr (Only Nat8) Field)
 
 type Field
     = Empty
     | Piece PieceKind Color
 
-type PieceKind = Pawn | --...
+type PieceKind = Pawn --| ...
 type Color = Black | White
 
 initialChessBoard : ChessBoard
@@ -141,7 +140,7 @@ initialChessBoard
 ```elm
 -- the max tag count should be 53
 tag : Arr (In min_ Nat53) String -> a -> Tagged a
-tag tags toTag = --...
+tag tags toTag = ...
 
 tag (Arr.from3 "fun" "easy" "fresh")
 --> valid
