@@ -125,9 +125,10 @@ The reason this is called a "major" change is that the `resize` argument went fr
 - made `Arr.replaceAt` & `.updateAt` index type more general → allow indices out of bounds (not a breaking change)
 - allow `In-/MinArr.insertAt length ...`
 - added `Arr.order`
-- used custom serialize errors instead of directly converting every error to a `String` thanks to [MartinSStewart](https://github.com/MartinSStewart)'s help
+- used custom serialize errors instead of directly converting every error to a `String` (thanks [MartinSStewart](https://github.com/MartinSStewart) for your help!)
 
 ### 16.1.0
 
 - added `Arr.whenAllJust`
+- added `all` & `any`
 - updated `bounded-nat` to 19.0.0
