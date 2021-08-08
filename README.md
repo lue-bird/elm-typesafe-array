@@ -55,13 +55,10 @@ import LinearDirection exposing (LinearDirection(..))
 
 import Nat exposing (Nat, Only, In, Min)
 import InNat
-import NNats exposing (..)
-    -- (..) is nat0 to nat160
+import Nats exposing (..)
+    -- nat0-160, Nat0-160 & -Plus
 
 import Typed
-
-import TypeNats exposing (..)
-    -- (..) is Nat0 to Nat160 & Nat1Plus to Nat160Plus
 
 import Arr exposing (Arr)
 import InArr

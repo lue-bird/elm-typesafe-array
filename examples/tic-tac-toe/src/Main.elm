@@ -8,9 +8,8 @@ import Element.Font as Font
 import Element.Input as UiInput
 import LinearDirection exposing (LinearDirection(..))
 import Maybe.Extra as Maybe
-import NNats exposing (..)
 import Nat exposing (In, Nat, Only)
-import TypeNats exposing (..)
+import Nats exposing (..)
 
 
 type alias Model =

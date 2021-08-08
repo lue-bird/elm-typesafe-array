@@ -70,11 +70,10 @@ import InNat
 import LinearDirection exposing (LinearDirection(..))
 import List.LinearDirection as List
 import MinNat
-import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Random
 import Serialize exposing (Codec)
-import TypeNats exposing (..)
+import Nats exposing (..)
 import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
 
 

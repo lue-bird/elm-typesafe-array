@@ -46,10 +46,9 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 import Arr exposing (Arr)
 import Internal
 import LinearDirection exposing (LinearDirection(..))
-import NNats exposing (..)
 import Nat exposing (ArgIn, In, Is, N, Nat, Only, To)
 import Serialize exposing (Codec)
-import TypeNats exposing (..)
+import Nats exposing (..)
 import Typed exposing (val)
 
 

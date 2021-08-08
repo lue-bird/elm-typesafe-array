@@ -5,10 +5,9 @@ import Expect
 import InArr
 import LinearDirection exposing (LinearDirection(..))
 import MinArr
-import NNats exposing (..)
 import Nat exposing (In, Min, Only)
 import Test exposing (Test, describe, test)
-import TypeNats exposing (..)
+import Nats exposing (..)
 
 
 suite : Test

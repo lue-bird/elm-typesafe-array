@@ -30,7 +30,7 @@ config =
     , NoSinglePatternCase.rule
     , NoLeftPizza.rule NoLeftPizza.Any
     , NoExposingEverything.rule
-    , NoImportingEverything.rule [ "Nats", "TypeNats" ]
+    , NoImportingEverything.rule [ "Nats" ]
     , NoMissingTypeAnnotation.rule
     , NoForbiddenWords.rule [ "TODO", "todo" ]
     , NoBooleanCase.rule

@@ -119,12 +119,10 @@ import Array exposing (Array)
 import Array.LinearDirection as Array
 import Internal as Internal exposing (inPush)
 import LinearDirection exposing (LinearDirection(..))
-import NNat exposing (..)
-import NNats exposing (nat0)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
 import Random
 import Serialize exposing (Codec)
-import TypeNats exposing (..)
+import Nats exposing (..)
 import Typed exposing (Checked, Internal, Typed, val)
 
 
