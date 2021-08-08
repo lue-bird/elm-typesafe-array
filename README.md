@@ -153,20 +153,35 @@ Now take a look at modules like `Arr` to get started!
 
 ## comparison to [Orasund's static-array][static-array]
 
-I started creating my package before this one so I didn't take inspiration from this package.
+Development of `typesafe-array` started before `static-array` was published but the idea is the same as from this package.
 
-#### creation
+#### creating
 
+`static-array`:
 ```elm
 six = StaticArray.Length.five |> StaticArray.Length.plus1
 
-StaticArray.fromList six 0[1,2,3,4,5]
+StaticArray.fromList six 0 [ 1, 2, 3, 4, 5 ]
 ```
-vs
+It makes it easy to forget the length if you add a new element to the list:
+
+```elm
+StaticArray.fromList six 0 [ 1, 2, 3, 4, 5, 6 ]
+```
+
+The added element `6` is simply ignored!
+
+`typesafe-array`:
 ```elm
 Arr.from6 0 1 2 3 4 5
+
+Arr.from6 0 1 2 3 4 5 6
+--> compile-time error
 ```
+
 #### appending
+
+`static-array`:
 ```elm
 staticArray1, staticArray2 : StaticArray Six ...
 
@@ -208,8 +223,7 @@ wrong
 
 It silently gave us back an element at the wrong (first) index!
 
-vs
-
+`typesafe-array`:
 ```elm
 arr1, arr2 : Arr (In Nat6 (Nat6Plus a_)) ...
 
@@ -219,10 +233,11 @@ arr1 |> InArr.append nat6 arr2
 
 type-safe.
 
-#### a length in a range
+#### length in a range
 
+`static-array`:
 ```elm
-maybePush : Maybe a -> StaticArray n a -> -- what is the result?!
+maybePush : Maybe a -> StaticArray n a -> -- what result type?
 
 type MaybePushResult lengthBefore
     = Pushed
@@ -232,9 +247,10 @@ type MaybePushResult lengthBefore
     | DidntPush (StaticArray lengthBefore)
 
 maybePush : Maybe a -> StaticArray n a -> MaybePushResult n
--- unconvenient
 ```
-vs
+That's really inconvenient.
+
+`typesafe-array`:
 ```elm
 maybePush :
     Maybe a
@@ -247,10 +263,12 @@ maybePush maybePushedElement =
         )
 ```
 
-### and now?
+## ready? go!
 
-Look at [some example programs using `Arr`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)!
+- [some example apps that use `Arr`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
+- [elm-bits](bits): bits stored in `Arr`
 
 [bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
 [static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
 [linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
+[bits]: https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/
