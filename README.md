@@ -8,7 +8,7 @@ ticTacToeBoard
     |> Arr.at nat1 FirstToLast
 ```
 
-returns a **_value, not a `Maybe`_** if `ticTacToeBoard`'s type can promise that it contains enough elements.
+_returns a value, not a `Maybe`_ if `ticTacToeBoard`'s type can promise that it contains enough elements.
 
 A type that can hold that promise could be:
 
@@ -37,11 +37,7 @@ initialTicTacToeBoard
 --> FieldEmpty
 ```
 
-### Setup
-
-If you want, take a 👀 to get a feel why the used packages are useful.
-- most importantly: [`bounded-nat`][bounded-nat]: `nat...`, `Nat...`, `Min`, `In`, `Only`
-- [`linear-direction`][linear-direction]: `FirstToLast` & `LastToFirst`
+## Setup
 
 ```noformatingplease
 elm install lue-bird/elm-linear-direction
@@ -49,6 +45,10 @@ elm install lue-bird/elm-typed-value
 elm install lue-bird/elm-bounded-nat
 elm install lue-bird/elm-typesafe-array
 ```
+
+You can take a 👀 at these packages:
+- [`bounded-nat`][bounded-nat]: `nat...`, `Nat...`, `Min`, `In`, `Only`
+- a small extra: [`linear-direction`][linear-direction]: `FirstToLast` & `LastToFirst`
 
 ```elm
 import LinearDirection exposing (LinearDirection(..))
@@ -69,11 +69,11 @@ You can define & use operations for `Arr`s with a certain amount.
 ## a minimum length?
 
 ```elm
-first :
+last :
     Arr (In (Nat1Plus orMore_) max_) element
     -> element
-first =
-    Arr.at nat0 FirstToLast
+last =
+    Arr.at nat0 LastToFirst
 
 biggest :
     Arr (In (Nat1Plus orMore_) max_) comparable
@@ -88,12 +88,12 @@ biggest Arr.empty --> compile-time error
 `Arr (In (Nat1Plus orMore_) max_)` means what exactly?
 → It constrains the length of possible `Arr`s.
 
-The types are explained in more detail in [`bounded-nat`][bounded-nat] (only `In`, `Min` & `Only` is used for `Arr`s). In this example:
+The types are explained in more detail in [`bounded-nat`][bounded-nat] (only `In`, `Min` & `Only` is needed). In this example:
 
-- `Arr`: `Array` with additional type info about its length
-    - `In`: length is within a minimum (& maximum)
-        - `Nat1Plus orMore_`: the minimum length is >= 1
-        - `max_`: no maximum length or any maximum length
+- `Array` with type info about its length: `Arr`
+    - length is in a range: `In`
+        - the minimum length is >= 1: `Nat1Plus orMore_`
+        - no maximum length or any maximum length: `max_`
 
 ## an exact length?
 
