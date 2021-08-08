@@ -3,7 +3,7 @@ module Tests exposing (..)
 import Arr
 import Expect
 import Main exposing (Field(..), GameOver(..), Player(..), isGameOver)
-import NNats exposing (nat3)
+import Nats exposing (nat3)
 import Test exposing (..)
 
 
