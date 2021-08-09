@@ -1251,23 +1251,23 @@ restoreMaxLength maximumLength =
             (Arr (Only Nat10) GameField)
     serializeGameRow =
         Arr.serialize nat10
-            -- just give us the error back as a String
+            -- if we just want a simple error string
             Arr.serializeErrorToString
             serializeGameField
 
 The encode/decode functions can be extracted if needed.
 
-    encode : Arr (Only Nat10) GameField -> Bytes
-    encode =
+    encodeGameRow : Arr (Only Nat10) GameField -> Bytes
+    encodeGameRow =
         Serialize.encodeToBytes serializeGameRow
 
-    decode :
+    decodeGameRow :
         Bytes
         ->
             Result
                 (Serialize.Error String)
                 (Arr (Only Nat10) GameField)
-    decode =
+    decodeGameRow =
         Serialize.decodeFromBytes serializeGameRow
 
 -}
@@ -1301,5 +1301,5 @@ serializeErrorToString :
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (\expected -> Internal.Exact expected)
+        (\expected -> Internal.ExpectExact expected)
         error

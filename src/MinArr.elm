@@ -371,7 +371,7 @@ value =
     serializeSaves : Codec String (Arr (Min Nat1) World)
     serializeSaves =
         MinArr.serialize nat1
-            -- just give us the error back as a String
+            -- if we just want a simple error string
             MinArr.serializeErrorToString
             serializeWorld
 
@@ -379,8 +379,8 @@ The encode/decode functions can be extracted if needed.
 
     encode : Arr (In (Nat1Plus minMinus1_) max_) World -> Bytes
     encode =
-        MinArr.value
-            >> Arr.lowerMinLength nat1
+        Arr.lowerMinLength nat1
+            >> MinArr.value
             >> Serialize.encodeToBytes serializeSaves
 
     decode :
@@ -423,8 +423,8 @@ serializeErrorToString :
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (Internal.InBound
-            << Internal.AtLeast
+        (Internal.ExpectInBound
+            << Internal.ExpectAtLeast
             << .atLeast
         )
         error

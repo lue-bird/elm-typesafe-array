@@ -3,7 +3,7 @@ module InArr exposing
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , serialize, ExpectedLength(..), serializeErrorToString
+    , serialize, ExpectedLengthIn(..), serializeErrorToString
     )
 
 {-| If the maximum length is set to a specific value (also for `Only`),
@@ -39,7 +39,7 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 ## serialize
 
-@docs serialize, ExpectedLength, serializeErrorToString
+@docs serialize, ExpectedLengthIn, serializeErrorToString
 
 -}
 
@@ -429,14 +429,14 @@ isLengthAtMost upperBound lowest =
         InArr.serialize
             nat10
             nat15
-            -- just give us the error back as a String
+            -- if we just want a simple error string
             InArr.serializeErrorToString
             Serialize.int
 
 The encode/decode functions can be extracted if needed.
 
     encode :
-        Arr (In (Nat10Plus orHigherMin_) Nat15) Int
+        Arr (In (Nat10Plus minMinus10_) Nat15) Int
         -> Bytes
     encode =
         Arr.lowerMinLength nat10
@@ -479,7 +479,7 @@ serialize lowerBound upperBound toSerializeError serializeElement =
                 { actualLength = actualLength
                 , expectedLength =
                     expectedLength
-                        |> internalToExpectedLength
+                        |> internalToExpectLength
                 }
         )
         serializeElement
@@ -495,9 +495,9 @@ We expected the length to be
 See [serializeErrorToString](InArr#serializeErrorToString) & [serialize](InArr#serialize).
 
 -}
-type ExpectedLength minimum maximum
-    = AtLeast (Nat minimum)
-    | AtMost (Nat maximum)
+type ExpectLengthIn minimum maximum
+    = ExpectAtLeast (Nat minimum)
+    | ExpectAtMost (Nat maximum)
 
 
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
@@ -510,14 +510,14 @@ type ExpectedLength minimum maximum
 
 -}
 serializeErrorToString :
-    { expectedLength : ExpectedLength minimum_ maximum_
+    { expectedLength : ExpectLengthIn minimum_ maximum_
     , actualLength : Int
     }
     -> String
 serializeErrorToString error =
     Internal.serializeErrorToString
-        (Internal.InBound
-            << toInternalExpectedLength
+        (Internal.ExpectInBound
+            << toInternalExpectLength
         )
         error
 
@@ -526,25 +526,25 @@ serializeErrorToString error =
 -- ### ↓ not important
 
 
-internalToExpectedLength :
-    Internal.ExpectedLengthIn minimum maximum
-    -> ExpectedLength minimum maximum
-internalToExpectedLength internalError =
+internalToExpectLength :
+    Internal.ExpectLengthIn minimum maximum
+    -> ExpectLengthIn minimum maximum
+internalToExpectLength internalError =
     case internalError of
-        Internal.AtLeast min ->
-            AtLeast min
+        Internal.ExpectAtLeast minimum ->
+            ExpectAtLeast minimum
 
-        Internal.AtMost max ->
-            AtMost max
+        Internal.ExpectAtMost maximum ->
+            ExpectAtMost maximum
 
 
-toInternalExpectedLength :
-    ExpectedLength minimum maximum
+toInternalExpectLength :
+    ExpectedLengthIn minimum maximum
     -> Internal.ExpectedLengthIn minimum maximum
-toInternalExpectedLength expectedLength =
+toInternalExpectLength expectedLength =
     case expectedLength of
-        AtLeast minimum ->
-            Internal.AtLeast minimum
+        ExpectAtLeast minimum ->
+            Internal.ExpectAtLeast minimum
 
-        AtMost maximum ->
-            Internal.AtMost maximum
+        ExpectAtMost maximum ->
+            Internal.ExpectAtMost maximum
