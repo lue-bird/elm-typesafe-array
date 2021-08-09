@@ -506,7 +506,7 @@ type ExpectedLength minimum maximum
     , actualLength = 10
     }
         |> MinArr.serializeErrorToString
-    --> expected an array of length >= 11 but the actual length was 10
+    --> "expected an array of length >= 11 but the actual length was 10"
 
 -}
 serializeErrorToString :

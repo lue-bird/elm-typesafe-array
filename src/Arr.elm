@@ -1291,7 +1291,7 @@ serialize length_ toSerializeError serializeElement =
     , actualLength = 10
     }
         |> Arr.serializeErrorToString
-    --> expected an array of length 11 but the actual length was 10
+    --> "expected an array of length 11 but the actual length was 10"
 
 -}
 serializeErrorToString :
