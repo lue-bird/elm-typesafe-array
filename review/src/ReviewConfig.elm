@@ -31,7 +31,7 @@ config =
     , NoSinglePatternCase.rule
     , NoLeftPizza.rule NoLeftPizza.Any
     , NoExposingEverything.rule
-    , NoImportingEverything.rule [ "Nats" ]
+    , NoImportingEverything.rule [ "Nats", "Arguments" ]
     , NoMissingTypeAnnotation.rule
     , NoForbiddenWords.rule [ "TODO", "todo" ]
     , NoBooleanCase.rule
