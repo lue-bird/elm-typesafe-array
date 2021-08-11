@@ -15,10 +15,7 @@ generalizeError :
         { expected : { length : expectedLength }
         , actual : { length : Nat (Min Nat0) }
         }
-    ->
-        { expected : Arr.Expectation
-        , actual : { length : Nat (Min Nat0) }
-        }
+    -> Arr.Error
 generalizeError generalizeExpectedLength error =
     { expected = generalizeExpectedLength error.expected.length
     , actual = error.actual
