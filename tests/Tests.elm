@@ -6,8 +6,8 @@ import InArr
 import LinearDirection exposing (LinearDirection(..))
 import MinArr
 import Nat exposing (In, Min, Only)
-import Test exposing (Test, describe, test)
 import Nats exposing (..)
+import Test exposing (Test, describe, test)
 
 
 suite : Test
@@ -195,3 +195,12 @@ type Field
 type Piece
     = Pawn
     | Other
+
+
+
+-- ↓ not important
+
+
+isEven : Int -> Bool
+isEven =
+    modBy 2 >> (==) 0
