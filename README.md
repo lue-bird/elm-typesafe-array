@@ -18,23 +18,25 @@ type alias TicTacToeBoard =
     Arr (Only Nat3) (Arr (Only Nat3) Field)
 
 type Field =
-    FieldEmpty
+    Empty
     | X
     | O
 
-initialTicTacToeBoard : TicTacToeBoard
-initialTicTacToeBoard =
-    Arr.repeat nat3
-        (Arr.repeat nat3 FieldEmpty)
+aTicTacToeBoard : TicTacToeBoard
+aTicTacToeBoard =
+    Arr.from3
+        (Arr.from3 Empty Empty O)
+        (Arr.from3 Empty O Empty)
+        (Arr.from3 O Empty Empty)
 ```
 
-**We & the compiler know** there are enough elements in `initialTicTacToeBoard`:
+**We & the compiler know** there are enough elements in `aTicTacToeBoard`:
 
 ```elm
-initialTicTacToeBoard
-    |> Arr.at nat2 FirstToLast
+aTicTacToeBoard
     |> Arr.at nat1 FirstToLast
---> FieldEmpty
+    |> Arr.at nat1 FirstToLast
+--> O
 ```
 
 ## Setup
