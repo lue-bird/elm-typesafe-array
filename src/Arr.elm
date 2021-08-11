@@ -1245,11 +1245,28 @@ restoreMaxLength maximumLength =
 -- ## error
 
 
+{-| An expectation for the decoded array that hasn't been met.
+
+  - `ExpectLength`: expected a different exact length
+  - `LengthInBound`: expected a length within a range (→ see `InNat.Expectation`)
+      - `ExpectAtLeast` some minimum in a range
+      - `ExpectAtMost` some maximum in a range
+
+See [errorToString](Arr#errorToString) and the `serialize` functions.
+
+-}
 type Expectation
     = ExpectLength (Nat (Min Nat0))
     | LengthInBound InNat.Expectation
 
 
+{-| An error for when a decoded array doesn't have the expected length.
+
+You can transform it into a message with [`errorToString`](Arr#errorToString).
+
+See the `serialize` functions.
+
+-}
 type alias Error =
     { expected : Expectation
     , actual : { length : Nat (Min Nat0) }

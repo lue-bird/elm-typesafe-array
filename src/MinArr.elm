@@ -414,12 +414,48 @@ serialize lowerBound toSerializeError serializeElement =
     Internal.serializeMin lowerBound toSerializeError serializeElement
 
 
+{-| An error for when a decoded array has a length that's less than the expected minimum length. You can transform it into
+
+  - a message: [`errorToString`](MinArr#errorToString)
+  - an [`Arr.Error`](Arr#Error): [`generalizeError`](MinArr#generalizeError)
+
+See [`serialize`](MinArr#serialize).
+
+-}
 type alias Error =
     { expected : { length : { atLeast : Nat (Min Nat0) } }
     , actual : { length : Nat (Min Nat0) }
     }
 
 
+{-| Convert its error to a [`Arr.Error`](Arr#Error): an error type that covers all cases where `Array` to `Arr` conversions can fail.
+
+    import Serialize exposing (Codec)
+
+    Serialize.mapError MinArr.generalizeError
+    --> : Codec MinArr.Error a -> Codec Arr.Error a
+
+Use this if you serialize `Arr (In ...)` together with `Arr (Min ...)`:
+
+    Serialize.tuple
+        (MinArr.serialize nat10 ...)
+        (InArr.serializeIn nat10 nat99 ...)
+    --> error : `Codec`s have different custom errors
+
+    Serialize.tuple
+        (MinArr.serialize nat10 ...
+            |> Serialize.mapError MinArr.generalizeError
+        )
+        (InArr.serializeIn nat10 nat99 ...)
+    --> Codec
+    -->     Arr.Error
+    -->     ( Arr (Min Nat0) ...
+    -->     , Arr (In Nat0 (Nat99Plus a_)) ...
+    -->     )
+
+Note: There's also [`errorToString`](MinArr#errorToString).
+
+-}
 generalizeError : Error -> Arr.Error
 generalizeError error =
     error

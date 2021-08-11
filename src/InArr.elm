@@ -529,12 +529,50 @@ serialize length toError serializeElement =
 -- ## error
 
 
+{-| An error for when the length of a decoded array is different from an exact expected length. You can transform it into
+
+  - a message: [`errorToString`](InArr#errorToString)
+  - an [`Arr.Error`](Arr#Error): [`generalizeError`](InArr#generalizeError)
+
+See [`serialize`](InNat#serialize).
+
+-}
 type alias Error =
     { expected : { length : Nat (Min Nat0) }
     , actual : { length : Nat (Min Nat0) }
     }
 
 
+{-| Convert its error to a [`Arr.Error`](Arr#Error): an error type that covers all cases where `Array` to `Arr` conversions can fail.
+
+    import Serialize exposing (Codec)
+
+    Serialize.mapError MinArr.generalizeError
+    --> : Codec MinArr.Error a -> Codec Arr.Error a
+
+Use this if you serialize `Arr (In X (XPlus a_))` together with `Arr (In A Z)`:
+
+    Serialize.tuple
+        (InArr.serialize nat10 ...)
+        (InArr.serializeIn nat10 nat99 ...)
+    --> error : `Codec`s have different custom errors
+
+    Serialize.tuple
+        (InArr.serialize nat10
+            InArr.generalizeError ...
+        )
+        (InArr.serializeIn nat10 nat99
+            identity ...
+        )
+    --> Codec
+    -->     Arr.Error
+    -->     ( Arr (Min Nat0) ...
+    -->     , Arr (In Nat0 (Nat99Plus a_)) ...
+    -->     )
+
+Note: There's also [`errorToString`](MinArr#errorToString).
+
+-}
 generalizeError : Error -> Arr.Error
 generalizeError error =
     error
