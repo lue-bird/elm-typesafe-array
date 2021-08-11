@@ -11,7 +11,7 @@ module Arr exposing
     , to1
     , to2, to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
     , map2, map3, map4
-    , lowerMinLength
+    , lowerMinLength, toMin
     , restoreMaxLength
     , Error, Expectation(..), errorToString
     )
@@ -106,7 +106,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 ## drop information
 
-@docs lowerMinLength
+@docs lowerMinLength, toMin
 
 
 ## restore
@@ -1175,8 +1175,8 @@ The length of all `Arr`s must be in the same range.
 
 ```
 Arr.map2 (\a b -> a.lifes + b.lifes)
-    (aBoard |> MinArr.value)
-    (bBoard |> MinArr.value)
+    (aBoard |> Arr.toMin)
+    (bBoard |> Arr.toMin)
 
 aBoard : Arr (In Nat2 someMax_) Field
 bBoard : Arr (In Nat2 otherMax_) Field
@@ -1497,6 +1497,32 @@ lowerMinLength :
     -> Arr (In newMin max) element
 lowerMinLength =
     Internal.lowerMinLength
+
+
+{-| Convert the `Arr (In min ...)` to a `Arr (Min min)`.
+
+    between4And10Elements |> Arr.toMin
+    --> : Arr (Min Nat4) ...
+
+There is only 1 situation you should use this.
+
+To make these the same type.
+
+    [ atLeast1Element, between1And10Elements ]
+
+Elm complains:
+
+> But all the previous elements in the list are
+> `Arr (Min Nat1) ...`
+
+    [ atLeast1Element
+    , between1And10Elements |> Arr.toMin
+    ]
+
+-}
+toMin : Arr (In min max_) element -> Arr (Min min) element
+toMin =
+    Internal.toMinArr
 
 
 

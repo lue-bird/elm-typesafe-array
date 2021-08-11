@@ -3,7 +3,6 @@ module MinArr exposing
     , append, prepend
     , drop
     , isLength, isLengthAtLeast, isLengthAtMost
-    , value
     , serialize
     , Error, generalizeError, errorToString
     )
@@ -38,11 +37,6 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 
 # transform
-
-
-## drop information
-
-@docs value
 
 
 ## serialize
@@ -339,36 +333,6 @@ isLengthAtMost upperBound lowest =
     Internal.minIsLengthAtMost upperBound lowest
 
 
-
--- ## drop information
-
-
-{-| Convert the `Arr (In min ...)` to a `Arr (Min min)`.
-
-    between4And10Elements |> MinArr.value
-    --> : Arr (Min Nat4) ...
-
-There is only 1 situation you should use this.
-
-To make these the same type.
-
-    [ atLeast1Element, between1And10Elements ]
-
-Elm complains:
-
-> But all the previous elements in the list are
-> `Arr (Min Nat1) ...`
-
-    [ atLeast1Element
-    , between1And10Elements |> MinArr.value
-    ]
-
--}
-value : Arr (In min max_) element -> Arr (Min min) element
-value =
-    Internal.toMinArr
-
-
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a minimum amount of elements.
 
     import Serialize exposing (Codec)
@@ -387,7 +351,7 @@ The encode/decode functions can be extracted if needed.
     encode : Arr (In (Nat1Plus minMinus1_) max_) World -> Bytes
     encode =
         Arr.lowerMinLength nat1
-            >> MinArr.value
+            >> Arr.toMin
             >> Serialize.encodeToBytes serializeSaves
 
     decode :
