@@ -5,7 +5,7 @@ Knowing more about the length of an `Array` at compile-time to help you **access
 ```elm
 ticTacToeBoard
     |> Arr.at nat2 FirstToLast
-    |> Arr.at nat1 FirstToLast
+    |> Arr.at nat0 FirstToLast
 ```
 
 _returns a value, not a `Maybe`_ if `ticTacToeBoard`'s type can promise that it contains enough elements.
@@ -34,8 +34,8 @@ aTicTacToeBoard =
 
 ```elm
 aTicTacToeBoard
-    |> Arr.at nat1 FirstToLast
-    |> Arr.at nat1 FirstToLast
+    |> Arr.at nat2 FirstToLast
+    |> Arr.at nat0 FirstToLast
 --> O
 ```
 
