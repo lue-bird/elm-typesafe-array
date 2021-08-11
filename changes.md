@@ -135,7 +135,8 @@ The reason this is called a "major" change is that the `resize` argument went fr
 - added `Arr.whenAllJust`
 - added `all` & `any`
 
-### 17.1.0
+### 18.0.0
 
+- moved `MinArr.value` to `Arr.toMin`
 - added `to1` to `to14`
 - added `toMaybe` & `fromMaybe`
