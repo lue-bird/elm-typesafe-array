@@ -1,14 +1,15 @@
 module Arr exposing
     ( Arr
-    , fromArray, fromList, repeat, nats, minNats, random
+    , fromArray, fromList, fromMaybe, repeat, nats, minNats, random
     , empty, from1
-    , from2
-    , from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
+    , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at, all, any
     , replaceAt, updateAt, resize, reverse, order
     , when, dropWhen, whenJust, whenAllJust
     , take, takeMax, groupsOf
-    , map, fold, foldWith, toArray, toList
+    , map, fold, foldWith, toArray, toList, toMaybe
+    , to1
+    , to2, to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
@@ -52,7 +53,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # create
 
-@docs fromArray, fromList, repeat, nats, minNats, random
+@docs fromArray, fromList, fromMaybe, repeat, nats, minNats, random
 
 
 ## exact
@@ -61,11 +62,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 [Skip to `from16`](Arr#from16).
 
-@docs from2
-
-[Skip to `from16`](Arr#from16).
-
-@docs from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
+@docs from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
 
 
 # scan
@@ -90,7 +87,16 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # transform
 
-@docs map, fold, foldWith, toArray, toList
+@docs map, fold, foldWith, toArray, toList, toMaybe
+
+
+## extract
+
+@docs to1
+
+[Skip to `to14`](Arr#to14).
+
+@docs to2, to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
 
 
 ## combine
@@ -121,9 +127,10 @@ import ArrayExtra as Array
 import InNat
 import Internal as Internal exposing (inPush)
 import LinearDirection exposing (LinearDirection(..))
-import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
+import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
 import Random
+import Toop
 import Typed exposing (Checked, Internal, Typed, val)
 
 
@@ -231,6 +238,264 @@ toList =
     toArray >> Array.toList
 
 
+{-| `Nothing` if the `Arr` is `empty`, else `Just` it's only value.
+-}
+toMaybe : Arr (In min_ Nat1) element -> Maybe element
+toMaybe =
+    \arr ->
+        case
+            arr
+                |> Internal.inIsLengthAtLeast nat1
+                    { lowest = nat0 }
+        of
+            Nat.Below _ ->
+                Nothing
+
+            Nat.EqualOrGreater one ->
+                Just (to1 one)
+
+
+{-| Access the only value in the `Arr`.
+
+    Arr.to1 (Arr.from1 "hi")
+    --> "hi"
+
+-}
+to1 : Arr (Only Nat1) element -> element
+to1 =
+    at nat0 FirstToLast
+
+
+{-| Transform the `Arr` into a `Toop.T2`. This makes accessing elements and pattern matching easier.
+-}
+to2 : Arr (Only Nat2) element -> Toop.T2 element element
+to2 =
+    \arr ->
+        Toop.T2
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T3`. This makes accessing elements and pattern matching easier.
+-}
+to3 : Arr (Only Nat3) element -> Toop.T3 element element element
+to3 =
+    \arr ->
+        Toop.T3
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T4`. This makes accessing elements and pattern matching easier.
+-}
+to4 :
+    Arr (Only Nat4) element
+    -> Toop.T4 element element element element
+to4 =
+    \arr ->
+        Toop.T4
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T5`. This makes accessing elements and pattern matching easier.
+-}
+to5 :
+    Arr (Only Nat5) element
+    -> Toop.T5 element element element element element
+to5 =
+    \arr ->
+        Toop.T5
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T6`. This makes accessing elements and pattern matching easier.
+-}
+to6 :
+    Arr (Only Nat6) element
+    -> Toop.T6 element element element element element element
+to6 =
+    \arr ->
+        Toop.T6
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T7`. This makes accessing elements and pattern matching easier.
+-}
+to7 :
+    Arr (Only Nat7) element
+    -> Toop.T7 element element element element element element element
+to7 =
+    \arr ->
+        Toop.T7
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T8`. This makes accessing elements and pattern matching easier.
+-}
+to8 :
+    Arr (Only Nat8) element
+    -> Toop.T8 element element element element element element element element
+to8 =
+    \arr ->
+        Toop.T8
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T9`. This makes accessing elements and pattern matching easier.
+-}
+to9 :
+    Arr (Only Nat9) element
+    -> Toop.T9 element element element element element element element element element
+to9 =
+    \arr ->
+        Toop.T9
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T10`. This makes accessing elements and pattern matching easier.
+-}
+to10 :
+    Arr (Only Nat10) element
+    -> Toop.T10 element element element element element element element element element element
+to10 =
+    \arr ->
+        Toop.T10
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T11`. This makes accessing elements and pattern matching easier.
+-}
+to11 :
+    Arr (Only Nat11) element
+    -> Toop.T11 element element element element element element element element element element element
+to11 =
+    \arr ->
+        Toop.T11
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T12`. This makes accessing elements and pattern matching easier.
+-}
+to12 :
+    Arr (Only Nat12) element
+    -> Toop.T12 element element element element element element element element element element element element
+to12 =
+    \arr ->
+        Toop.T12
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+            (at nat11 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T13`. This makes accessing elements and pattern matching easier.
+-}
+to13 :
+    Arr (Only Nat13) element
+    -> Toop.T13 element element element element element element element element element element element element element
+to13 =
+    \arr ->
+        Toop.T13
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+            (at nat11 FirstToLast arr)
+            (at nat12 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T14`. This makes accessing elements and pattern matching easier.
+-}
+to14 :
+    Arr (Only Nat14) element
+    -> Toop.T14 element element element element element element element element element element element element element element
+to14 =
+    \arr ->
+        Toop.T14
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+            (at nat11 FirstToLast arr)
+            (at nat12 FirstToLast arr)
+            (at nat13 FirstToLast arr)
+
+
 
 -- # create
 
@@ -301,6 +566,27 @@ Tell the compiler if you know the amount of elements. Make sure the it knows as 
 fromList : List element -> Arr (Min Nat0) element
 fromList list =
     list |> Array.fromList |> fromArray
+
+
+{-| `Arr.from1` if `Just`, `empty` if `Nothing`.
+
+    Arr.fromMaybe (Just "hi")
+    --> Arr.from1 "hi"
+    --> : Arr (In Nat0 (Nat1Plus a_))
+
+    Arr.fromMaybe Nothing
+    --> Arr.empty
+    --> : Arr (In Nat0 (Nat1Plus a_))
+
+-}
+fromMaybe : Maybe element -> Arr (In Nat0 (Nat1Plus a_)) element
+fromMaybe maybe =
+    case maybe of
+        Just element ->
+            from1 element |> lowerMinLength nat0
+
+        Nothing ->
+            empty
 
 
 {-| No elements.
