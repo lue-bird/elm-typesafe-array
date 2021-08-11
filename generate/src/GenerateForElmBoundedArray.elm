@@ -7,84 +7,19 @@ Thanks to [`the-sett/elm-syntax-dsl`](https://package.elm-lang.org/packages/the-
 -}
 
 import Browser
-import Bytes.Encode
 import Element as Ui
 import Element.Background as UiBg
-import Element.Border as UiBorder
 import Element.Font as UiFont
 import Element.Input as UiInput
-import Elm.CodeGen
-    exposing
-        ( access
-        , and
-        , append
-        , applyBinOp
-        , binOp
-        , binOpChain
-        , caseExpr
-        , char
-        , code
-        , composel
-        , composer
-        , cons
-        , construct
-        , customTypeDecl
-        , equals
-        , extRecordAnn
-        , fqConstruct
-        , fqFun
-        , fqNamedPattern
-        , fqTyped
-        , fun
-        , funExpose
-        , importStmt
-        , int
-        , intAnn
-        , lambda
-        , letDestructuring
-        , letExpr
-        , letFunction
-        , letVal
-        , list
-        , listAnn
-        , listPattern
-        , markdown
-        , maybeAnn
-        , minus
-        , namedPattern
-        , normalModule
-        , openTypeExpose
-        , parens
-        , pipel
-        , piper
-        , plus
-        , record
-        , recordAnn
-        , recordPattern
-        , tuple
-        , tupleAnn
-        , tuplePattern
-        , typeOrAliasExpose
-        , typeVar
-        , typed
-        , unConsPattern
-        , unit
-        , unitAnn
-        , val
-        , valDecl
-        , varPattern
-        )
-import Elm.Pretty
+import Elm.CodeGen as Gen exposing (applyBinOp, construct, fqConstruct, fqNamedPattern, fqTyped, fun, lambda, letDestructuring, letExpr, markdown, namedPattern, parens, parensPattern, piper, typeVar, typed, val, varPattern)
 import Extra.GenerateElm exposing (..)
 import Extra.Ui as Ui
 import File.Download
 import Html exposing (Html)
-import Html.Attributes
-import SyntaxHighlight
+import String exposing (concat)
 import Task
 import Time
 import Zip
-import Zip.Entry
 
 
 main : Program () Model Msg
@@ -98,7 +33,7 @@ main =
 
 
 type alias Model =
-    { from1To16ShownOrFolded :
+    { fromAndToXShownOrFolded :
         ShownOrFolded (Ui.Element Msg)
     , argumentsModuleShownOrFolded :
         ShownOrFolded (Ui.Element Msg)
@@ -116,7 +51,7 @@ type ShownOrFolded content
 
 init : ( Model, Cmd Msg )
 init =
-    ( { from1To16ShownOrFolded = Folded
+    ( { fromAndToXShownOrFolded = Folded
       , argumentsModuleShownOrFolded = Folded
       }
     , Cmd.none
@@ -130,12 +65,8 @@ type Msg
 
 
 type ModulesInElmArrs
-    = From1To16
+    = FromAndToX
     | Arguments
-
-
-type From1To16Tag
-    = From1To16Tag
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -164,7 +95,7 @@ update msg model =
                         zipEntryFromModule time moduleFile
                  in
                  Zip.fromEntries
-                    [ toZipEntry from1To16
+                    [ toZipEntry fromAndToX
                     , toZipEntry argumentsModule
                     ]
                     |> Zip.toBytes
@@ -173,12 +104,12 @@ update msg model =
 
         SwitchVisibleModule moduleKind ->
             ( case moduleKind of
-                From1To16 ->
+                FromAndToX ->
                     { model
-                        | from1To16ShownOrFolded =
+                        | fromAndToXShownOrFolded =
                             switchShownOrFolded
-                                (.from1To16ShownOrFolded model)
-                                viewFrom1To16
+                                (.fromAndToXShownOrFolded model)
+                                viewFromAndToX
                     }
 
                 Arguments ->
@@ -209,12 +140,12 @@ switchShownOrFolded visibility content =
 --
 
 
-natNAnn : Elm.CodeGen.TypeAnnotation -> Elm.CodeGen.TypeAnnotation
+natNAnn : Gen.TypeAnnotation -> Gen.TypeAnnotation
 natNAnn n =
     typed "Nat" [ n ]
 
 
-nAnn : Int -> Elm.CodeGen.TypeAnnotation
+nAnn : Int -> Gen.TypeAnnotation
 nAnn n =
     typed "N"
         [ natXAnn n
@@ -224,7 +155,7 @@ nAnn n =
         ]
 
 
-isAnn : Int -> String -> Elm.CodeGen.TypeAnnotation
+isAnn : Int -> String -> Gen.TypeAnnotation
 isAnn n var =
     typed "Is"
         [ typeVar var
@@ -233,29 +164,39 @@ isAnn n var =
         ]
 
 
-toAnn : Elm.CodeGen.TypeAnnotation
+toAnn : Gen.TypeAnnotation
 toAnn =
     typed "To" []
 
 
-natXAnn : Int -> Elm.CodeGen.TypeAnnotation
+natXAnn : Int -> Gen.TypeAnnotation
 natXAnn x =
-    typed ("Nat" ++ String.fromInt x) []
+    typed ([ "Nat", x |> String.fromInt ] |> concat)
+        []
 
 
-natXPlusAnn : Int -> Elm.CodeGen.TypeAnnotation -> Elm.CodeGen.TypeAnnotation
+natXPlusAnn : Int -> Gen.TypeAnnotation -> Gen.TypeAnnotation
 natXPlusAnn x more =
     case x of
         0 ->
             more
 
         _ ->
-            typed ("Nat" ++ String.fromInt x ++ "Plus") [ more ]
+            typed
+                ([ "Nat", x |> String.fromInt, "Plus" ]
+                    |> concat
+                )
+                [ more ]
 
 
-toIntAnn : Elm.CodeGen.TypeAnnotation
-toIntAnn =
-    funAnn [ natNAnn (typeVar "n") ] intAnn
+arrAnn : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
+arrAnn length element =
+    typed "Arr" [ length, element ]
+
+
+onlyAnn : Gen.TypeAnnotation -> Gen.TypeAnnotation
+onlyAnn nat =
+    typed "Only" [ nat ]
 
 
 
@@ -304,7 +245,8 @@ argumentsModule =
                     )
         in
         applyPreset 1
-            (applyBinOp (parens (construct "f" [ val "a" ]))
+            (applyBinOp
+                (parens (construct "f" [ val "a" ]))
                 piper
                 (val "more")
             )
@@ -322,14 +264,19 @@ argumentsModule =
     }
 
 
-viewFrom1To16 : Ui.Element msg
-viewFrom1To16 =
-    Ui.module_ from1To16
+viewFromAndToX : Ui.Element msg
+viewFromAndToX =
+    Ui.module_ fromAndToX
 
 
-from1To16 : Module From1To16Tag
-from1To16 =
-    { name = [ "From1To16" ]
+type FromAndToXTag
+    = FromXTag
+    | ToXTag
+
+
+fromAndToX : Module FromAndToXTag
+fromAndToX =
+    { name = [ "FromAndToX" ]
     , roleInPackage =
         PackageExposedModule
             { moduleComment = \_ -> []
@@ -339,11 +286,12 @@ from1To16 =
     , declarations =
         let
             fromXPreset x implementation =
-                packageExposedFunDecl From1To16Tag
+                packageExposedFunDecl FromXTag
                     [ markdown
                         (case x of
                             1 ->
                                 "Create an `Arr` with exactly 1 element."
+
                             _ ->
                                 "Create an `Arr` with exactly "
                                     ++ String.fromInt x
@@ -353,16 +301,19 @@ from1To16 =
                     (funAnn
                         (List.repeat x (typeVar "element"))
                         (typed "Arr"
-                            [ typed "In" [ natXAnn x, natXPlusAnn x (typeVar "a_") ]
+                            [ typed "In"
+                                [ natXAnn x
+                                , natXPlusAnn x (typeVar "a_")
+                                ]
                             , typeVar "element"
                             ]
                         )
                     )
-                    ("from" ++ String.fromInt x)
+                    ([ "from", x |> String.fromInt ] |> concat)
                     []
                     implementation
         in
-        fromXPreset 1
+        [ fromXPreset 1
             (lambda [ varPattern "a" ]
                 (applyBinOp
                     (val "empty")
@@ -374,8 +325,8 @@ from1To16 =
                     |> List.map
                         (\x ->
                             fromXPreset x
-                                (construct ("apply" ++ String.fromInt (x - 1))
-                                    [ fun ("from" ++ String.fromInt (x - 1))
+                                (construct ([ "apply", (x - 1) |> String.fromInt ] |> concat)
+                                    [ fun ([ "from", (x - 1) |> String.fromInt ] |> concat)
                                     , lambda [ varPattern "init" ]
                                         (lambda [ varPattern "last" ]
                                             (applyBinOp (val "init")
@@ -387,25 +338,58 @@ from1To16 =
                                 )
                         )
                )
+        , List.range 2 14
+            |> List.map
+                (\i ->
+                    let
+                        t n =
+                            [ "T", n |> String.fromInt ]
+                                |> concat
+                    in
+                    packageExposedFunDecl ToXTag
+                        [ markdown
+                            ([ "Transform the `Arr` into a `Toop."
+                             , t i
+                             , "`. This makes accessing elements and pattern matching easier."
+                             ]
+                                |> concat
+                            )
+                        ]
+                        (funAnn
+                            [ arrAnn (onlyAnn (natXAnn i))
+                                (typeVar "element")
+                            ]
+                            (fqTyped [ "Toop" ]
+                                (t i)
+                                (List.repeat i (typeVar "element"))
+                            )
+                        )
+                        ([ "to", i |> String.fromInt ] |> concat)
+                        []
+                        (lambda [ varPattern "arr" ]
+                            (fqConstruct [ "Toop" ]
+                                (t i)
+                                (List.range 0 (i - 1)
+                                    |> List.map
+                                        (\argI ->
+                                            construct "at"
+                                                [ val ([ "nat", argI |> String.fromInt ] |> concat)
+                                                , val "FirstToLast"
+                                                , val "arr"
+                                                ]
+                                                |> parens
+                                        )
+                                )
+                            )
+                        )
+                )
+        ]
+            |> List.concat
     }
 
 
 
 --
-
-
-args : (arg -> String) -> List arg -> String
-args argToString =
-    List.map argToString >> String.join " "
-
-
-indexed : ((String -> String) -> a) -> Int -> Int -> List a
-indexed use first last =
-    List.range first last
-        |> List.map
-            (\i ->
-                use (\base -> base ++ String.fromInt i)
-            )
 
 
 charIndex : Int -> Char
@@ -421,7 +405,7 @@ charPrefixed use last =
 
 
 view : Model -> Html Msg
-view { from1To16ShownOrFolded, argumentsModuleShownOrFolded } =
+view { fromAndToXShownOrFolded, argumentsModuleShownOrFolded } =
     Ui.layoutWith
         { options =
             [ Ui.focusStyle
@@ -497,8 +481,8 @@ view { from1To16ShownOrFolded, argumentsModuleShownOrFolded } =
                                     Folded ->
                                         switchButton ("⌄ " ++ name) switch
                         in
-                        [ ( from1To16ShownOrFolded
-                          , ( "From1To16", From1To16 )
+                        [ ( fromAndToXShownOrFolded
+                          , ( "FromAndToX", FromAndToX )
                           )
                         , ( argumentsModuleShownOrFolded
                           , ( "Arguments", Arguments )
