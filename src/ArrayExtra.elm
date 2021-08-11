@@ -1,9 +1,20 @@
-module ArrayExtra exposing (reverse, whenAllJust, any, all)
+module ArrayExtra exposing
+    ( any, all, natLength
+    , reverse, whenAllJust
+    )
 
 {-| Should be replaced by Array.Extra functions if they are added there.
+
+
+# scan
+
+@docs any, all, natLength
+
 -}
 
 import Array exposing (Array)
+import Nat exposing (Min, Nat)
+import Nats exposing (Nat0, nat0)
 
 
 reverse : Array a -> Array a
@@ -23,12 +34,19 @@ whenAllJust maybes =
         |> whenAllJustInList
         |> Maybe.map Array.fromList
 
+
 any : (a -> Bool) -> Array a -> Bool
 any isOkay =
     Array.toList
         >> List.any isOkay
 
+
 all : (a -> Bool) -> Array a -> Bool
 all isOkay =
     Array.toList
         >> List.all isOkay
+
+
+natLength : Array a_ -> Nat (Min Nat0)
+natLength =
+    Array.length >> Nat.intAtLeast nat0

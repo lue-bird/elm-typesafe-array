@@ -4,7 +4,8 @@ module MinArr exposing
     , drop
     , isLength, isLengthAtLeast, isLengthAtMost
     , value
-    , serialize, serializeErrorToString
+    , serialize
+    , Error, generalizeError, errorToString
     )
 
 {-| If the maximum length is a type variable,
@@ -46,17 +47,23 @@ use these operations instead of the ones in `Arr` or `InArr`
 
 ## serialize
 
-@docs serialize, serializeErrorToString
+@docs serialize
+
+
+## error
+
+@docs Error, generalizeError, errorToString
 
 -}
 
 import Arr exposing (Arr)
+import Common
+import InNat
 import Internal
 import LinearDirection exposing (LinearDirection)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
-import Serialize exposing (Codec)
 import Nats exposing (..)
-import Typed exposing (val)
+import Serialize exposing (Codec)
 
 
 
@@ -359,7 +366,7 @@ Elm complains:
 -}
 value : Arr (In min max_) element -> Arr (Min min) element
 value =
-    Internal.minValue
+    Internal.toMinArr
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a minimum amount of elements.
@@ -367,12 +374,12 @@ value =
     import Serialize exposing (Codec)
 
 
-    -- we can't start if we have no worlds to choose from!
+    -- we can't start if we have no worlds to choose from
     serializeSaves : Codec String (Arr (Min Nat1) World)
     serializeSaves =
         MinArr.serialize nat1
             -- if we just want a simple error string
-            MinArr.serializeErrorToString
+            MinArr.errorToString
             serializeWorld
 
 The encode/decode functions can be extracted if needed.
@@ -394,37 +401,54 @@ The encode/decode functions can be extracted if needed.
 
 -}
 serialize :
-    Nat (ArgIn min max ifN)
+    Nat (ArgIn min max_ ifN_)
     ->
-        ({ expectedLength : { atLeast : Nat (ArgIn min max ifN) }
-         , actualLength : Int
+        ({ expected : { length : { atLeast : Nat (Min Nat0) } }
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError element
-    -> Codec serializeError (Arr (Min min) element)
+    -> Codec error element
+    -> Codec error (Arr (Min min) element)
 serialize lowerBound toSerializeError serializeElement =
     Internal.serializeMin lowerBound toSerializeError serializeElement
 
 
+type alias Error =
+    { expected : { length : { atLeast : Nat (Min Nat0) } }
+    , actual : { length : Nat (Min Nat0) }
+    }
+
+
+generalizeError : Error -> Arr.Error
+generalizeError error =
+    error
+        |> Common.generalizeError
+            (Arr.LengthInBound
+                << InNat.ExpectAtLeast
+                << .atLeast
+            )
+
+
 {-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
 
-    { expectedLength = { atLeast = nat11 }
-    , actualLength = 10
+    { expected = { length = { atLeast = nat11 } }
+    , actual = { length = 10 }
     }
-        |> MinArr.serializeErrorToString
+        |> MinArr.errorToString
     --> expected an array of length >= 11 but the actual length was 10
 
+(example doesn't compile)
+
+Equivalent to
+
+    error
+        |> MinArr.generalizeError
+        |> Arr.errorToString
+
 -}
-serializeErrorToString :
-    { expectedLength : { atLeast : Nat minimum_ }
-    , actualLength : Int
-    }
-    -> String
-serializeErrorToString error =
-    Internal.serializeErrorToString
-        (Internal.ExpectInBound
-            << Internal.ExpectAtLeast
-            << .atLeast
-        )
-        error
+errorToString : Error -> String
+errorToString error =
+    error
+        |> generalizeError
+        |> Arr.errorToString

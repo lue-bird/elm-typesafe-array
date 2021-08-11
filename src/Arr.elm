@@ -12,7 +12,7 @@ module Arr exposing
     , map2, map3, map4
     , lowerMinLength
     , restoreMaxLength
-    , serialize, serializeErrorToString
+    , Error, Expectation(..), errorToString
     )
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -103,26 +103,27 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 @docs lowerMinLength
 
 
-## restore information
+## restore
 
 @docs restoreMaxLength
 
 
-## serialize
+# error
 
-@docs serialize, serializeErrorToString
+@docs Error, Expectation, errorToString
 
 -}
 
 import Arguments exposing (..)
 import Array exposing (Array)
 import Array.LinearDirection as Array
+import ArrayExtra as Array
+import InNat
 import Internal as Internal exposing (inPush)
 import LinearDirection exposing (LinearDirection(..))
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, To)
-import Random
-import Serialize exposing (Codec)
 import Nats exposing (..)
+import Random
 import Typed exposing (Checked, Internal, Typed, val)
 
 
@@ -1101,6 +1102,7 @@ at :
 at index direction =
     Internal.at index direction
 
+
 {-| Whether all elements satisfy a test.
 
     Arr.all isEven (Arr.from2 2 4)
@@ -1111,7 +1113,7 @@ at index direction =
 
     Arr.all isEven Arr.empty
     --> True
-    
+
 -}
 all : (element -> Bool) -> Arr length_ element -> Bool
 all isOkay =
@@ -1128,14 +1130,16 @@ all isOkay =
 
     Arr.any isEven Arr.empty
     --> False
-    
+
 -}
 any : (element -> Bool) -> Arr length_ element -> Bool
 any isOkay =
     toArray >> Array.any isOkay
 
 
+
 -- ## part
+
 
 {-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
@@ -1238,68 +1242,44 @@ restoreMaxLength maximumLength =
 
 
 
--- ## serialize
+-- ## error
 
 
-{-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a specific amount of elements.
-
-    import Serialize exposing (Codec)
-
-    serializeGameRow :
-        Codec
-            String
-            (Arr (Only Nat10) GameField)
-    serializeGameRow =
-        Arr.serialize nat10
-            -- if we just want a simple error string
-            Arr.serializeErrorToString
-            serializeGameField
-
-The encode/decode functions can be extracted if needed.
-
-    encodeGameRow : Arr (Only Nat10) GameField -> Bytes
-    encodeGameRow =
-        Serialize.encodeToBytes serializeGameRow
-
-    decodeGameRow :
-        Bytes
-        ->
-            Result
-                (Serialize.Error String)
-                (Arr (Only Nat10) GameField)
-    decodeGameRow =
-        Serialize.decodeFromBytes serializeGameRow
-
--}
-serialize :
-    Nat (ArgIn min max ifN)
-    ->
-        ({ expectedLength : Nat (ArgIn min max ifN)
-         , actualLength : Int
-         }
-         -> serializeError
-        )
-    -> Codec serializeError element
-    -> Codec serializeError (Arr (In min max) element)
-serialize length_ toSerializeError serializeElement =
-    Internal.serialize length_ toSerializeError serializeElement
+type Expectation
+    = ExpectLength (Nat (Min Nat0))
+    | LengthInBound InNat.Expectation
 
 
-{-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
-
-    { expectedLength = nat11
-    , actualLength = 10
+type alias Error =
+    { expected : Expectation
+    , actual : { length : Nat (Min Nat0) }
     }
-        |> Arr.serializeErrorToString
+
+
+{-| Convert an error to a readable message.
+
+    { expected = ExpectLength nat11
+    , actual = { length = nat10 }
+    }
+        |> Arr.errorToString
     --> "expected an array of length 11 but the actual length was 10"
 
 -}
-serializeErrorToString :
-    { expectedLength : Nat range_
-    , actualLength : Int
-    }
-    -> String
-serializeErrorToString error =
-    Internal.serializeErrorToString
-        (\expected -> Internal.ExpectExact expected)
-        error
+errorToString : Error -> String
+errorToString error =
+    [ "expected an array of length"
+    , case error.expected of
+        ExpectLength expected ->
+            val expected |> String.fromInt
+
+        LengthInBound (InNat.ExpectAtLeast minimum) ->
+            [ ">=", val minimum |> String.fromInt ]
+                |> String.join " "
+
+        LengthInBound (InNat.ExpectAtMost maximum) ->
+            [ "<=", val maximum |> String.fromInt ]
+                |> String.join " "
+    , "but the actual length was"
+    , val error.actual.length |> String.fromInt
+    ]
+        |> String.join " "

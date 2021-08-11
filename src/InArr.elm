@@ -3,7 +3,8 @@ module InArr exposing
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
-    , serialize, ExpectedLengthIn(..), serializeErrorToString
+    , serialize, serializeIn
+    , Error, generalizeError, errorToString
     )
 
 {-| If the maximum length is set to a specific value (also for `Only`),
@@ -39,17 +40,22 @@ use these operations instead of the ones in `Arr` or `MinArr`.
 
 ## serialize
 
-@docs serialize, ExpectedLengthIn, serializeErrorToString
+@docs serialize, serializeIn
+
+
+## error
+
+@docs Error, generalizeError, errorToString
 
 -}
 
 import Arr exposing (Arr)
+import Common exposing (fromInternalError)
 import Internal
 import LinearDirection exposing (LinearDirection(..))
-import Nat exposing (ArgIn, In, Is, N, Nat, Only, To)
-import Serialize exposing (Codec)
+import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
-import Typed exposing (val)
+import Serialize exposing (Codec)
 
 
 
@@ -426,11 +432,11 @@ isLengthAtMost upperBound lowest =
             String
             (Arr (In Nat10 (Nat15Plus a_)) Int)
     serialize10To15Ints =
-        InArr.serialize
+        InArr.serializeIn
             nat10
             nat15
             -- if we just want a simple error string
-            InArr.serializeErrorToString
+            InArr.errorToString
             Serialize.int
 
 The encode/decode functions can be extracted if needed.
@@ -454,97 +460,107 @@ The encode/decode functions can be extracted if needed.
 For decoded `Arr`s with a length outside of the expected bounds, the `Result` is an error message.
 
 -}
-serialize :
-    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN)
-    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+serializeIn :
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
     ->
-        ({ actualLength : Int
-         , expectedLength :
-            ExpectedLength
-                (ArgIn minLowerBound minUpperBound lowerBoundIfN)
-                (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+        ({ expected : Arr.Expectation
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError element
+    -> Codec error element
     ->
         Codec
-            serializeError
+            error
             (Arr (In minLowerBound maxUpperBound) element)
-serialize lowerBound upperBound toSerializeError serializeElement =
+serializeIn lowerBound upperBound toError serializeElement =
     Internal.serializeIn lowerBound
         upperBound
-        (\{ actualLength, expectedLength } ->
-            toSerializeError
-                { actualLength = actualLength
-                , expectedLength =
-                    expectedLength
-                        |> internalToExpectLength
-                }
-        )
+        (fromInternalError >> toError)
         serializeElement
 
 
-{-| An expectation that hasn't been met for the decoded array length.
+{-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s with a specific amount of elements.
 
-We expected the length to be
+    import Serialize exposing (Codec)
 
-  - `AtLeast` some minimum in a range
-  - `AtMost` some maximum in a range
+    serializeGameRow :
+        Codec
+            String
+            (Arr (Only Nat10) GameField)
+    serializeGameRow =
+        Arr.serialize nat10
+            -- if we just want a simple error string
+            Arr.errorToString
+            serializeGameField
 
-See [serializeErrorToString](InArr#serializeErrorToString) & [serialize](InArr#serialize).
+The encode/decode functions can be extracted if needed.
+
+    encodeGameRow : Arr (Only Nat10) GameField -> Bytes
+    encodeGameRow =
+        Serialize.encodeToBytes serializeGameRow
+
+    decodeGameRow :
+        Bytes
+        ->
+            Result
+                (Serialize.Error String)
+                (Arr (Only Nat10) GameField)
+    decodeGameRow =
+        Serialize.decodeFromBytes serializeGameRow
 
 -}
-type ExpectLengthIn minimum maximum
-    = ExpectAtLeast (Nat minimum)
-    | ExpectAtMost (Nat maximum)
+serialize :
+    Nat (ArgIn min max ifN_)
+    ->
+        ({ expected : { length : Nat (Min Nat0) }
+         , actual : { length : Nat (Min Nat0) }
+         }
+         -> error
+        )
+    -> Codec error element
+    -> Codec error (Arr (In min max) element)
+serialize length toError serializeElement =
+    Internal.serialize length toError serializeElement
 
 
-{-| Convert the [serialization](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) error into a readable message.
 
-    { expectedLength = MinArr.AtLeast nat11
-    , actualLength = 10
+-- ## error
+
+
+type alias Error =
+    { expected : { length : Nat (Min Nat0) }
+    , actual : { length : Nat (Min Nat0) }
     }
-        |> MinArr.serializeErrorToString
+
+
+generalizeError : Error -> Arr.Error
+generalizeError error =
+    error
+        |> Common.generalizeError
+            Arr.ExpectLength
+
+
+{-| Convert an error into a readable message.
+
+    { expected = { length = InNat.ExpectAtLeast nat11 }
+    , actual = { length = nat10 }
+    }
+        |> MinArr.errorToString
     --> "expected an array of length >= 11 but the actual length was 10"
 
+(example doesn't compile)
+
+Equivalent to
+
+    error
+        |> generalizeError
+        |> Common.errorToString
+
 -}
-serializeErrorToString :
-    { expectedLength : ExpectLengthIn minimum_ maximum_
-    , actualLength : Int
-    }
-    -> String
-serializeErrorToString error =
-    Internal.serializeErrorToString
-        (Internal.ExpectInBound
-            << toInternalExpectLength
-        )
-        error
-
-
-
--- ### ↓ not important
-
-
-internalToExpectLength :
-    Internal.ExpectLengthIn minimum maximum
-    -> ExpectLengthIn minimum maximum
-internalToExpectLength internalError =
-    case internalError of
-        Internal.ExpectAtLeast minimum ->
-            ExpectAtLeast minimum
-
-        Internal.ExpectAtMost maximum ->
-            ExpectAtMost maximum
-
-
-toInternalExpectLength :
-    ExpectedLengthIn minimum maximum
-    -> Internal.ExpectedLengthIn minimum maximum
-toInternalExpectLength expectedLength =
-    case expectedLength of
-        ExpectAtLeast minimum ->
-            Internal.ExpectAtLeast minimum
-
-        ExpectAtMost maximum ->
-            Internal.ExpectAtMost maximum
+errorToString : Error -> String
+errorToString error =
+    error
+        |> generalizeError
+        |> Arr.errorToString

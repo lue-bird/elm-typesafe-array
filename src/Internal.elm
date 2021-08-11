@@ -3,12 +3,12 @@ module Internal exposing
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
-    , serialize, serializeIn, serializeMin, ExpectLength(..), ExpectLengthIn(..), serializeErrorToString
+    , serialize, serializeIn, serializeMin, Expectation(..)
     , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
-    , ArrTag, Content, lowerMinLength, minValue, restoreMaxLength
+    , ArrTag, Content, lowerMinLength, restoreMaxLength, toMinArr
     )
 
 {-| Contains stuff that is unsafe to use.
@@ -38,7 +38,7 @@ Calling `isChecked Arr` marks unsafe operations.
 
 ### serialize
 
-@docs serialize, serializeIn, serializeMin, ExpectLength, ExpectLengthIn, serializeErrorToString
+@docs serialize, serializeIn, serializeMin, Expectation, generalizeError, errorToString
 
 
 ## modify
@@ -71,10 +71,10 @@ import LinearDirection exposing (LinearDirection(..))
 import List.LinearDirection as List
 import MinNat
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
+import Nats exposing (..)
 import Random
 import Serialize exposing (Codec)
-import Nats exposing (..)
-import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val)
+import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val, val2)
 
 
 type alias Arr length element =
@@ -101,7 +101,7 @@ from :
     -> ArrAs Tagged (In minLength maxLength) element
 from array length_ =
     { array = array
-    , length = length_.length |> InNat.value
+    , length = length_.length |> Nat.toIn
     }
         |> tag
 
@@ -153,7 +153,7 @@ mapArrayAndLength mapArray_ mapLength_ =
     Typed.map
         (\v ->
             { array = mapArray_ v.array
-            , length = mapLength_ v.length |> InNat.value
+            , length = mapLength_ v.length |> Nat.toIn
             }
         )
 
@@ -717,9 +717,9 @@ restoreMaxLength newMaximumLength =
         >> isChecked Arr
 
 
-minValue : Arr (In min max_) element -> Arr (Min min) element
-minValue =
-    mapLength MinNat.value >> isChecked Arr
+toMinArr : Arr (In min max_) element -> Arr (Min min) element
+toMinArr =
+    mapLength Nat.toMin >> isChecked Arr
 
 
 resize :
@@ -1047,15 +1047,15 @@ serializeValid :
     (Array element
      -> Result expectedLength (Arr length element)
     )
-    -> Codec serializeError element
+    -> Codec error element
     ->
-        ({ expectedLength : expectedLength
-         , actualLength : Int
+        ({ expected : expectedLength
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError (Arr length element)
-serializeValid mapValid serializeElement toSerializeError =
+    -> Codec error (Arr length element)
+serializeValid mapValid serializeElement toError =
     Serialize.array
         serializeElement
         |> Serialize.mapValid
@@ -1063,25 +1063,25 @@ serializeValid mapValid serializeElement toSerializeError =
                 mapValid array
                     |> Result.mapError
                         (\expectedLength ->
-                            { expectedLength = expectedLength
-                            , actualLength = Array.length array
+                            { expected = expectedLength
+                            , actual = { length = Array.natLength array }
                             }
-                                |> toSerializeError
+                                |> toError
                         )
             )
             toArray
 
 
 serialize :
-    Nat (ArgIn min max ifN)
+    Nat (ArgIn min max ifN_)
     ->
-        ({ expectedLength : Nat (ArgIn min max ifN)
-         , actualLength : Int
+        ({ expected : { length : Nat (Min Nat0) }
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError element
-    -> Codec serializeError (Arr (In min max) element)
+    -> Codec error element
+    -> Codec error (Arr (In min max) element)
 serialize length_ toSerializeError serializeElement =
     serializeValid
         (\array ->
@@ -1091,42 +1091,57 @@ serialize length_ toSerializeError serializeElement =
                     |> Ok
 
             else
-                Err length_
+                Err
+                    { length =
+                        length_
+                            |> Nat.lowerMin nat0
+                            |> Nat.toMin
+                    }
         )
         serializeElement
         toSerializeError
 
 
-type ExpectLength exact minimum maximum
-    = ExpectExact (Nat exact)
-    | ExpectInBound (ExpectLengthIn minimum maximum)
-
-
-type ExpectLengthIn minimum maximum
-    = ExpectAtLeast (Nat minimum)
-    | ExpectAtMost (Nat maximum)
+type Expectation
+    = ExpectLength (Nat (Min Nat0))
+    | LengthInBound InNat.Expectation
 
 
 serializeIn :
-    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN)
-    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN)
+    Nat (ArgIn minLowerBound minUpperBound lowerBoundIfN_)
+    -> Nat (ArgIn minUpperBound maxUpperBound upperBoundIfN_)
     ->
-        ({ expectedLength :
-            ExpectLengthIn
-                (ArgIn minLowerBound minUpperBound lowerBoundIfN)
-                (ArgIn minUpperBound maxUpperBound upperBoundIfN)
-         , actualLength : Int
+        ({ expected : Expectation
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError element
+    -> Codec error element
     ->
         Codec
-            serializeError
+            error
             (Arr (In minLowerBound maxUpperBound) element)
 serializeIn lowerBound upperBound toSerializeError serializeElement =
     serializeValid
         (\array ->
+            let
+                toMin0 =
+                    Nat.lowerMin nat0
+                        >> Nat.toMin
+
+                expectedLength { ifRange } =
+                    if val2 (==) lowerBound upperBound then
+                        Err
+                            (ExpectLength
+                                (lowerBound
+                                    |> Nat.lowerMin nat0
+                                    |> Nat.toMin
+                                )
+                            )
+
+                    else
+                        Err (ifRange |> LengthInBound)
+            in
             case
                 Array.length array
                     |> Nat.isIntInRange lowerBound upperBound
@@ -1136,26 +1151,33 @@ serializeIn lowerBound upperBound toSerializeError serializeElement =
                         |> isChecked Arr
                         |> Ok
 
-                Nat.BelowRange () ->
-                    Err (AtLeast lowerBound)
+                Nat.BelowRange _ ->
+                    expectedLength
+                        { ifRange =
+                            InNat.ExpectAtLeast (lowerBound |> toMin0)
+                        }
 
                 Nat.AboveRange _ ->
-                    Err (AtMost upperBound)
+                    expectedLength
+                        { ifRange =
+                            InNat.ExpectAtMost (upperBound |> toMin0)
+                        }
         )
         serializeElement
         toSerializeError
 
 
 serializeMin :
-    Nat (ArgIn min max ifN)
+    Nat (ArgIn min max_ ifN_)
     ->
-        ({ expectedLength : { atLeast : Nat (ArgIn min max ifN) }
-         , actualLength : Int
+        ({ expected :
+            { length : { atLeast : Nat (Min Nat0) } }
+         , actual : { length : Nat (Min Nat0) }
          }
-         -> serializeError
+         -> error
         )
-    -> Codec serializeError element
-    -> Codec serializeError (Arr (Min min) element)
+    -> Codec error element
+    -> Codec error (Arr (Min min) element)
 serializeMin lowerBound toSerializeError serializeElement =
     serializeValid
         (\array ->
@@ -1169,38 +1191,14 @@ serializeMin lowerBound toSerializeError serializeElement =
                         |> Ok
 
                 Nothing ->
-                    Err { atLeast = lowerBound }
+                    Err
+                        { length =
+                            { atLeast =
+                                lowerBound
+                                    |> Nat.lowerMin nat0
+                                    |> Nat.toMin
+                            }
+                        }
         )
         serializeElement
         toSerializeError
-
-
-{-|
-
-> expected an array of length {} but the actual length was {}
-
--}
-serializeErrorToString :
-    (expectedLength -> ExpectLength exact_ minimum_ maximum_)
-    ->
-        { expectedLength : expectedLength
-        , actualLength : Int
-        }
-    -> String
-serializeErrorToString expectedLengthToString error =
-    [ "expected an array of length"
-    , case expectedLengthToString error.expectedLength of
-        ExpectExact expected ->
-            val expected |> String.fromInt
-
-        ExpectInBound (ExpectAtLeast minimum) ->
-            [ ">=", val minimum |> String.fromInt ]
-                |> String.join " "
-
-        ExpectInBound (ExpectAtMost maximum) ->
-            [ "<=", val maximum |> String.fromInt ]
-                |> String.join " "
-    , "but the actual length was"
-    , String.fromInt error.actualLength
-    ]
-        |> String.join " "
