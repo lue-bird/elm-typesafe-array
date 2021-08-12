@@ -138,5 +138,5 @@ The reason this is called a "major" change is that the `resize` argument went fr
 ### 18.0.0
 
 - moved `MinArr.value` to `Arr.toMin`
-- added `to1` to `to14`
-- added `toMaybe` & `fromMaybe`
+- added `Arr.to1` to `to14`
+- added `Arr.toMaybe` & `fromMaybe`
