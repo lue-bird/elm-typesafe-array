@@ -74,7 +74,7 @@ push :
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
 push element =
-    Internal.inPush element
+    Internal.push element
 
 
 {-| Put an element in the `Arr` at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -95,7 +95,7 @@ insertAt :
     -> Arr (In minLength maxLength) element
     -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
 insertAt index direction element =
-    Internal.inInsertAt index direction element
+    Internal.insertAt index direction element
 
 
 {-| Attach elements of an `Arr` which has multiple possible amounts to the right.

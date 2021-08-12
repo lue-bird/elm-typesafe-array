@@ -76,7 +76,8 @@ push :
     -> Arr (In minLength maxLength_) element
     -> Arr (Min (Nat1Plus minLength)) element
 push element =
-    Internal.minPush element
+    Internal.push element
+        >> Arr.toMin
 
 
 {-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -101,7 +102,8 @@ insertAt :
     -> Arr (In minLength maxLength_) element
     -> Arr (Min (Nat1Plus minLength)) element
 insertAt index direction inserted =
-    Internal.minInsertAt index direction inserted
+    Internal.insertAt index direction inserted
+        >> Arr.toMin
 
 
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).

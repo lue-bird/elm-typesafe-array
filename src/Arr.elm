@@ -125,7 +125,7 @@ import Array exposing (Array)
 import Array.LinearDirection as Array
 import ArrayExtra as Array
 import InNat
-import Internal as Internal exposing (inPush)
+import Internal as Internal exposing (push)
 import LinearDirection exposing (LinearDirection(..))
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
@@ -606,14 +606,14 @@ empty =
 -}
 from1 : element -> Arr (In Nat1 (Nat1Plus a_)) element
 from1 =
-    \a -> empty |> inPush a
+    \a -> empty |> push a
 
 
 {-| Create an `Arr` with exactly 2 elements in this order.
 -}
 from2 : element -> element -> Arr (In Nat2 (Nat2Plus a_)) element
 from2 =
-    apply1 from1 (\init -> \last -> init |> inPush last)
+    apply1 from1 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 3 elements in this order.
@@ -624,7 +624,7 @@ from3 :
     -> element
     -> Arr (In Nat3 (Nat3Plus a_)) element
 from3 =
-    apply2 from2 (\init -> \last -> init |> inPush last)
+    apply2 from2 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 4 elements in this order.
@@ -636,7 +636,7 @@ from4 :
     -> element
     -> Arr (In Nat4 (Nat4Plus a_)) element
 from4 =
-    apply3 from3 (\init -> \last -> init |> inPush last)
+    apply3 from3 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 5 elements in this order.
@@ -649,7 +649,7 @@ from5 :
     -> element
     -> Arr (In Nat5 (Nat5Plus a_)) element
 from5 =
-    apply4 from4 (\init -> \last -> init |> inPush last)
+    apply4 from4 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 6 elements in this order.
@@ -663,7 +663,7 @@ from6 :
     -> element
     -> Arr (In Nat6 (Nat6Plus a_)) element
 from6 =
-    apply5 from5 (\init -> \last -> init |> inPush last)
+    apply5 from5 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 7 elements in this order.
@@ -678,7 +678,7 @@ from7 :
     -> element
     -> Arr (In Nat7 (Nat7Plus a_)) element
 from7 =
-    apply6 from6 (\init -> \last -> init |> inPush last)
+    apply6 from6 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 8 elements in this order.
@@ -694,7 +694,7 @@ from8 :
     -> element
     -> Arr (In Nat8 (Nat8Plus a_)) element
 from8 =
-    apply7 from7 (\init -> \last -> init |> inPush last)
+    apply7 from7 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 9 elements in this order.
@@ -711,7 +711,7 @@ from9 :
     -> element
     -> Arr (In Nat9 (Nat9Plus a_)) element
 from9 =
-    apply8 from8 (\init -> \last -> init |> inPush last)
+    apply8 from8 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 10 elements in this order.
@@ -729,7 +729,7 @@ from10 :
     -> element
     -> Arr (In Nat10 (Nat10Plus a_)) element
 from10 =
-    apply9 from9 (\init -> \last -> init |> inPush last)
+    apply9 from9 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 11 elements in this order.
@@ -748,7 +748,7 @@ from11 :
     -> element
     -> Arr (In Nat11 (Nat11Plus a_)) element
 from11 =
-    apply10 from10 (\init -> \last -> init |> inPush last)
+    apply10 from10 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 12 elements in this order.
@@ -768,7 +768,7 @@ from12 :
     -> element
     -> Arr (In Nat12 (Nat12Plus a_)) element
 from12 =
-    apply11 from11 (\init -> \last -> init |> inPush last)
+    apply11 from11 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 13 elements in this order.
@@ -789,7 +789,7 @@ from13 :
     -> element
     -> Arr (In Nat13 (Nat13Plus a_)) element
 from13 =
-    apply12 from12 (\init -> \last -> init |> inPush last)
+    apply12 from12 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 14 elements in this order.
@@ -811,7 +811,7 @@ from14 :
     -> element
     -> Arr (In Nat14 (Nat14Plus a_)) element
 from14 =
-    apply13 from13 (\init -> \last -> init |> inPush last)
+    apply13 from13 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 15 elements in this order.
@@ -834,7 +834,7 @@ from15 :
     -> element
     -> Arr (In Nat15 (Nat15Plus a_)) element
 from15 =
-    apply14 from14 (\init -> \last -> init |> inPush last)
+    apply14 from14 (\init -> \last -> init |> push last)
 
 
 {-| Create an `Arr` with exactly 16 elements in this order.
@@ -858,7 +858,7 @@ from16 :
     -> element
     -> Arr (In Nat16 (Nat16Plus a_)) element
 from16 =
-    apply15 from15 (\init -> \last -> init |> inPush last)
+    apply15 from15 (\init -> \last -> init |> push last)
 
 
 {-| Increasing natural numbers. In the end, there are `length` numbers.

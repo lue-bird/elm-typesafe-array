@@ -4,7 +4,7 @@ module Internal exposing
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
     , serialize, serializeIn, serializeMin, Expectation(..)
-    , replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
+    , replaceAt, push, insertAt, inRemoveAt, minRemoveAt, resize, order
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
@@ -16,47 +16,47 @@ module Internal exposing
 Calling `isChecked Arr` marks unsafe operations.
 
 
-## create
+# create
 
 @docs empty, fromArray, repeat, nats, minNats, random
 
 
-## scan
+# scan
 
 @docs at, length
 
 
-### scan length
+## scan length
 
 @docs inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
 
 
-## transform
+# transform
 
 @docs toArray, map, map2
 
 
-### serialize
+## serialize
 
 @docs serialize, serializeIn, serializeMin, Expectation, generalizeError, errorToString
 
 
-## modify
+# modify
 
-@docs replaceAt, inPush, minPush, inInsertAt, minInsertAt, inRemoveAt, minRemoveAt, resize, order
+@docs replaceAt, push, insertAt, inRemoveAt, minRemoveAt, resize, order
 
 
-### glue
+## glue
 
 @docs appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
 
 
-### filter
+## filter
 
 @docs when, dropWhen, whenJust, whenAllJust
 
 
-### part
+## part
 
 @docs take, takeMax, inDrop, minDrop, groupsOf
 
@@ -356,76 +356,30 @@ replaceAt index direction replacement =
         >> isChecked Arr
 
 
-inPush :
+push :
     element
     -> Arr (In min max) element
     -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
-inPush element =
-    push element (InNat.add nat1)
+push elementToPush =
+    mapArrayAndLength (Array.push elementToPush)
+        (InNat.add nat1)
         >> isChecked Arr
 
 
-minPush :
-    element
-    -> Arr (In min max_) element
-    -> Arr (Min (Nat1Plus min)) element
-minPush element =
-    push element (MinNat.add nat1)
-        >> isChecked Arr
-
-
-{-| Should not be exposed.
--}
-push :
-    element
-    -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
-    -> Arr (In min max) element
-    -> ArrAs Tagged (In (Nat1Plus min) maxPlus1) element
-push elementToPush add1 =
-    mapArrayAndLength (Array.push elementToPush) add1
-
-
-inInsertAt :
+insertAt :
     Nat (ArgIn indexMin_ minLength indexIfN_)
     -> LinearDirection
     -> element
     -> Arr (In minLength maxLength) element
     -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
-inInsertAt index direction insertedElement =
-    insertAt index
-        direction
-        insertedElement
+insertAt index direction insertedElement =
+    mapArrayAndLength
+        (Array.insertAt (val index)
+            direction
+            insertedElement
+        )
         (InNat.add nat1)
         >> isChecked Arr
-
-
-minInsertAt :
-    Nat (ArgIn indexMin_ minLength indexIfN_)
-    -> LinearDirection
-    -> element
-    -> Arr (In minLength maxLength_) element
-    -> Arr (Min (Nat1Plus minLength)) element
-minInsertAt index direction elementToInsert =
-    insertAt index
-        direction
-        elementToInsert
-        (MinNat.add nat1)
-        >> isChecked Arr
-
-
-{-| Should not be exposed.
--}
-insertAt :
-    Nat range_
-    -> LinearDirection
-    -> element
-    -> (Nat (In min max) -> Nat (ArgIn (Nat1Plus min) maxPlus1 ifN_))
-    -> Arr (In min max) element
-    -> ArrAs Tagged (In (Nat1Plus min) maxPlus1) element
-insertAt index direction inserted add1 =
-    mapArrayAndLength
-        (Array.insertAt (val index) direction inserted)
-        add1
 
 
 inRemoveAt :
@@ -434,7 +388,7 @@ inRemoveAt :
     -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
     -> Arr (In minMinus1 maxMinus1) element
 inRemoveAt index direction =
-    removeAt index direction (InNat.sub nat1)
+    removeAtTemplate index direction (InNat.sub nat1)
         >> isChecked Arr
 
 
@@ -444,13 +398,13 @@ minRemoveAt :
     -> Arr (In (Nat1Plus lengthMinus1) max) element
     -> Arr (In lengthMinus1 max) element
 minRemoveAt index direction =
-    removeAt index direction (MinNat.sub nat1)
+    removeAtTemplate index direction (MinNat.sub nat1)
         >> isChecked Arr
 
 
 {-| Should not be exposed.
 -}
-removeAt :
+removeAtTemplate :
     Nat (ArgIn minIndex_ minMinus1 indexIfN_)
     -> LinearDirection
     ->
@@ -459,7 +413,7 @@ removeAt :
         )
     -> Arr (In (Nat1Plus minMinus1) max) element
     -> ArrAs Tagged (In minMinus1 maxMinus1) element
-removeAt index direction sub1 =
+removeAtTemplate index direction sub1 =
     mapArrayAndLength
         (Array.removeAt (val index) direction)
         sub1
@@ -471,7 +425,7 @@ inAppend :
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 inAppend addedLength extension =
-    append extension (\_ -> InNat.add addedLength)
+    appendTemplate extension (\_ -> InNat.add addedLength)
         >> isChecked Arr
 
 
@@ -482,7 +436,7 @@ appendIn :
     -> Arr (In min max) element
     -> Arr (In appendedMin appendedMax) element
 appendIn extensionMin extensionMax extension =
-    append extension
+    appendTemplate extension
         (InNat.addIn extensionMin extensionMax)
         >> isChecked Arr
 
@@ -493,7 +447,7 @@ minAppend :
     -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 minAppend minAddedLength extension =
-    append extension (\_ -> MinNat.add minAddedLength)
+    appendTemplate extension (\_ -> MinNat.add minAddedLength)
         >> isChecked Arr
 
 
@@ -522,12 +476,12 @@ glue direction extension addLength =
 
 {-| Should not be exposed.
 -}
-append :
+appendTemplate :
     Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
     -> ArrAs Tagged lengthSum element
-append extension addLength =
+appendTemplate extension addLength =
     glue (\app a b -> app a b) extension addLength
 
 
@@ -537,18 +491,18 @@ inPrepend :
     -> Arr (In min max) element
     -> Arr (In sumMin sumMax) element
 inPrepend addedLength extension =
-    prepend extension (\_ -> InNat.add addedLength)
+    prependTemplate extension (\_ -> InNat.add addedLength)
         >> isChecked Arr
 
 
 {-| Should not be exposed.
 -}
-prepend :
+prependTemplate :
     Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
     -> ArrAs Tagged lengthSum element
-prepend extension addLength =
+prependTemplate extension addLength =
     glue (\app a b -> app b a) extension addLength
 
 
@@ -559,7 +513,7 @@ prependIn :
     -> Arr (In min max) element
     -> Arr (In appendedMin appendedMax) element
 prependIn extensionMin extensionMax extension =
-    prepend extension
+    prependTemplate extension
         (InNat.addIn extensionMin extensionMax)
         >> isChecked Arr
 
@@ -570,7 +524,7 @@ minPrepend :
     -> Arr (In min max_) element
     -> Arr (Min sumMin) element
 minPrepend minAddedLength extension =
-    prepend extension (\_ -> MinNat.add minAddedLength)
+    prependTemplate extension (\_ -> MinNat.add minAddedLength)
         >> isChecked Arr
 
 
@@ -580,7 +534,7 @@ inDrop :
     -> Arr (In min max) element
     -> Arr (In minTaken maxTaken) element
 inDrop droppedAmount direction =
-    drop droppedAmount direction InNat.sub
+    dropTemplate droppedAmount direction InNat.sub
         >> isChecked Arr
 
 
@@ -590,13 +544,13 @@ minDrop :
     -> Arr (In min max) element
     -> Arr (In minTaken max) element
 minDrop droppedAmount direction =
-    drop droppedAmount direction MinNat.sub
+    dropTemplate droppedAmount direction MinNat.sub
         >> isChecked Arr
 
 
 {-| Should not be exposed.
 -}
-drop :
+dropTemplate :
     Nat (N dropped atLeastDropped (Is minTaken To min) is)
     -> LinearDirection
     ->
@@ -606,7 +560,7 @@ drop :
         )
     -> Arr (In min max) element
     -> ArrAs Tagged (In minTaken maxTaken) element
-drop droppedAmount direction subDropped =
+dropTemplate droppedAmount direction subDropped =
     mapArrayAndLength
         (Array.drop (val droppedAmount) direction)
         (\len -> len |> subDropped droppedAmount)
