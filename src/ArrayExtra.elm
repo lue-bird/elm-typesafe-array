@@ -1,6 +1,7 @@
 module ArrayExtra exposing
     ( any, all, natLength
-    , reverse, whenAllJust
+    , reverse, intersperse
+    , whenAllJust
     )
 
 {-| Should be replaced by Array.Extra functions if they are added there.
@@ -9,6 +10,16 @@ module ArrayExtra exposing
 # scan
 
 @docs any, all, natLength
+
+
+# modify
+
+@docs reverse, intersperse
+
+
+# transform
+
+@docs whenAllJust
 
 -}
 
@@ -50,3 +61,10 @@ all isOkay =
 natLength : Array a_ -> Nat (Min Nat0)
 natLength =
     Array.length >> Nat.intAtLeast nat0
+
+
+intersperse : a -> Array a -> Array a
+intersperse separator =
+    Array.toList
+        >> List.intersperse separator
+        >> Array.fromList
