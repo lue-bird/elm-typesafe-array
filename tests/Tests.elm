@@ -1,7 +1,7 @@
 module Tests exposing (startBoard, suite)
 
 import Arr exposing (Arr)
-import Expect
+import Expect exposing (Expectation)
 import InArr
 import LinearDirection exposing (LinearDirection(..))
 import MinArr
@@ -86,13 +86,13 @@ inArrTests =
                 [ test "length less than current"
                     (\() ->
                         Arr.resize FirstToLast nat3 0 num1234
-                            |> Expect.equal
+                            |> expectEqualArr
                                 (Arr.from3 1 2 3)
                     )
                 , test "length greater than current"
                     (\() ->
                         Arr.resize FirstToLast nat6 0 num1234
-                            |> Expect.equal
+                            |> expectEqualArr
                                 (Arr.from6 1 2 3 4 0 0)
                     )
                 ]
@@ -100,13 +100,13 @@ inArrTests =
                 [ test "length less than current"
                     (\() ->
                         Arr.resize LastToFirst nat3 0 num1234
-                            |> Expect.equal
+                            |> expectEqualArr
                                 (Arr.from3 2 3 4)
                     )
                 , test "length greater than current"
                     (\() ->
                         Arr.resize LastToFirst nat6 0 num1234
-                            |> Expect.equal
+                            |> expectEqualArr
                                 (Arr.from6 0 0 1 2 3 4)
                     )
                 ]
@@ -204,3 +204,10 @@ type Piece
 isEven : Int -> Bool
 isEven =
     modBy 2 >> (==) 0
+
+
+expectEqualArr : Arr l a -> Arr l a -> Expectation
+expectEqualArr expected actual =
+    Expect.equalLists
+        (expected |> Arr.toList)
+        (actual |> Arr.toList)
