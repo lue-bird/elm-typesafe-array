@@ -872,7 +872,7 @@ from16 =
         Arr.nats length
             |> Arr.map (InNat.add first)
 
-If you want to use a `Nat` as the length, but you dont know the maximum, e.g.
+If you want to use a `Nat` as the length, but you don't know the maximum, e.g.
 
     Arr.nats (Nat.intAtLeast nat5 someInt) -- error
 
@@ -1164,8 +1164,8 @@ map alter =
 {-| Combine the elements of 2 `Arr`s into new elements.
 If one list is longer, its extra elements are not used.
 
-    teamLifes aBoard bBoard =
-        Arr.map2 (\a b -> a.lifes + b.lifes)
+    teamLives aBoard bBoard =
+        Arr.map2 (\a b -> a.lives + b.lives)
             aBoard
             bBoard
 
@@ -1174,7 +1174,7 @@ The length of all `Arr`s must be in the same range.
   - If 1 `Arr`'s maximum length isn't known:
 
 ```
-Arr.map2 (\a b -> a.lifes + b.lifes)
+Arr.map2 (\a b -> a.lives + b.lives)
     (aBoard |> Arr.toMin)
     (bBoard |> Arr.toMin)
 
@@ -1185,7 +1185,7 @@ bBoard : Arr (In Nat2 otherMax_) Field
   - If 1 `Arr` has a higher minimum length:
 
 ```
-Arr.map2 (\a b -> a.lifes + b.lifes)
+Arr.map2 (\a b -> a.lives + b.lives)
     (aBoard |> Arr.lowerMinLength nat2)
     bBoard
 
