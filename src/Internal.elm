@@ -11,7 +11,7 @@ module Internal exposing
     , ArrTag, Content, lowerMinLength, restoreMaxLength, toMinArr
     )
 
-{-| Contains stuff that is unsafe to use.
+{-| Contains all functions that use unsafe operations. No other module can modify the underlying array or length and decide its length type.
 
 Calling `isChecked Arr` marks unsafe operations.
 
@@ -110,6 +110,15 @@ from array length_ =
 -- ## scan
 
 
+{-| Succeeds for every correctly typed `Arr`.
+
+If it doesn't succeed, `at` crashes with a
+
+> RangeError: Maximum call stack size exceeded
+
+instead of failing silently like [Orasund's static-array](https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/) does.
+
+-}
 at :
     Nat (ArgIn indexMin_ minMinus1 indexIfN_)
     -> LinearDirection
@@ -119,14 +128,9 @@ at index direction =
     \arr ->
         case Array.at (val index) direction (toArray arr) of
             Just element ->
-                -- succeeds for every correctly typed Arr
                 element
 
             Nothing ->
-                -- if not, we crash with a
-                -- RangeError: Maximum call stack size exceeded
-                -- instead of failing silently
-                -- like Orasund's static-array does
                 at index direction arr
 
 
