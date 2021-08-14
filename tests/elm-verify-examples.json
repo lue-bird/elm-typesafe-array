@@ -1,0 +1,9 @@
+{
+  "root": "../src",
+  "tests": [
+    "Arr",
+    "InArr",
+    "MinArr",
+    "./README.md"
+  ]
+}
