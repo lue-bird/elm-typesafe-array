@@ -1287,9 +1287,9 @@ foldWith direction reduce =
 
 {-| Alias to `Arr.order LastToFirst`: flip the order of the elements.
 
-    Arr.from5 "l" "i" "v" "e"
+    Arr.from4 "l" "i" "v" "e"
         |> Arr.reverse
-    --> Arr.from5 "e" "v" "i" "l"
+    --> Arr.from4 "e" "v" "i" "l"
 
 -}
 reverse : Arr length element -> Arr length element
@@ -1301,11 +1301,11 @@ reverse =
 reverse if [`LastToFirst`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/LinearDirection#LinearDirection).
 
     Arr.from3 1 2 3
-        |> Array.order LastToFirst
+        |> Arr.order LastToFirst
     --> Arr.from3 3 2 1
 
     Arr.from3 1 2 3
-        |> Array.order FirstToLast
+        |> Arr.order FirstToLast
     --> Arr.from3 1 2 3
 
 -}
@@ -1321,19 +1321,19 @@ order direction =
 
     Arr.resize LastToFirst nat4 0
         (Arr.from2 1 2)
-    --> Array.from4 0 0 1 2
+    --> Arr.from4 0 0 1 2
 
     Arr.resize LastToFirst nat2 0
         (Array.from3 1 2 3)
-    --> Array.from2 2 3
+    --> Arr.from2 2 3
 
     Arr.resize FirstToLast nat4 0
         (Array.from2 1 2)
-    --> Array.from4 1 2 0 0
+    --> Arr.from4 1 2 0 0
 
     Arr.resize FirstToLast nat2 0
         (Array.from3 1 2 3)
-    --> Array.from2 1 2
+    --> Arr.from2 1 2
 
 This is a quick way to gain some type-level knowledge about the length.
 
@@ -1560,7 +1560,7 @@ restoreMaxLength maximumLength =
 {-| An expectation for the decoded array that hasn't been met.
 
   - `ExpectLength`: expected a different exact length
-  - `LengthInBound`: expected a length within a range (→ see `InNat.Expectation`)
+  - `LengthInBound`: expected a length within a range (→ see [`InNat.Expectation`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/InNat#Expectation))
       - `ExpectAtLeast` some minimum in a range
       - `ExpectAtMost` some maximum in a range
 

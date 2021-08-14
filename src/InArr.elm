@@ -424,6 +424,7 @@ isLengthAtMost upperBound lowest =
 
 
 {-| A [`Codec`](https://package.elm-lang.org/packages/MartinSStewart/elm-serialize/latest/) to serialize `Arr`s within a minimum & maximum length.
+To serialize `Arr`s of an exact length, use [`serialize`](InArr#serialize).
 
     import Serialize exposing (Codec)
 
@@ -561,13 +562,13 @@ Use this if you serialize `Arr (In X (XPlus a_))` together with `Arr (In A Z)`:
         (InArr.serialize nat10
             InArr.generalizeError ...
         )
-        (InArr.serializeIn nat10 nat99
+        (InArr.serializeIn nat10 nat20
             identity ...
         )
     --> Codec
     -->     Arr.Error
-    -->     ( Arr (Min Nat0) ...
-    -->     , Arr (In Nat0 (Nat99Plus a_)) ...
+    -->     ( Arr (In Nat10 (Nat10Plus a_)) ...
+    -->     , Arr (In Nat10 (Nat20Plus b_)) ...
     -->     )
 
 Note: There's also [`errorToString`](MinArr#errorToString).
