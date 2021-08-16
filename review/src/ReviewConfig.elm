@@ -22,6 +22,7 @@ import NoMissingTypeAnnotation
 import NoForbiddenWords
 import NoBooleanCase
 import NoPrematureLetComputation
+import LinksPointToExistingPackageMembers
 
 
 config : List Rule
@@ -36,4 +37,5 @@ config =
     , NoForbiddenWords.rule [ "TODO", "todo" ]
     , NoBooleanCase.rule
     , NoPrematureLetComputation.rule
+    , LinksPointToExistingPackageMembers.rule
     ]
