@@ -535,7 +535,7 @@ serialize length toError serializeElement =
   - a message: [`errorToString`](InArr#errorToString)
   - an [`Arr.Error`](Arr#Error): [`generalizeError`](InArr#generalizeError)
 
-See [`serialize`](InNat#serialize).
+See [`serialize`](InArr#serialize).
 
 -}
 type alias Error =
