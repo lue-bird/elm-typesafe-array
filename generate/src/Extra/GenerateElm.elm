@@ -1,4 +1,4 @@
-module Extra.GenerateElm exposing (..)
+module Extra.GenerateElm exposing (Comment, Declaration(..), ExposedOrLocal(..), Module, ModuleRoleInPackage(..), PackageExposed(..), PackageInternal(..), PackageInternalDeclaration, PackageInternalModule, TypeConstructorExposed(..), aliasDeclaration, arrayAnn, docTagsFrom, exposedToJust, exposingAll, exposingExplicit, funAnn, funDeclaration, importAlias, localAliasDecl, localFunDecl, localTypeDecl, noAlias, noExposing, packageExposedAliasDecl, packageExposedFunDecl, packageExposedTypeDecl, packageInternalExposedAliasDecl, packageInternalExposedFunDecl, packageInternalExposedTypeDecl, stringFromModuleFile, toDeclaration, toDocComment, toModuleComment, typeDecl, zipEntryFromModule)
 
 {-| Content to create a `Generate.file`.
 -}
@@ -86,7 +86,7 @@ type ModuleRoleInPackage tag
     | PackageInternalModule
 
 
-zipEntryFromModule : ( Time.Zone, Time.Posix ) -> Module tag -> Zip.Entry.Entry
+zipEntryFromModule : ( Time.Zone, Time.Posix ) -> Module tag_ -> Zip.Entry.Entry
 zipEntryFromModule time moduleFile =
     stringFromModuleFile moduleFile
         |> Bytes.Encode.string
@@ -119,7 +119,7 @@ toModuleComment =
 --
 
 
-toDeclaration : Declaration tag -> Generate.Declaration
+toDeclaration : Declaration tag_ -> Generate.Declaration
 toDeclaration (Declaration declaration) =
     declaration.make declaration.name
 
@@ -221,7 +221,7 @@ localFunDecl :
     -> String
     -> List Generate.Pattern
     -> Generate.Expression
-    -> Declaration tag
+    -> Declaration tag_
 localFunDecl typeAnn name argumentPatterns expression =
     funDeclaration Local Nothing typeAnn name argumentPatterns expression
 
@@ -367,7 +367,7 @@ localTypeDecl :
     String
     -> List String
     -> List ( String, List Generate.TypeAnnotation )
-    -> Declaration tag
+    -> Declaration tag_
 localTypeDecl name argumentNames choiceConstructors =
     typeDecl Nothing
         Nothing
@@ -380,7 +380,7 @@ localTypeDecl name argumentNames choiceConstructors =
 --
 
 
-stringFromModuleFile : Module tag -> String
+stringFromModuleFile : Module tag_ -> String
 stringFromModuleFile moduleFile =
     let
         fromModuleComment moduleComment =

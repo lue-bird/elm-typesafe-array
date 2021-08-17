@@ -203,7 +203,7 @@ onlyAnn nat =
 --
 
 
-viewArgumentsModule : Ui.Element msg
+viewArgumentsModule : Ui.Element msg_
 viewArgumentsModule =
     Ui.module_ argumentsModule
 
@@ -264,7 +264,7 @@ argumentsModule =
     }
 
 
-viewFromAndToX : Ui.Element msg
+viewFromAndToX : Ui.Element msg_
 viewFromAndToX =
     Ui.module_ fromAndToX
 

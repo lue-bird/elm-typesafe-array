@@ -63,7 +63,7 @@ slider { min, max, value } changeValue =
         }
 
 
-module_ : Module tag -> Ui.Element msg
+module_ : Module tag_ -> Ui.Element msg_
 module_ moduleFile =
     let
         string =
