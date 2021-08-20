@@ -225,6 +225,21 @@ order direction =
         >> isChecked Arr
 
 
+{-| Should not be exposed.
+-}
+intersperseTemplate :
+    element
+    ->
+        (Nat (In minLength maxLength)
+         -> Nat (In minLength maxLength)
+         -> Nat (In (Nat1Plus minDoubleLengthMinus1) maxDoubleLength)
+        )
+    ->
+        (Nat (In (Nat1Plus minDoubleLengthMinus1) maxDoubleLength)
+         -> Nat (In minDoubleLengthMinus1 maxDoubleLengthMinus1)
+        )
+    -> Arr (In minLength maxLength) element
+    -> ArrAs Tagged (In minDoubleLengthMinus1 maxDoubleLengthMinus1) element
 intersperseTemplate separatorBetweenTheElements addLength sub1 =
     \arr ->
         arr
@@ -446,20 +461,20 @@ insertAt index direction insertedElement =
 
 
 inRemoveAt :
-    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 ifN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
-    -> Arr (In minMinus1 maxMinus1) element
+    -> Arr (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1)) element
+    -> Arr (In minLengthMinus1 maxLengthMinus1) element
 inRemoveAt index direction =
     removeAtTemplate index direction (InNat.sub nat1)
         >> isChecked Arr
 
 
 minRemoveAt :
-    Nat (ArgIn indexMin_ lengthMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 ifN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus lengthMinus1) max) element
-    -> Arr (In lengthMinus1 max) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
+    -> Arr (In minLengthMinus1 maxLength) element
 minRemoveAt index direction =
     removeAtTemplate index direction (MinNat.sub nat1)
         >> isChecked Arr
@@ -468,55 +483,23 @@ minRemoveAt index direction =
 {-| Should not be exposed.
 -}
 removeAtTemplate :
-    Nat (ArgIn minIndex_ minMinus1 indexIfN_)
+    Nat (ArgIn minIndex_ minLengthMinus1 indexIfN_)
     -> LinearDirection
     ->
-        (Nat (In (Nat1Plus minMinus1) max)
-         -> Nat (ArgIn minMinus1 maxMinus1 minus1IfN_)
+        (Nat (In (Nat1Plus minLengthMinus1) maxLength)
+         -> Nat (ArgIn minLengthMinus1 maxLengthMinus1 minus1IfN_)
         )
-    -> Arr (In (Nat1Plus minMinus1) max) element
-    -> ArrAs Tagged (In minMinus1 maxMinus1) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength) element
+    -> ArrAs Tagged (In minLengthMinus1 maxLengthMinus1) element
 removeAtTemplate index direction sub1 =
     mapArrayAndLength
         (Array.removeAt (val index) direction)
         sub1
 
 
-inAppend :
-    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
-    -> Arr (Only added) element
-    -> Arr (In min max) element
-    -> Arr (In sumMin sumMax) element
-inAppend addedLength extension =
-    appendTemplate extension (\_ -> InNat.add addedLength)
-        >> isChecked Arr
-
-
-appendIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
-    -> Arr (In addedMin addedMax) element
-    -> Arr (In min max) element
-    -> Arr (In appendedMin appendedMax) element
-appendIn extensionMin extensionMax extension =
-    appendTemplate extension
-        (InNat.addIn extensionMin extensionMax)
-        >> isChecked Arr
-
-
-minAppend :
-    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
-    -> Arr (In minAdded maxAdded_) element
-    -> Arr (In min max_) element
-    -> Arr (Min sumMin) element
-minAppend minAddedLength extension =
-    appendTemplate extension (\_ -> MinNat.add minAddedLength)
-        >> isChecked Arr
-
-
 {-| Should not be exposed.
 -}
-glue :
+glueTemplate :
     ((Array element -> Array element -> Array element)
      -> Array element
      -> Array element
@@ -526,7 +509,7 @@ glue :
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
     -> ArrAs Tagged lengthSum element
-glue direction extension addLength =
+glueTemplate direction extension addLength =
     let
         appendVal a b =
             { array = direction Array.append b.array a.array
@@ -545,14 +528,77 @@ appendTemplate :
     -> Arr length element
     -> ArrAs Tagged lengthSum element
 appendTemplate extension addLength =
-    glue (\app a b -> app a b) extension addLength
+    glueTemplate (\app a b -> app a b) extension addLength
+
+
+inAppend :
+    Nat
+        (N
+            added
+            atLeastAdded_
+            (Is minLength To minLengthSum)
+            (Is maxLength To maxLengthSum)
+        )
+    -> Arr (Only added) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLengthSum maxLengthSum) element
+inAppend addedLength extension =
+    appendTemplate extension (\_ -> InNat.add addedLength)
+        >> isChecked Arr
+
+
+appendIn :
+    Nat
+        (N
+            minAdded
+            atLeastMinAdded_
+            (Is minLength To minSumLength)
+            addedMinIs_
+        )
+    ->
+        Nat
+            (N
+                maxAdded
+                atLeastAddedMax_
+                (Is maxLength To appendedMax)
+                addedMaxIs_
+            )
+    -> Arr (In minAdded maxAdded) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minSumLength appendedMax) element
+appendIn extensionMin extensionMax extension =
+    appendTemplate extension
+        (InNat.addIn extensionMin extensionMax)
+        >> isChecked Arr
+
+
+minAppend :
+    Nat
+        (N
+            minAdded
+            atLeastMinAdded_
+            (Is minLength To minSumLength)
+            is_
+        )
+    -> Arr (In minAdded maxAdded_) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minSumLength) element
+minAppend minAddedLength extension =
+    appendTemplate extension (\_ -> MinNat.add minAddedLength)
+        >> isChecked Arr
 
 
 inPrepend :
-    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
+    Nat
+        (N
+            added
+            atLeastAdded_
+            (Is minLength To minSumLength)
+            (Is maxLength To maxSumLength)
+        )
     -> Arr (Only added) element
-    -> Arr (In min max) element
-    -> Arr (In sumMin sumMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minSumLength maxSumLength) element
 inPrepend addedLength extension =
     prependTemplate extension (\_ -> InNat.add addedLength)
         >> isChecked Arr
@@ -566,15 +612,15 @@ prependTemplate :
     -> Arr length element
     -> ArrAs Tagged lengthSum element
 prependTemplate extension addLength =
-    glue (\app a b -> app b a) extension addLength
+    glueTemplate (\app a b -> app b a) extension addLength
 
 
 prependIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
+    Nat (N addedMin atLeastAddedMin_ (Is minLength To minSumLength) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is maxLength To appendedMax) addedMaxIs_)
     -> Arr (In addedMin addedMax) element
-    -> Arr (In min max) element
-    -> Arr (In appendedMin appendedMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minSumLength appendedMax) element
 prependIn extensionMin extensionMax extension =
     prependTemplate extension
         (InNat.addIn extensionMin extensionMax)
@@ -582,19 +628,25 @@ prependIn extensionMin extensionMax extension =
 
 
 minPrepend :
-    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    Nat (N minAdded atLeastMinAdded_ (Is minLength To minSumLength) is_)
     -> Arr (In minAdded maxAdded_) element
-    -> Arr (In min max_) element
-    -> Arr (Min sumMin) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minSumLength) element
 minPrepend minAddedLength extension =
     prependTemplate extension (\_ -> MinNat.add minAddedLength)
         >> isChecked Arr
 
 
 inDrop :
-    Nat (N dropped_ atLeastDropped_ (Is minTaken To min) (Is maxTaken To max))
+    Nat
+        (N
+            dropped_
+            atLeastDropped_
+            (Is minTaken To minLength)
+            (Is maxTaken To maxLength)
+        )
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     -> Arr (In minTaken maxTaken) element
 inDrop droppedAmount direction =
     dropTemplate droppedAmount direction InNat.sub
@@ -602,10 +654,16 @@ inDrop droppedAmount direction =
 
 
 minDrop :
-    Nat (N dropped_ atLeastDropped_ (Is minTaken To min) is_)
+    Nat
+        (N
+            dropped_
+            atLeastDropped_
+            (Is minTaken To minLength)
+            is_
+        )
     -> LinearDirection
-    -> Arr (In min max) element
-    -> Arr (In minTaken max) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minTaken maxLength) element
 minDrop droppedAmount direction =
     dropTemplate droppedAmount direction MinNat.sub
         >> isChecked Arr
@@ -614,14 +672,14 @@ minDrop droppedAmount direction =
 {-| Should not be exposed.
 -}
 dropTemplate :
-    Nat (N dropped atLeastDropped (Is minTaken To min) is)
+    Nat (N dropped atLeastDropped (Is minTaken To minLength) is)
     -> LinearDirection
     ->
-        (Nat (N dropped atLeastDropped (Is minTaken To min) is)
-         -> Nat (In min max)
+        (Nat (N dropped atLeastDropped (Is minTaken To minLength) is)
+         -> Nat (In minLength maxLength)
          -> Nat (In minTaken maxTaken)
         )
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     -> ArrAs Tagged (In minTaken maxTaken) element
 dropTemplate droppedAmount direction subDropped =
     mapArrayAndLength
@@ -647,10 +705,10 @@ takeTemplate amountToTake direction =
 
 
 takeMax :
-    Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
+    Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To minLength) is_)
     -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     -> Arr (In minTaken atLeastMaxTaken) element
 takeMax maxTakenAmount amountToTake direction =
     takeTemplate
@@ -660,9 +718,9 @@ takeMax maxTakenAmount amountToTake direction =
 
 
 take :
-    Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
+    Nat (N taken atLeastTaken (Is takenToMin_ To minLength) is_)
     -> LinearDirection
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     -> Arr (In taken atLeastTaken) element
 take amountToTake direction =
     takeTemplate amountToTake direction
@@ -672,11 +730,11 @@ take amountToTake direction =
 groupsOf :
     Nat (ArgIn (Nat1Plus minGroupSizMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
-    -> Arr (In min_ max) element
+    -> Arr (In minLength_ maxLength) element
     ->
         { groups :
             Arr
-                (In Nat0 max)
+                (In Nat0 maxLength)
                 (Arr
                     (In (Nat1Plus minGroupSizMinus1) maxGroupSize)
                     element
@@ -717,34 +775,36 @@ groupsOf groupSize direction =
 
 
 lowerMinLength :
-    Nat (ArgIn newMin min lowerIfN_)
-    -> Arr (In min max) element
-    -> Arr (In newMin max) element
+    Nat (ArgIn newMinLength minLength ifN_)
+    -> Arr (In minLength maxLength) element
+    -> Arr (In newMinLength maxLength) element
 lowerMinLength newMinimumLength =
     mapLength (Nat.lowerMin newMinimumLength)
         >> isChecked Arr
 
 
 restoreMaxLength :
-    Nat (ArgIn max newMax ifN_)
-    -> Arr (In min max) element
-    -> Arr (In min newMax) element
+    Nat (ArgIn maxLength newMaxLength ifN_)
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLength newMaxLength) element
 restoreMaxLength newMaximumLength =
     mapLength (Nat.restoreMax newMaximumLength)
         >> isChecked Arr
 
 
-toMinArr : Arr (In min max_) element -> Arr (Min min) element
+toMinArr :
+    Arr (In minLength maxLength_) element
+    -> Arr (Min minLength) element
 toMinArr =
     mapLength Nat.toMin >> isChecked Arr
 
 
 resize :
     LinearDirection
-    -> Nat (ArgIn newMin newMax ifN_)
+    -> Nat (ArgIn newMinLength newMaxLength ifN_)
     -> element
     -> Arr length_ element
-    -> Arr (In newMin newMax) element
+    -> Arr (In newMinLength newMaxLength) element
 resize direction newLength paddingValue =
     mapArrayAndLength
         (Array.resize direction
@@ -765,7 +825,7 @@ inIsLength :
             (Nat1Plus valueMinus1)
             atLeastValue
             (Is a_ To (Nat1Plus atLeastValueMinus1))
-            (Is valueToMax_ To max)
+            (Is valueToMax_ To maxLength)
         )
     ->
         { lowest :
@@ -773,16 +833,16 @@ inIsLength :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToValue_ To (Nat1Plus valueMinus1))
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.LessOrEqualOrGreater
             (Arr (In lowest atLeastValueMinus1) element)
             (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
-            (Arr (In (Nat2Plus valueMinus1) max) element)
+            (Arr (In (Nat2Plus valueMinus1) maxLength) element)
 inIsLength amount lowest =
     \arr ->
         let
@@ -813,7 +873,7 @@ inIsLengthInRange :
             (N
                 upperBound
                 atLeastUpperBound
-                (Is upperBoundToMax_ To max)
+                (Is upperBoundToMax_ To maxLength)
                 upperBoundIs_
             )
     ->
@@ -822,16 +882,16 @@ inIsLengthInRange :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToLowerBound_ To lowerBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.BelowOrInOrAboveRange
             (Arr (In lowest atLeastLowerBoundMinus1) element)
             (Arr (In lowerBound atLeastUpperBound) element)
-            (Arr (In (Nat1Plus upperBound) max) element)
+            (Arr (In (Nat1Plus upperBound) maxLength) element)
 inIsLengthInRange lowerBound upperBound lowest =
     \arr ->
         let
@@ -860,7 +920,7 @@ inIsLengthAtLeast :
         (N
             lowerBound
             (Nat1Plus atLeastLowerBoundMinus1)
-            (Is atLeastRange_ To max)
+            (Is atLeastRange_ To maxLength)
             is_
         )
     ->
@@ -869,15 +929,15 @@ inIsLengthAtLeast :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is (Nat1Plus lowestToLowerBound_) To lowerBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.BelowOrAtLeast
             (Arr (In lowest atLeastLowerBoundMinus1) element)
-            (Arr (In lowerBound max) element)
+            (Arr (In lowerBound maxLength) element)
 inIsLengthAtLeast lowerBound lowest =
     \arr ->
         let
@@ -902,7 +962,7 @@ inIsLengthAtMost :
         (N
             upperBound
             atLeastUpperBound
-            (Is (Nat1Plus greaterRange_) To max)
+            (Is (Nat1Plus greaterRange_) To maxLength)
             is_
         )
     ->
@@ -911,15 +971,15 @@ inIsLengthAtMost :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToUpperBound_ To upperBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.AtMostOrAbove
             (Arr (In lowest atLeastUpperBound) element)
-            (Arr (In (Nat1Plus upperBound) max) element)
+            (Arr (In (Nat1Plus upperBound) maxLength) element)
 inIsLengthAtMost upperBound lowest =
     \arr ->
         let
@@ -953,11 +1013,11 @@ minIsLength :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToValueMinus1_ To valueMinus1)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.LessOrEqualOrGreater
             (Arr (In lowest atLeastValueMinus1) element)
@@ -996,11 +1056,11 @@ minIsLengthAtLeast :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is lowestToMinLowerBound_ To minLowerBound)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.BelowOrAtLeast
             (Arr (In lowest maxLowerBoundMinus1) element)
@@ -1029,11 +1089,11 @@ minIsLengthAtMost :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is lowestToMinUpperBound_ To minUpperBound)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.AtMostOrAbove
             (Arr (In lowest maxUpperBound) element)
@@ -1090,7 +1150,7 @@ serializeValid mapValid serializeElement toError =
 
 
 serialize :
-    Nat (ArgIn min max ifN_)
+    Nat (ArgIn minLength maxLength ifN_)
     ->
         ({ expected : { length : Nat (Min Nat0) }
          , actual : { length : Nat (Min Nat0) }
@@ -1098,7 +1158,7 @@ serialize :
          -> error
         )
     -> Codec error element
-    -> Codec error (Arr (In min max) element)
+    -> Codec error (Arr (In minLength maxLength) element)
 serialize length_ toSerializeError serializeElement =
     serializeValid
         (\array ->
@@ -1185,7 +1245,7 @@ serializeIn lowerBound upperBound toSerializeError serializeElement =
 
 
 serializeMin :
-    Nat (ArgIn min max_ ifN_)
+    Nat (ArgIn minLength max_ ifN_)
     ->
         ({ expected :
             { length : { atLeast : Nat (Min Nat0) } }
@@ -1194,7 +1254,7 @@ serializeMin :
          -> error
         )
     -> Codec error element
-    -> Codec error (Arr (Min min) element)
+    -> Codec error (Arr (Min minLength) element)
 serializeMin lowerBound toSerializeError serializeElement =
     serializeValid
         (\array ->
