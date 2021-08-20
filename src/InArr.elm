@@ -1,5 +1,6 @@
 module InArr exposing
     ( push, removeAt, insertAt
+    , intersperse
     , append, appendIn, prepend, prependIn
     , drop
     , isLengthInRange, isLength, isLengthAtLeast, isLengthAtMost
@@ -7,17 +8,18 @@ module InArr exposing
     , Error, generalizeError, errorToString
     )
 
-{-| If the maximum length is set to a specific value (also for `Only`),
+{-| If the length is `Only` or the maximum length is set to a specific value:
 
     -- only up to 50 tags
     tag : Arr (In min_ Nat50) String -> a -> Tagged a
 
-use these operations instead of the ones in `Arr` or `MinArr`.
+use these operations instead of the ones in [`Arr`](Arr) or [`MinArr`](MinArr).
 
 
 # modify
 
 @docs push, removeAt, insertAt
+@docs intersperse
 
 
 ## glue
@@ -96,6 +98,39 @@ insertAt :
     -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
 insertAt index direction element =
     Internal.insertAt index direction element
+
+
+{-| Place a value between all members.
+
+To get the correct final length type, we need to give the current minimum and maximum length as an arguments.
+
+    Arr.from3 "turtles" "turtles" "turtles"
+        |> InArr.intersperse "on" nat3 nat3
+    --> Arr.from5 "turtles" "on" "turtles" "on" "turtles"
+
+-}
+intersperse :
+    element
+    ->
+        Nat
+            (N
+                minLength
+                atLeastMinLength_
+                (Is minLength To (Nat1Plus minDoubleLengthMinus1))
+                minIs_
+            )
+    ->
+        Nat
+            (N
+                maxLength
+                atLeastMaxLength_
+                (Is maxLength To (Nat1Plus maxDoubleLengthMinus1))
+                maxIs_
+            )
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minDoubleLengthMinus1 maxDoubleLengthMinus1) element
+intersperse separatorBetweenTheElements minLength maxLength =
+    Internal.inIntersperse separatorBetweenTheElements minLength maxLength
 
 
 {-| Attach elements of an `Arr` which has multiple possible amounts to the right.

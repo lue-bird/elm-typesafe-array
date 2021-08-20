@@ -1,5 +1,6 @@
 module MinArr exposing
     ( push, removeAt, insertAt
+    , intersperse
     , append, prepend
     , drop
     , isLength, isLengthAtLeast, isLengthAtMost
@@ -7,18 +8,19 @@ module MinArr exposing
     , Error, generalizeError, errorToString
     )
 
-{-| If the maximum length is a type variable,
+{-| If the length is `Min` or the maximum length is a type variable:
 
     first :
         Arr (In (Nat1Plus minMinus1_) max_) element
         -> element
 
-use these operations instead of the ones in `Arr` or `InArr`
+use these operations instead of the ones in [`Arr`](Arr) or [`InArr`](InArr).
 
 
 # modify
 
 @docs push, removeAt, insertAt
+@docs intersperse
 
 
 ## glue
@@ -104,6 +106,32 @@ insertAt :
 insertAt index direction inserted =
     Internal.insertAt index direction inserted
         >> Arr.toMin
+
+
+{-| Place a value between all members.
+
+To get the correct final length type, we need to give the current minimum length as an arguments.
+
+    atLeast3Turtles
+        |> MinArr.intersperse "on" nat3
+    --> "turtles" "on" "turtles" "on" "turtles" ...
+    --> : Arr (Min Nat5) String
+
+-}
+intersperse :
+    element
+    ->
+        Nat
+            (N
+                minLength
+                atLeastMinLength_
+                (Is minLength To (Nat1Plus minDoubleLengthMinus1))
+                minIs_
+            )
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minDoubleLengthMinus1) element
+intersperse separatorBetweenTheElements minLength =
+    Internal.minIntersperse separatorBetweenTheElements minLength
 
 
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).

@@ -131,7 +131,7 @@ import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
 import Random
 import Toop
-import Typed exposing (Checked, Internal, Typed, val)
+import Typed exposing (Checked, Internal, Typed, isChecked, val)
 
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -1612,3 +1612,7 @@ errorToString error =
     , val error.actual.length |> String.fromInt
     ]
         |> String.join " "
+
+
+shouldBeReported =
+    isChecked

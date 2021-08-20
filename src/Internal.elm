@@ -8,7 +8,7 @@ module Internal exposing
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
-    , ArrTag, Content, lowerMinLength, restoreMaxLength, toMinArr
+    , ArrTag, Content, inIntersperse, lowerMinLength, minIntersperse, restoreMaxLength, toMinArr
     )
 
 {-| Contains all functions that use unsafe operations. No other module can modify the underlying array or length and decide its length type.
@@ -44,6 +44,11 @@ Calling `isChecked Arr` marks unsafe operations.
 # modify
 
 @docs replaceAt, push, insertAt, inRemoveAt, minRemoveAt, resize, order
+
+
+## separate elements
+
+@docs inSeparateElementsBy, minSeparateElementsBy
 
 
 ## glue
@@ -217,6 +222,60 @@ order :
     -> Arr length element
 order direction =
     mapArray (Array.order direction)
+        >> isChecked Arr
+
+
+intersperseTemplate separatorBetweenTheElements addLength sub1 =
+    \arr ->
+        arr
+            |> mapArrayAndLength
+                (Array.intersperse separatorBetweenTheElements)
+                (addLength (length arr) >> sub1)
+
+
+inIntersperse :
+    element
+    ->
+        Nat
+            (N
+                minLength
+                atLeastMinLength_
+                (Is minLength To (Nat1Plus minDoubleLengthMinus1))
+                minIs_
+            )
+    ->
+        Nat
+            (N
+                maxLength
+                atLeastMaxLength_
+                (Is maxLength To (Nat1Plus maxDoubleLengthMinus1))
+                maxIs_
+            )
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minDoubleLengthMinus1 maxDoubleLengthMinus1) element
+inIntersperse separatorBetweenTheElements minLength maxLength =
+    intersperseTemplate separatorBetweenTheElements
+        (InNat.addIn minLength maxLength)
+        (InNat.sub nat1)
+        >> isChecked Arr
+
+
+minIntersperse :
+    element
+    ->
+        Nat
+            (N
+                minLength
+                atLeastMinLength_
+                (Is minLength To (Nat1Plus minDoubleLengthMinus1))
+                minIs_
+            )
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minDoubleLengthMinus1) element
+minIntersperse separatorBetweenTheElements minLength =
+    intersperseTemplate separatorBetweenTheElements
+        (MinNat.addMin minLength)
+        (MinNat.sub nat1)
         >> isChecked Arr
 
 
