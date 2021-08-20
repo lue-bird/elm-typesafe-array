@@ -128,6 +128,13 @@ inArrTests =
                         |> Expect.equal Nothing
                 )
             ]
+        , test "intersperse"
+            (\() ->
+                Arr.from3 "turtles" "turtles" "turtles"
+                    |> InArr.intersperse "on" nat3 nat3
+                    |> Expect.equal
+                        (Arr.from5 "turtles" "on" "turtles" "on" "turtles")
+            )
         ]
 
 
