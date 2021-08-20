@@ -73,8 +73,14 @@ import Serialize exposing (Codec)
 -}
 push :
     element
-    -> Arr (In min max) element
-    -> Arr (In (Nat1Plus min) (Nat1Plus max)) element
+    -> Arr (In minLength maxLength) element
+    ->
+        Arr
+            (In
+                (Nat1Plus minLength)
+                (Nat1Plus maxLength)
+            )
+            element
 push element =
     Internal.push element
 
@@ -144,11 +150,11 @@ Use [`append`](InArr#append) if the appended `Arr` has an exact amount of elemen
 
 -}
 appendIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
+    Nat (N addedMin atLeastAddedMin_ (Is minLength To minLengthSum) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is maxLength To maxLengthSum) addedMaxIs_)
     -> Arr (In addedMin addedMax) element
-    -> Arr (In min max) element
-    -> Arr (In appendedMin appendedMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLengthSum maxLengthSum) element
 appendIn extensionMin extensionMax extension =
     Internal.appendIn extensionMin extensionMax extension
 
@@ -164,11 +170,11 @@ Use [`prepend`](InArr#prepend) if the appended `Arr` has an exact amount of elem
 
 -}
 prependIn :
-    Nat (N addedMin atLeastAddedMin_ (Is min To appendedMin) addedMinIs_)
-    -> Nat (N addedMax atLeastAddedMax_ (Is max To appendedMax) addedMaxIs_)
+    Nat (N addedMin atLeastAddedMin_ (Is minLength To minLengthSum) addedMinIs_)
+    -> Nat (N addedMax atLeastAddedMax_ (Is maxLength To maxLengthSum) addedMaxIs_)
     -> Arr (In addedMin addedMax) element
-    -> Arr (In min max) element
-    -> Arr (In appendedMin appendedMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLengthSum maxLengthSum) element
 prependIn extensionMin extensionMax extension =
     Internal.prependIn extensionMin extensionMax extension
 
@@ -181,10 +187,10 @@ prependIn extensionMin extensionMax extension =
 
 -}
 append :
-    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
+    Nat (N added atLeastAdded_ (Is minLength To minLengthSum) (Is maxLength To minSumMax))
     -> Arr (Only added) element
-    -> Arr (In min max) element
-    -> Arr (In sumMin sumMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLengthSum minSumMax) element
 append addedLength arrExtension =
     Internal.inAppend addedLength arrExtension
 
@@ -197,10 +203,16 @@ append addedLength arrExtension =
 
 -}
 prepend :
-    Nat (N added atLeastAdded_ (Is min To sumMin) (Is max To sumMax))
+    Nat
+        (N
+            added
+            atLeastAdded_
+            (Is minLength To minLengthSum)
+            (Is maxLength To maxLengthSum)
+        )
     -> Arr (Only added) element
-    -> Arr (In min max) element
-    -> Arr (In sumMin sumMax) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minLengthSum maxLengthSum) element
 prepend addedLength arrExtension =
     Internal.inPrepend addedLength arrExtension
 
@@ -213,10 +225,10 @@ prepend addedLength arrExtension =
 
 -}
 removeAt :
-    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) (Nat1Plus maxMinus1)) element
-    -> Arr (In minMinus1 maxMinus1) element
+    -> Arr (In (Nat1Plus minLengthMinus1) (Nat1Plus maxLengthMinus1)) element
+    -> Arr (In minLengthMinus1 maxLengthMinus1) element
 removeAt index direction =
     Internal.inRemoveAt index direction
 
@@ -237,11 +249,11 @@ drop :
         (N
             dropped_
             atLeastDropped_
-            (Is minTaken To min)
-            (Is maxTaken To max)
+            (Is minTaken To minLength)
+            (Is maxTaken To maxLength)
         )
     -> LinearDirection
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     -> Arr (In minTaken maxTaken) element
 drop droppedAmount direction =
     Internal.inDrop droppedAmount direction
@@ -276,10 +288,10 @@ drop droppedAmount direction =
 isLength :
     Nat
         (N
-            (Nat1Plus valueMinus1)
-            atLeastValue
-            (Is a_ To (Nat1Plus atLeastValueMinus1))
-            (Is valueToMax_ To max)
+            (Nat1Plus nMinus1)
+            atLeastN
+            (Is a_ To (Nat1Plus nPlusAMinus1))
+            (Is valueToMax_ To maxLength)
         )
     ->
         { lowest :
@@ -287,16 +299,16 @@ isLength :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
-                    (Is minToValue_ To (Nat1Plus valueMinus1))
+                    (Is lowestToMin_ To minLength)
+                    (Is minToValue_ To (Nat1Plus nMinus1))
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.LessOrEqualOrGreater
-            (Arr (In lowest atLeastValueMinus1) element)
-            (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
-            (Arr (In (Nat2Plus valueMinus1) max) element)
+            (Arr (In lowest nPlusAMinus1) element)
+            (Arr (In (Nat1Plus nMinus1) atLeastN) element)
+            (Arr (In (Nat2Plus nMinus1) maxLength) element)
 isLength amount lowest =
     Internal.inIsLength amount lowest
 
@@ -306,7 +318,7 @@ isLength amount lowest =
 `lowest` can be a number <= the minimum length.
 
     chooseFormation :
-        Arr (In min Nat50) Character
+        Arr (In minLength_ Nat50) Character
         -> Formation
     chooseFormation characters =
         case
@@ -336,7 +348,7 @@ isLengthInRange :
             (N
                 upperBound
                 atLeastUpperBound
-                (Is upperBoundToMax_ To max)
+                (Is upperBoundToMax_ To maxLength)
                 upperBoundIs_
             )
     ->
@@ -345,16 +357,16 @@ isLengthInRange :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToLowerBound_ To lowerBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.BelowOrInOrAboveRange
             (Arr (In lowest atLeastLowerBoundMinus1) element)
             (Arr (In lowerBound atLeastUpperBound) element)
-            (Arr (In (Nat1Plus upperBound) max) element)
+            (Arr (In (Nat1Plus upperBound) maxLength) element)
 isLengthInRange lowerBound upperBound lowest =
     Internal.inIsLengthInRange lowerBound upperBound lowest
 
@@ -364,12 +376,10 @@ isLengthInRange lowerBound upperBound lowest =
 `lowest` can be a number <= the minimum length.
 
     first5 :
-        Arr (In min max) element
-        -> Maybe (Arr (In Nat5 max) element)
+        Arr (In minLength_ maxLength) element
+        -> Maybe (Arr (In Nat5 maxLength) element)
     first5 arr =
-        case
-            arr |> MinArr.isLengthAtLeast nat5 { lowest = nat0 }
-        of
+        case arr |> MinArr.isLengthAtLeast nat5 { lowest = nat0 } of
             Nat.Below _ ->
                 Nothing
 
@@ -382,7 +392,7 @@ isLengthAtLeast :
         (N
             lowerBound
             (Nat1Plus atLeastLowerBoundMinus1)
-            (Is atLeastRange_ To max)
+            (Is atLeastRange_ To maxLength)
             is_
         )
     ->
@@ -391,15 +401,15 @@ isLengthAtLeast :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is (Nat1Plus lowestToLowerBound_) To lowerBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.BelowOrAtLeast
             (Arr (In lowest atLeastLowerBoundMinus1) element)
-            (Arr (In lowerBound max) element)
+            (Arr (In lowerBound maxLength) element)
 isLengthAtLeast lowerBound lowest =
     Internal.inIsLengthAtLeast lowerBound lowest
 
@@ -436,7 +446,7 @@ isLengthAtMost :
         (N
             upperBound
             atLeastUpperBound
-            (Is (Nat1Plus greaterRange_) To max)
+            (Is (Nat1Plus greaterRange_) To maxLength)
             is_
         )
     ->
@@ -445,15 +455,15 @@ isLengthAtMost :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is minToUpperBound_ To upperBound)
                 )
         }
-    -> Arr (In min max) element
+    -> Arr (In minLength maxLength) element
     ->
         Nat.AtMostOrAbove
             (Arr (In lowest atLeastUpperBound) element)
-            (Arr (In (Nat1Plus upperBound) max) element)
+            (Arr (In (Nat1Plus upperBound) maxLength) element)
 isLengthAtMost upperBound lowest =
     Internal.inIsLengthAtMost upperBound lowest
 
@@ -548,7 +558,7 @@ The encode/decode functions can be extracted if needed.
 
 -}
 serialize :
-    Nat (ArgIn min max ifN_)
+    Nat (ArgIn minLength maxLength ifN_)
     ->
         ({ expected : { length : Nat (Min Nat0) }
          , actual : { length : Nat (Min Nat0) }
@@ -556,7 +566,7 @@ serialize :
          -> error
         )
     -> Codec error element
-    -> Codec error (Arr (In min max) element)
+    -> Codec error (Arr (In minLength maxLength) element)
 serialize length toError serializeElement =
     Internal.serialize length toError serializeElement
 
@@ -622,15 +632,15 @@ generalizeError error =
     , actual = { length = nat10 }
     }
         |> MinArr.errorToString
-    --> "expected an array of length >= 11 but the actual length was 10"
+    --> "Expected an array of length >= 11, but the actual length was 10."
 
 (example doesn't compile)
 
 Equivalent to
 
     error
-        |> generalizeError
-        |> Common.errorToString
+        |> InArr.generalizeError
+        |> Arr.errorToString
 
 -}
 errorToString : Error -> String

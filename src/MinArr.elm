@@ -159,10 +159,10 @@ removeAt index direction =
 
 -}
 append :
-    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    Nat (N minAdded atLeastMinAdded_ (Is minLength To minLengthSum) is_)
     -> Arr (In minAdded maxAdded_) element
-    -> Arr (In min max_) element
-    -> Arr (Min sumMin) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minLengthSum) element
 append minAddedLength extension =
     Internal.minAppend minAddedLength extension
 
@@ -176,10 +176,10 @@ append minAddedLength extension =
 
 -}
 prepend :
-    Nat (N minAdded atLeastMinAdded_ (Is min To sumMin) is_)
+    Nat (N minAdded atLeastMinAdded_ (Is minLength To minLengthSum) is_)
     -> Arr (In minAdded maxAdded_) element
-    -> Arr (In min max_) element
-    -> Arr (Min sumMin) element
+    -> Arr (In minLength maxLength_) element
+    -> Arr (Min minLengthSum) element
 prepend minAddedLength extension =
     Internal.minPrepend minAddedLength extension
 
@@ -192,10 +192,16 @@ prepend minAddedLength extension =
 
 -}
 drop :
-    Nat (N dropped_ atLeastDropped_ (Is minTaken To min) is_)
+    Nat
+        (N
+            dropped_
+            atLeastDropped_
+            (Is minTaken To minLength)
+            is_
+        )
     -> LinearDirection
-    -> Arr (In min max) element
-    -> Arr (In minTaken max) element
+    -> Arr (In minLength maxLength) element
+    -> Arr (In minTaken maxLength) element
 drop droppedAmount direction =
     Internal.minDrop droppedAmount direction
 
@@ -243,9 +249,9 @@ drop droppedAmount direction =
 isLength :
     Nat
         (N
-            (Nat1Plus valueMinus1)
-            atLeastValue
-            (Is a_ To (Nat1Plus atLeastValueMinus1))
+            (Nat1Plus nMinus1)
+            atLeastN
+            (Is a_ To (Nat1Plus nPlusAMinus1))
             is_
         )
     ->
@@ -254,16 +260,16 @@ isLength :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
-                    (Is minToValueMinus1_ To valueMinus1)
+                    (Is lowestToMin_ To minLength)
+                    (Is minToValueMinus1_ To nMinus1)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.LessOrEqualOrGreater
-            (Arr (In lowest atLeastValueMinus1) element)
-            (Arr (In (Nat1Plus valueMinus1) atLeastValue) element)
-            (Arr (Min (Nat2Plus valueMinus1)) element)
+            (Arr (In lowest nPlusAMinus1) element)
+            (Arr (In (Nat1Plus nMinus1) atLeastN) element)
+            (Arr (Min (Nat2Plus nMinus1)) element)
 isLength lengthToCompareAgainst =
     Internal.minIsLength lengthToCompareAgainst
 
@@ -308,11 +314,11 @@ isLengthAtLeast :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is lowestToMinLowerBound_ To minLowerBound)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.BelowOrAtLeast
             (Arr (In lowest maxLowerBoundMinus1) element)
@@ -350,11 +356,11 @@ isLengthAtMost :
                 (N
                     lowest
                     atLeastLowest_
-                    (Is lowestToMin_ To min)
+                    (Is lowestToMin_ To minLength)
                     (Is lowestToMinUpperBound_ To minUpperBound)
                 )
         }
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     ->
         Nat.AtMostOrAbove
             (Arr (In lowest maxUpperBound) element)
@@ -395,7 +401,7 @@ The encode/decode functions can be extracted if needed.
 
 -}
 serialize :
-    Nat (ArgIn min max_ ifN_)
+    Nat (ArgIn minLength max_ ifN_)
     ->
         ({ expected : { length : { atLeast : Nat (Min Nat0) } }
          , actual : { length : Nat (Min Nat0) }
@@ -403,7 +409,7 @@ serialize :
          -> error
         )
     -> Codec error element
-    -> Codec error (Arr (Min min) element)
+    -> Codec error (Arr (Min minLength) element)
 serialize lowerBound toSerializeError serializeElement =
     Internal.serializeMin lowerBound toSerializeError serializeElement
 
@@ -466,7 +472,7 @@ generalizeError error =
     , actual = { length = 10 }
     }
         |> MinArr.errorToString
-    --> expected an array of length >= 11 but the actual length was 10
+    --> "Expected an array of length >= 11, but the actual length was 10."
 
 (example doesn't compile)
 

@@ -9,7 +9,8 @@ module Arr exposing
     , take, takeMax, groupsOf
     , map, fold, foldWith, toArray, toList, toMaybe
     , to1
-    , to2, to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
+    , to2
+    , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
     , map2, map3, map4
     , lowerMinLength, toMin
     , restoreMaxLength
@@ -93,10 +94,11 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 ## extract
 
 @docs to1
+@docs to2
 
 [Skip to `to14`](Arr#to14).
 
-@docs to2, to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
+@docs to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
 
 
 ## combine
@@ -175,7 +177,7 @@ Arr (In (Nat4Plus minMinus4_) Nat15) ...
 
 ## as storage types
 
-To store in your `Model` for example (which means: no any type variables)
+To store in your `Model` for example (which means: no type variables)
 
   - = 15
 
@@ -504,8 +506,6 @@ to14 =
 
     Arr.repeat nat4 'L'
     --> Arr.from4 'L' 'L' 'L' 'L'
-    --> : Arr (In Nat4 (Nat4Plus a)) Char
-
 
     Arr.repeat atLeast3 'L'
     --> : Arr (Min Nat3) Char
@@ -519,7 +519,9 @@ repeat amount element =
     Internal.repeat amount element
 
 
-{-| Create an `Arr` from an `Array`. As every `Array` has `>= 0` elements:
+{-| Create an `Arr` from an `Array`.
+
+As every `Array` has `>= 0` elements:
 
     Arr.fromArray arrayFromSomewhere
     --> : Arr (Min Nat0)
@@ -544,7 +546,9 @@ fromArray array =
     Internal.fromArray array
 
 
-{-| Short for `Array.fromList list |> Arr.fromArray`. Create an `Arr` from a `List`. As every `List` has `>= 0` elements:
+{-| Short for `Array.fromList list |> Arr.fromArray`. Create an `Arr` from a `List`.
+
+As every `List` has `>= 0` elements:
 
     Arr.fromList listFromSomewhere
     --> : Arr (Min Nat0)
@@ -861,7 +865,13 @@ from16 =
     apply15 from15 (\init -> \last -> init |> push last)
 
 
-{-| Increasing natural numbers. In the end, there are `length` numbers.
+{-| Increasing natural numbers until below a given value.
+
+    Arr.nats nat4
+    --> Arr.from4 (Nat 0) (Nat 1) (Nat 2) (Nat 3)
+    --> : Arr
+    -->     (In Nat4 (Nat4PLus a))
+    -->     (Nat (In Nat0 (Nat3Plus a)))
 
     Arr.nats between2And10
     --> : Arr
@@ -880,22 +890,24 @@ use [minNats](Arr#minNats).
 
 -}
 nats :
-    Nat (ArgIn minLength (Nat1Plus maxLengthMinus1) lengthIfN_)
+    Nat (ArgIn min (Nat1Plus maxMinus1) ifN_)
     ->
         Arr
-            (In minLength (Nat1Plus maxLengthMinus1))
-            (Nat (In Nat0 maxLengthMinus1))
+            (In min (Nat1Plus maxMinus1))
+            (Nat (In Nat0 maxMinus1))
 nats length_ =
     Internal.nats length_
 
 
-{-| Increasing natural numbers. In the end, there are `length` numbers. Use [nats](Arr#nats) if you know the maximum length.
+{-| Increasing natural numbers until below a given value.
+
+Use [nats](Arr#nats) if you know the maximum length:
 
     Arr.nats nat5
 
     Arr.nats between2And10
 
-If not:
+If you don't:
 
     Arr.minNats atLeast10
     --> : Arr (Min Nat10)
@@ -907,11 +919,8 @@ If not:
 
 -}
 minNats :
-    Nat (ArgIn minLength maxLength ifN_)
-    ->
-        Arr
-            (In minLength maxLength)
-            (Nat (In Nat0 maxLength))
+    Nat (ArgIn min max ifN_)
+    -> Arr (In min max) (Nat (In Nat0 max))
 minNats length_ =
     Internal.minNats length_
 
@@ -925,9 +934,9 @@ minNats length_ =
 
 -}
 random :
-    Nat (ArgIn min max ifN_)
+    Nat (ArgIn minLength maxLength ifN_)
     -> Random.Generator element
-    -> Random.Generator (Arr (In min max) element)
+    -> Random.Generator (Arr (In minLength maxLength) element)
 random amount generateElement =
     Internal.random amount generateElement
 
@@ -946,7 +955,7 @@ random amount generateElement =
         |> Arr.replaceAt nat1 LastToFirst "feel"
     --> Arr.from3 "I" "feel" "ok"
 
-An invalid index is ignored.
+An index that's out of bounds is ignored.
 
     Arr.from3 "I" "am" "ok"
         |> Arr.replaceAt nat3 LastToFirst "feel"
@@ -973,7 +982,7 @@ replaceAt index direction replacingElement =
         |> Arr.updateAt nat0 LastToFirst (\x -> -x)
     --> Arr.from3 1 20 -30
 
-An invalid index is ignored.
+An index that's out of bounds is ignored.
 
     Arr.from3 1 20 30
         |> Arr.updateAt nat3 FirstToLast ((*) 10)
@@ -1009,8 +1018,8 @@ updateAt index direction updateElement =
 -}
 when :
     (element -> Bool)
-    -> Arr (In min_ max) element
-    -> Arr (In Nat0 max) element
+    -> Arr (In minLength_ maxLength) element
+    -> Arr (In Nat0 maxLength) element
 when isGood =
     Internal.when isGood
 
@@ -1025,8 +1034,8 @@ when isGood =
 -}
 dropWhen :
     (element -> Bool)
-    -> Arr (In min_ max) element
-    -> Arr (In Nat0 max) element
+    -> Arr (In minLength_ maxLength) element
+    -> Arr (In Nat0 maxLength) element
 dropWhen isBad =
     when (not << isBad)
 
@@ -1048,13 +1057,13 @@ dropWhen isBad =
 
 -}
 whenJust :
-    Arr (In min_ max) (Maybe value)
-    -> Arr (In Nat0 max) value
+    Arr (In minLength_ maxLength) (Maybe value)
+    -> Arr (In Nat0 maxLength) value
 whenJust maybes =
     Internal.whenJust maybes
 
 
-{-| If every `Maybe` is present, return all of the values. Return `Nothing` when any element is `Nothing`.
+{-| If every `Maybe` is present, return all of the values. Return `Nothing` if any element is `Nothing`.
 
     Arr.empty |> Arr.whenAllJust
     --> Just Arr.empty
@@ -1107,10 +1116,10 @@ Use [`take`](Arr#take) if you know the exact amount of elements to take.
 
 -}
 takeMax :
-    Nat (N maxTaken atLeastMaxTaken (Is maxTakenToMin_ To min) is_)
+    Nat (N maxTaken atLeastMaxTaken (Is minNotTaken_ To minLength) is_)
     -> Nat (ArgIn minTaken maxTaken takenIfN_)
     -> LinearDirection
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     -> Arr (In minTaken atLeastMaxTaken) element
 takeMax maxAmount takenAmount direction =
     Internal.takeMax maxAmount takenAmount direction
@@ -1126,9 +1135,9 @@ Use [`takeMax`](Arr#takeMax) if you don't know the exact amount of elements to t
 
 -}
 take :
-    Nat (N taken atLeastTaken (Is takenToMin_ To min) is_)
+    Nat (N taken atLeastTaken (Is minNotTaken_ To minLength) is_)
     -> LinearDirection
-    -> Arr (In min max_) element
+    -> Arr (In minLength maxLength_) element
     -> Arr (In taken atLeastTaken) element
 take takenAmount direction =
     Internal.take takenAmount direction
@@ -1272,7 +1281,7 @@ fold direction reduce initial =
 foldWith :
     LinearDirection
     -> (element -> element -> element)
-    -> Arr (In (Nat1Plus minMinus1_) max_) element
+    -> Arr (In (Nat1Plus minLengthMinus1_) maxLength_) element
     -> element
 foldWith direction reduce =
     \inArr ->
@@ -1340,10 +1349,10 @@ This is a quick way to gain some type-level knowledge about the length.
 -}
 resize :
     LinearDirection
-    -> Nat (ArgIn newMin newMax ifN_)
+    -> Nat (ArgIn newMinLength newMaxLength ifN_)
     -> element
     -> Arr length_ element
-    -> Arr (In newMin newMax) element
+    -> Arr (In newMinLength newMaxLength) element
 resize direction newLength paddingValue =
     Internal.resize direction newLength paddingValue
 
@@ -1381,9 +1390,9 @@ length =
 
 -}
 at :
-    Nat (ArgIn indexMin_ minMinus1 indexIfN_)
+    Nat (ArgIn indexMin_ minLengthMinus1 indexIfN_)
     -> LinearDirection
-    -> Arr (In (Nat1Plus minMinus1) max_) element
+    -> Arr (In (Nat1Plus minLengthMinus1) maxLength_) element
     -> element
 at index direction =
     Internal.at index direction
@@ -1429,36 +1438,37 @@ any isOkay =
 
 {-| Split the `Arr` into equal-sized chunks in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    { groups : the Arr divided into equal-sized Arrs
-    , less : values to one side which aren't enough
-    }
+  - `groups`: the Arr divided into equal-sized Arrs
+  - `less`: values to one side that don't fill a whole group
 
-    Arr.from7 1 2 3 4 5 6 7
-        |> Arr.groupsOf nat5 FirstToLast
-    --> { groups =
-    -->     Arr.from1 (Arr.from5 1 2 3 4 5)
-    -->     : Arr (In Nat0 (Nat7Plus a_))
-    -->         (Arr (In Nat5 (Nat5Plus b_)) number_)
-    --> , remaining =
-    -->     Arr.from2 6 7
-    -->     : Arr (In Nat0 (Nat5Plus c_)) number_
-    --> }
+```
+Arr.from7 1 2 3 4 5 6 7
+    |> Arr.groupsOf nat5 FirstToLast
+--> { groups =
+-->     Arr.from1 (Arr.from5 1 2 3 4 5)
+-->     : Arr (In Nat0 (Nat7Plus a_))
+-->         (Arr (In Nat5 (Nat5Plus b_)) number_)
+--> , remaining =
+-->     Arr.from2 6 7
+-->     : Arr (In Nat0 (Nat5Plus c_)) number_
+--> }
 
-    Arr.from7 1 2 3 4 5 6 7
-        |> Arr.groupsOf nat5 LastToFirst
-    --> { groups = Arr.from1 (Arr.from5 3 4 5 6 7) : ...
-    --> , remaining = Arr.from2 1 2 : ...
-    --> }
+Arr.from7 1 2 3 4 5 6 7
+    |> Arr.groupsOf nat5 LastToFirst
+--> { groups = Arr.from1 (Arr.from5 3 4 5 6 7) : ...
+--> , remaining = Arr.from2 1 2 : ...
+--> }
+```
 
 -}
 groupsOf :
     Nat (ArgIn (Nat1Plus minGroupSizeMinus1) maxGroupSize groupSizeIfN_)
     -> LinearDirection
-    -> Arr (In min_ max) element
+    -> Arr (In minLength_ maxLength) element
     ->
         { groups :
             Arr
-                (In Nat0 max)
+                (In Nat0 maxLength)
                 (Arr
                     (In (Nat1Plus minGroupSizeMinus1) maxGroupSize)
                     element
@@ -1492,9 +1502,9 @@ Elm complains:
 
 -}
 lowerMinLength :
-    Nat (ArgIn newMin min lowerIfN_)
-    -> Arr (In min max) element
-    -> Arr (In newMin max) element
+    Nat (ArgIn newMinLength minLength newMinIfN_)
+    -> Arr (In minLength maxLength) element
+    -> Arr (In newMinLength maxLength) element
 lowerMinLength =
     Internal.lowerMinLength
 
@@ -1587,32 +1597,31 @@ type alias Error =
 
 {-| Convert an error to a readable message.
 
-    { expected = ExpectLength nat11
+    { expected = Arr.ExpectLength nat11
     , actual = { length = nat10 }
     }
         |> Arr.errorToString
-    --> "expected an array of length 11 but the actual length was 10"
+    --> "Expected an array of length 11, but the actual length was 10."
+
+(example doesn't compile)
 
 -}
 errorToString : Error -> String
 errorToString error =
-    [ "expected an array of length"
+    [ "Expected an array of length "
     , case error.expected of
         ExpectLength expected ->
             val expected |> String.fromInt
 
         LengthInBound (InNat.ExpectAtLeast minimum) ->
-            [ ">=", val minimum |> String.fromInt ]
-                |> String.join " "
+            [ ">= ", val minimum |> String.fromInt ]
+                |> String.concat
 
         LengthInBound (InNat.ExpectAtMost maximum) ->
-            [ "<=", val maximum |> String.fromInt ]
-                |> String.join " "
-    , "but the actual length was"
+            [ "<= ", val maximum |> String.fromInt ]
+                |> String.concat
+    , ", but the actual length was "
     , val error.actual.length |> String.fromInt
+    , "."
     ]
-        |> String.join " "
-
-
-shouldBeReported =
-    isChecked
+        |> String.concat
