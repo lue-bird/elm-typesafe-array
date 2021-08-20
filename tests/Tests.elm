@@ -59,6 +59,15 @@ arrTests =
                         |> Expect.equal False
                 )
             ]
+        , test "errorToString"
+            (\() ->
+                { expected = Arr.ExpectLength (Nat.intAtLeast nat0 11)
+                , actual = { length = Nat.intAtLeast nat0 10 }
+                }
+                    |> Arr.errorToString
+                    |> Expect.equal
+                        "Expected an array of length 11, but the actual length was 10."
+            )
         ]
 
 
