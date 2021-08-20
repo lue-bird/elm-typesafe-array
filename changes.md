@@ -24,7 +24,7 @@
 
 ## 6.0.0
 
-- direct constructors `empty` to `from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
+- direct constructors `Arr.empty` to `.from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
 
 ### 6.1.0
 
@@ -32,12 +32,12 @@
 
 ## 7.0.0
 
-- moved `drop` from `Arr` to `InArr`
+- moved `Arr.drop` into `InArr`
 - added `MinArr.drop`
 
 ### 7.1.0
 
-- exposed the added `InArr.drop`
+- added `InArr.drop`
 - fixed wrong usage of `Arr (In ...)` in the documentation
 
 ## 8.0.0
@@ -59,9 +59,9 @@
 
     - `InArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`, `isLengthInRange`
     - `MinArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`
-- moved arguments in `MinArr.extend arr nat` to `MinArr.extend nat arr`
-- renamed & moved arguments in `InArr.extend min max arr` to `extendIn min max arr`
-- renamed `InArr.extendOnly` to `extend`
+- moved arguments in `MinArr.extend arr nat` to `.extend nat arr`
+- renamed & moved arguments in `InArr.extend min max arr` to `.extendIn min max arr`
+- renamed `InArr.extendOnly` to `.extend`
 
 ## 10.0.0
 
@@ -92,11 +92,11 @@
 
 - used more general `MinArr.serialize` length argument (`Nat (ArgIn ...)` instead of a `Nat (N ...)`)
 Updated `bounded-nat` to 17.0.0:
-- `MinArr.isLengthAtLeast` & `MinArr.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
+- `MinArr.isLengthAtLeast` & `.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
 
 ### 13.1.0
 
-- added `takeWhen`, `dropWhen` & `values` in `Arr`
+- added `Arr.takeWhen`, `.dropWhen` and `.values`
 - updated `bounded-nat` to 18.0.0
 
 ## 14.0.0
@@ -109,13 +109,13 @@ The reason this is called a "major" change is that the `resize` argument went fr
 
 ### 14.1.0
 
-- added `fromList` & `toList` in `Arr`
+- added `Arr.fromList` & `.toList`
 
 ## 15.0.0
 
-- renamed `Arr.values` to `whenJust`
-- renamed `InArr.extend` & `MinArr.extend` to `append`
-- renamed `InArr.extendIn` to `appendIn`
+- renamed `Arr.values` to `.whenJust`
+- renamed `InArr.extend` & `MinArr.extend` to `.append`
+- renamed `InArr.extendIn` to `.appendIn`
 - added `InArr.prepend` & `MinArr.prepend`
 - added `InArr.prependIn`
 - regrouped doc tags
@@ -138,5 +138,6 @@ The reason this is called a "major" change is that the `resize` argument went fr
 ### 18.0.0
 
 - moved `MinArr.value` to `Arr.toMin`
-- added `Arr.to1` to `to14`
-- added `Arr.toMaybe` & `fromMaybe`
+- added `Arr.to1` to `.to14`
+- added `Arr.toMaybe` & `.fromMaybe`
+- added `InArr.` & `MinArr.intersperse`
