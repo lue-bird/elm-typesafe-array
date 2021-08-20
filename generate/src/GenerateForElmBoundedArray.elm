@@ -406,17 +406,83 @@ charPrefixed use last =
 
 view : Model -> Html Msg
 view { fromAndToXShownOrFolded, argumentsModuleShownOrFolded } =
-    Ui.layoutWith
-        { options =
-            [ Ui.focusStyle
-                { borderColor = Just (Ui.rgba 0 1 1 0.38)
-                , backgroundColor = Nothing
-                , shadow = Nothing
-                }
+    [ "elm-bounded-nat modules"
+        |> Ui.text
+        |> Ui.el
+            [ UiFont.size 40
+            , UiFont.family [ UiFont.monospace ]
             ]
+    , UiInput.button
+        [ Ui.padding 16
+        , UiBg.color (Ui.rgba 1 0.4 0 0.6)
+        ]
+        { onPress = Just DownloadModules
+        , label = Ui.text "⬇ download elm modules"
         }
-        []
-        (Ui.column
+    , ([ [ "📂 preview modules"
+            |> Ui.text
+            |> Ui.el [ Ui.paddingXY 0 6 ]
+         ]
+       , let
+            switchButton text switch =
+                { onPress = Just switch
+                , label =
+                    text
+                        |> Ui.text
+                        |> Ui.el
+                            [ UiFont.family [ UiFont.monospace ] ]
+                }
+                    |> UiInput.button
+                        [ UiBg.color (Ui.rgba 1 0.4 0 0.6)
+                        , Ui.padding 12
+                        , Ui.width Ui.fill
+                        ]
+                    |> Ui.el
+                        [ Ui.width Ui.fill
+                        , Ui.paddingXY 0 6
+                        , Ui.moveUp 6
+                        ]
+
+            viewAccordingToShownOrFolded visibility name switch =
+                case visibility of
+                    Shown ui ->
+                        [ Ui.el
+                            [ Ui.width (Ui.px 1)
+                            , UiBg.color (Ui.rgba 1 0.4 0 0.6)
+                            , Ui.height Ui.fill
+                            ]
+                            Ui.none
+                        , [ switch |> switchButton ("⌃ " ++ name)
+                          , Ui.el [ Ui.moveRight 5 ] ui
+                          ]
+                            |> Ui.column [ Ui.width Ui.fill ]
+                        ]
+                            |> Ui.row
+                                [ Ui.height Ui.fill, Ui.width Ui.fill ]
+
+                    Folded ->
+                        switchButton ("⌄ " ++ name) switch
+         in
+         [ ( fromAndToXShownOrFolded
+           , ( "FromAndToX", FromAndToX )
+           )
+         , ( argumentsModuleShownOrFolded
+           , ( "Arguments", Arguments )
+           )
+         ]
+            |> List.map
+                (\( visibility, ( name, moduleKind ) ) ->
+                    viewAccordingToShownOrFolded visibility
+                        name
+                        (SwitchVisibleModule moduleKind)
+                )
+       ]
+        |> List.concat
+      )
+        |> Ui.column
+            [ Ui.width Ui.fill ]
+    ]
+        |> Ui.column
             [ Ui.paddingXY 40 60
             , Ui.spacing 32
             , Ui.width Ui.fill
@@ -424,77 +490,13 @@ view { fromAndToXShownOrFolded, argumentsModuleShownOrFolded } =
             , UiBg.color (Ui.rgb255 35 36 31)
             , UiFont.color (Ui.rgb 1 1 1)
             ]
-            [ Ui.el
-                [ UiFont.size 40
-                , UiFont.family [ UiFont.monospace ]
+        |> Ui.layoutWith
+            { options =
+                [ Ui.focusStyle
+                    { borderColor = Just (Ui.rgba 0 1 1 0.38)
+                    , backgroundColor = Nothing
+                    , shadow = Nothing
+                    }
                 ]
-                (Ui.text "elm-bounded-nat modules")
-            , UiInput.button
-                [ Ui.padding 16
-                , UiBg.color (Ui.rgba 1 0.4 0 0.6)
-                ]
-                { onPress = Just DownloadModules
-                , label = Ui.text "⬇ download elm modules"
-                }
-            , Ui.column
-                [ Ui.width Ui.fill
-                ]
-                (Ui.el [ Ui.paddingXY 0 6 ]
-                    (Ui.text "📂 preview modules")
-                    :: (let
-                            switchButton text switch =
-                                Ui.el
-                                    [ Ui.width Ui.fill
-                                    , Ui.paddingXY 0 6
-                                    , Ui.moveUp 6
-                                    ]
-                                    (UiInput.button
-                                        [ UiBg.color (Ui.rgba 1 0.4 0 0.6)
-                                        , Ui.padding 12
-                                        , Ui.width Ui.fill
-                                        ]
-                                        { onPress = Just switch
-                                        , label =
-                                            Ui.el
-                                                [ UiFont.family [ UiFont.monospace ] ]
-                                                (Ui.text text)
-                                        }
-                                    )
-
-                            viewAccordingToShownOrFolded visibility name switch =
-                                case visibility of
-                                    Shown ui ->
-                                        Ui.row
-                                            [ Ui.height Ui.fill, Ui.width Ui.fill ]
-                                            [ Ui.el
-                                                [ Ui.width (Ui.px 1)
-                                                , UiBg.color (Ui.rgba 1 0.4 0 0.6)
-                                                , Ui.height Ui.fill
-                                                ]
-                                                Ui.none
-                                            , Ui.column [ Ui.width Ui.fill ]
-                                                [ switchButton ("⌃ " ++ name) switch
-                                                , Ui.el [ Ui.moveRight 5 ] ui
-                                                ]
-                                            ]
-
-                                    Folded ->
-                                        switchButton ("⌄ " ++ name) switch
-                        in
-                        [ ( fromAndToXShownOrFolded
-                          , ( "FromAndToX", FromAndToX )
-                          )
-                        , ( argumentsModuleShownOrFolded
-                          , ( "Arguments", Arguments )
-                          )
-                        ]
-                            |> List.map
-                                (\( visibility, ( name, moduleKind ) ) ->
-                                    viewAccordingToShownOrFolded visibility
-                                        name
-                                        (SwitchVisibleModule moduleKind)
-                                )
-                       )
-                )
-            ]
-        )
+            }
+            []
