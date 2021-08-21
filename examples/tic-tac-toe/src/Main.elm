@@ -62,18 +62,18 @@ main =
 
 
 type Msg
-    = PlayerSetsField
+    = FieldSetByPlayer
         ( Nat (In Nat0 Nat2)
         , Nat (In Nat0 Nat2)
         )
         Player
-    | ClearBoard
+    | ClearBoardClicked
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PlayerSetsField ( x, y ) player ->
+        FieldSetByPlayer ( x, y ) player ->
             ( let
                 field =
                     model.board
@@ -107,20 +107,18 @@ update msg model =
             , Cmd.none
             )
 
-        ClearBoard ->
-            ( initialModel
-            , Cmd.none
-            )
+        ClearBoardClicked ->
+            ( initialModel, Cmd.none )
 
 
 isGameOver : Board -> Maybe GameOver
 isGameOver board =
     let
         allXorO fields =
-            if fields |> Arr.all (FieldSet O) then
+            if fields |> Arr.all ((==) (FieldSet O)) then
                 Just O
 
-            else if fields |> Arr.all (FieldSet X) then
+            else if fields |> Arr.all ((==) (FieldSet X)) then
                 Just X
 
             else
@@ -272,26 +270,26 @@ viewBoard { gameStage } board =
                                     , Font.size ((fieldSize * 0.7) |> round)
                                     ]
             in
-            UiInput.button
-                [ Ui.width Ui.fill
-                , Ui.height Ui.fill
-                , Background.color (Ui.rgb 0 0 0)
-                ]
-                { onPress =
-                    (case gameStage of
-                        Playing playing ->
-                            PlayerSetsField x y playing
+            { onPress =
+                (case gameStage of
+                    Playing player ->
+                        player |> FieldSetByPlayer ( x, y )
 
-                        GameOver _ ->
-                            ClearBoard
-                    )
-                        |> Just
-                , label =
-                    board
-                        |> Arr.at x FirstToLast
-                        |> Arr.at y FirstToLast
-                        |> fieldToShape
-                }
+                    GameOver _ ->
+                        ClearBoardClicked
+                )
+                    |> Just
+            , label =
+                board
+                    |> Arr.at x FirstToLast
+                    |> Arr.at y FirstToLast
+                    |> fieldToShape
+            }
+                |> UiInput.button
+                    [ Ui.width Ui.fill
+                    , Ui.height Ui.fill
+                    , Background.color (Ui.rgb 0 0 0)
+                    ]
 
         boardSize =
             fieldSize * 3 + spacing * 2

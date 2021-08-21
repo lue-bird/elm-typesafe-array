@@ -14,9 +14,9 @@
             "elm/random": "1.0.0",
             "elm-community/array-extra": "2.3.0",
             "elm-community/maybe-extra": "5.2.0",
-            "lue-bird/elm-bounded-nat": "18.0.0",
-            "lue-bird/elm-linear-direction": "2.2.0",
-            "lue-bird/elm-typed-value": "5.0.2",
+            "lue-bird/elm-bounded-nat": "19.0.1",
+            "lue-bird/elm-linear-direction": "2.2.1",
+            "lue-bird/elm-typed-value": "5.0.3",
             "mdgriffith/elm-ui": "1.1.8"
         },
         "indirect": {
@@ -27,8 +27,7 @@
             "elm/regex": "1.0.0",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.2",
-            "indique/n": "2.0.0"
+            "elm/virtual-dom": "1.0.2"
         }
     },
     "test-dependencies": {
