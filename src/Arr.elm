@@ -1412,7 +1412,9 @@ at index direction =
 -}
 all : (element -> Bool) -> Arr length_ element -> Bool
 all isOkay =
-    toArray >> Array.all isOkay
+    fold FirstToLast
+        (\element -> (&&) (isOkay element))
+        True
 
 
 {-| Whether any elements satisfy a test.
@@ -1429,7 +1431,9 @@ all isOkay =
 -}
 any : (element -> Bool) -> Arr length_ element -> Bool
 any isOkay =
-    toArray >> Array.any isOkay
+    fold FirstToLast
+        (\element -> (||) (isOkay element))
+        False
 
 
 

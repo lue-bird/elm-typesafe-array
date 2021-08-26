@@ -1,5 +1,5 @@
 module ArrayExtra exposing
-    ( any, all, natLength
+    ( natLength
     , reverse, intersperse
     , whenAllJust
     )
@@ -9,7 +9,7 @@ module ArrayExtra exposing
 
 # scan
 
-@docs any, all, natLength
+@docs natLength
 
 
 # modify
@@ -44,18 +44,6 @@ whenAllJust maybes =
         |> Array.toList
         |> whenAllJustInList
         |> Maybe.map Array.fromList
-
-
-any : (a -> Bool) -> Array a -> Bool
-any isOkay =
-    Array.toList
-        >> List.any isOkay
-
-
-all : (a -> Bool) -> Array a -> Bool
-all isOkay =
-    Array.toList
-        >> List.all isOkay
 
 
 natLength : Array a_ -> Nat (Min Nat0)
