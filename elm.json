@@ -18,7 +18,8 @@
         "elm-community/array-extra": "2.3.0 <= v < 3.0.0",
         "lue-bird/elm-bounded-nat": "19.0.0 <= v < 20.0.0",
         "lue-bird/elm-linear-direction": "2.2.1 <= v < 3.0.0",
-        "lue-bird/elm-typed-value": "5.0.3 <= v < 6.0.0"
+        "lue-bird/elm-typed-value": "5.0.3 <= v < 6.0.0",
+        "sparksp/elm-review-always": "1.0.5 <= v < 2.0.0"
     },
     "test-dependencies": {
         "elm-explorations/test": "1.2.2 <= v < 2.0.0"
