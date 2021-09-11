@@ -11,7 +11,9 @@ module Internal exposing
     , ArrTag, Content, inIntersperse, lowerMinLength, minIntersperse, restoreMaxLength, toMinArr
     )
 
-{-| Contains all functions that use unsafe operations. No other module can modify the underlying array or length and decide its length type.
+{-| Contains all functions that directly use type-unsafe operations.
+No other module can modify the underlying array or length and decide its length type.
+Ideally, this module should be as short as possible and contain as little `isChecked Arr` calls as possible.
 
 Calling `isChecked Arr` marks unsafe operations.
 
@@ -68,8 +70,8 @@ Calling `isChecked Arr` marks unsafe operations.
 -}
 
 import Array exposing (Array)
-import Array.Extra
-import Array.LinearDirection as Array
+import Array.Extra as Array
+import Array.LinearDirection
 import ArrayExtra as Array
 import InNat
 import LinearDirection exposing (LinearDirection(..))
@@ -131,7 +133,11 @@ at :
     -> element
 at index direction =
     \arr ->
-        case Array.at (val index) direction (toArray arr) of
+        case
+            Array.LinearDirection.at (val index)
+                direction
+                (toArray arr)
+        of
             Just element ->
                 element
 
@@ -206,7 +212,7 @@ map2 combine aArr bArr =
     let
         map2Val a b =
             { array =
-                Array.Extra.map2 combine a.array b.array
+                Array.map2 combine a.array b.array
             , length =
                 Nat.theSmaller a.length b.length
             }
@@ -221,7 +227,7 @@ order :
     -> Arr length element
     -> Arr length element
 order direction =
-    mapArray (Array.order direction)
+    mapArray (Array.LinearDirection.order direction)
         >> isChecked Arr
 
 
@@ -311,7 +317,7 @@ whenJust :
 whenJust maybes =
     maybes
         |> toArray
-        |> Array.Extra.filterMap identity
+        |> Array.filterMap identity
         |> fromArray
         |> mapLength
             (Nat.atMost (length maybes)
@@ -430,7 +436,10 @@ replaceAt :
     -> Arr length element
 replaceAt index direction replacement =
     mapArray
-        (Array.replaceAt (val index) direction replacement)
+        (Array.LinearDirection.replaceAt (val index)
+            direction
+            replacement
+        )
         >> isChecked Arr
 
 
@@ -452,7 +461,7 @@ insertAt :
     -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
 insertAt index direction insertedElement =
     mapArrayAndLength
-        (Array.insertAt (val index)
+        (Array.LinearDirection.insertAt (val index)
             direction
             insertedElement
         )
@@ -493,7 +502,7 @@ removeAtTemplate :
     -> ArrAs Tagged (In minLengthMinus1 maxLengthMinus1) element
 removeAtTemplate index direction sub1 =
     mapArrayAndLength
-        (Array.removeAt (val index) direction)
+        (Array.LinearDirection.removeAt (val index) direction)
         sub1
 
 
@@ -683,7 +692,9 @@ dropTemplate :
     -> ArrAs Tagged (In minTaken maxTaken) element
 dropTemplate droppedAmount direction subDropped =
     mapArrayAndLength
-        (Array.drop (val droppedAmount) direction)
+        (Array.LinearDirection.drop (val droppedAmount)
+            direction
+        )
         (\len -> len |> subDropped droppedAmount)
 
 
@@ -700,7 +711,9 @@ takeTemplate :
     -> ArrAs Tagged (In minTaken maxTaken) element
 takeTemplate amountToTake direction =
     mapArrayAndLength
-        (Array.take (val amountToTake) direction)
+        (Array.LinearDirection.take (val amountToTake)
+            direction
+        )
         (\_ -> amountToTake)
 
 
@@ -747,7 +760,8 @@ groupsOf groupSize direction =
         let
             { groups, less } =
                 toArray arr
-                    |> Array.group (val groupSize) direction
+                    |> Array.LinearDirection.group (val groupSize)
+                        direction
         in
         { groups =
             from
@@ -807,7 +821,7 @@ resize :
     -> Arr (In newMinLength newMaxLength) element
 resize direction newLength paddingValue =
     mapArrayAndLength
-        (Array.resize direction
+        (Array.LinearDirection.resize direction
             (val newLength)
             paddingValue
         )

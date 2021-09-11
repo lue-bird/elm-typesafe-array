@@ -1,6 +1,5 @@
 module ArrayExtra exposing
     ( natLength
-    , reverse, intersperse
     , whenAllJust
     )
 
@@ -28,11 +27,6 @@ import Nat exposing (Min, Nat)
 import Nats exposing (Nat0, nat0)
 
 
-reverse : Array a -> Array a
-reverse =
-    Array.toList >> List.reverse >> Array.fromList
-
-
 whenAllJustInList : List (Maybe a) -> Maybe (List a)
 whenAllJustInList =
     List.foldr (Maybe.map2 (::)) (Just [])
@@ -49,10 +43,3 @@ whenAllJust maybes =
 natLength : Array a_ -> Nat (Min Nat0)
 natLength =
     Array.length >> Nat.intAtLeast nat0
-
-
-intersperse : a -> Array a -> Array a
-intersperse separator =
-    Array.toList
-        >> List.intersperse separator
-        >> Array.fromList
