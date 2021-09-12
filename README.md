@@ -41,7 +41,7 @@ aTicTacToeBoard
 
 ## Setup
 
-```noformatingplease
+```noformattingples
 elm install lue-bird/elm-linear-direction
 elm install lue-bird/elm-typed-value
 elm install lue-bird/elm-bounded-nat
