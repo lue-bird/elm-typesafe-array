@@ -1,44 +1,98 @@
 # changelog
 
-## 2.0.0
+#### 18.0.1
 
-- updated `elm-bounded-nat` to 9.0.0 → type changes
-- removed redundant `NArr` module & `InArr.value` & `Arr.restoreLength`
+- upgraded to `bounded-nat` 20.0.0
 
-#### 2.0.1
+## 18.0.0
 
-- corrected types in docs
-- more detailed docs
+- moved `MinArr.value` to `Arr.toMin`
+- added `Arr.to1` to `.to14`
+- added `Arr.toMaybe` & `.fromMaybe`
+- added `InArr.` & `MinArr.intersperse`
 
-## 3.0.0
+## 17.0.0
 
-- gave `MinArr.group`'s return field `less` a smaller range and moved it to `Arr.groupsOf`
+- updated `bounded-nat` to 19.0.0
+- used different `Error` type
+- added `Error` & `generalizeError` for `MinNat` and `InNat`
+- added `Arr.whenAllJust`
+- added `all` & `any`
 
-## 4.0.0
+## 16.0.0
 
-- corrected `Arr.groupsOf`'s `groups` group length type
+- made `Arr.replaceAt` & `.updateAt` index type more general → allow indices out of bounds (not a breaking change)
+- allow `In-/MinArr.insertAt length ...`
+- added `Arr.order`
+- used custom serialize errors instead of directly converting every error to a `String` (thanks [MartinSStewart](https://github.com/MartinSStewart) for your help!)
 
-## 5.0.0
+## 15.0.0
 
-- corrected `Arr.random` return type to be `In` instead of possibly `Arg-`
+- renamed `Arr.values` to `.whenJust`
+- renamed `InArr.extend` & `MinArr.extend` to `.append`
+- renamed `InArr.extendIn` to `.appendIn`
+- added `InArr.prepend` & `MinArr.prepend`
+- added `InArr.prependIn`
+- regrouped doc tags
 
-## 6.0.0
+### 14.1.0
 
-- direct constructors `Arr.empty` to `.from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
+- added `Arr.fromList` & `.toList`
 
-### 6.1.0
+## 14.0.0
 
-- added `Arr.resize`
+No breaking change! 
 
-## 7.0.0
+- just doc changes
 
-- moved `Arr.drop` into `InArr`
-- added `MinArr.drop`
+The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_) ...` to `Arr length_ ...`.
 
-### 7.1.0
+### 13.1.0
 
-- added `InArr.drop`
-- fixed wrong usage of `Arr (In ...)` in the documentation
+- added `Arr.takeWhen`, `.dropWhen` and `.values`
+- updated `bounded-nat` to 18.0.0
+
+
+## 13.0.0
+
+- used more general `MinArr.serialize` length argument (`Nat (ArgIn ...)` instead of a `Nat (N ...)`)
+Updated `bounded-nat` to 17.0.0:
+- `MinArr.isLengthAtLeast` & `.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
+
+## 12.0.0
+
+- changed `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
+- split `Arr.take amount maxAmount` into
+    - `takeMax maxAmount amount`
+    - `take amount`, where the `amount` is a `Nat (N ...)`
+- improved documentation
+- added tic-tac-toe example elm program
+
+## 11.0.1
+
+- corrected minor doc example mistakes
+
+### 11.0.0
+
+- added `Arr.minNats`
+- added `Arr.updateAt`
+- changed `Arr.nats` type: the minimum length can be 0
+
+## 10.0.0
+
+- updated `lue-bird/elm-bounded-nat` to `15.0.0`
+    - corrected `InArr.isLength` result type
+    - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
+
+## 9.0.0
+
+- updated `lue-bird/elm-bounded-nat` to `13.0.0` meaning that `Arr.lowerMinLength natX` before `|> ...Arr.isLength... { min = natX }` became redundant because `min` was replaced with `{ lowest }` which can be <=, not = the minimum length. Changed functions:
+
+    - `InArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`, `isLengthInRange`
+    - `MinArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`
+- moved arguments in `MinArr.extend arr nat` to `.extend nat arr`
+- renamed & moved arguments in `InArr.extend min max arr` to `.extendIn min max arr`
+- renamed `InArr.extendOnly` to `.extend`
 
 ## 8.0.0
 
@@ -53,95 +107,43 @@
     in `InArr` & `MinArr`
 - renamed `groupsOf` result from `{ groups, less }` to `{ groups, remaining }`
 
-## 9.0.0
+### 7.1.0
 
-- updated `lue-bird/elm-bounded-nat` to `13.0.0` meaning that `Arr.lowerMinLength natX` before `|> ...Arr.isLength... { min = natX }` became redundant because `min` was replaced with `{ lowest }` which can be <=, not = the minimum length. Changed functions:
+- added `InArr.drop`
+- fixed wrong usage of `Arr (In ...)` in the documentation
 
-    - `InArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`, `isLengthInRange`
-    - `MinArr`: `isLengthAtLeast`, `isLength`, `isLengthAtMost`
-- moved arguments in `MinArr.extend arr nat` to `.extend nat arr`
-- renamed & moved arguments in `InArr.extend min max arr` to `.extendIn min max arr`
-- renamed `InArr.extendOnly` to `.extend`
+## 7.0.0
 
-## 10.0.0
+- moved `Arr.drop` into `InArr`
+- added `MinArr.drop`
 
-- updated `lue-bird/elm-bounded-nat` to `15.0.0`
-    - corrected `InArr.isLength` result type
-    - replaced `isLength` equal comparison result `Arr (Only ...)` with `Arr (In ...)`
 
-### 11.0.0
+### 6.1.0
 
-- added `Arr.minNats`
-- added `Arr.updateAt`
-- changed `Arr.nats` type: the minimum length can be 0
+- added `Arr.resize`
 
-## 11.0.1
+## 6.0.0
 
-- corrected minor doc example mistakes
+- direct constructors `Arr.empty` to `.from16` now return `Arr (In x x+a)` instead of `Arr (Only x)`
 
-## 12.0.0
+## 5.0.0
 
-- changed `Arr.restoreMaxLength`'s argument type `Nat (N ...)` to `Nat (In ...)`
-- split `Arr.take amount maxAmount` into
-    - `takeMax maxAmount amount`
-    - `take amount`, where the `amount` is a `Nat (N ...)`
-- improved documentation
-- added tic-tac-toe example elm program
+- corrected `Arr.random` return type to be `In` instead of possibly `Arg-`
 
-## 13.0.0
+## 4.0.0
 
-- used more general `MinArr.serialize` length argument (`Nat (ArgIn ...)` instead of a `Nat (N ...)`)
-Updated `bounded-nat` to 17.0.0:
-- `MinArr.isLengthAtLeast` & `.isLengthAtMost` now compare to a `Nat (ArgIn ...)` instead of a `Nat (N ...)`
+- corrected `Arr.groupsOf`'s `groups` group length type
 
-### 13.1.0
+## 3.0.0
 
-- added `Arr.takeWhen`, `.dropWhen` and `.values`
-- updated `bounded-nat` to 18.0.0
+- gave `MinArr.group`'s return field `less` a smaller range and moved it to `Arr.groupsOf`
 
-## 14.0.0
+#### 2.0.1
 
-No breaking change! 
+- corrected types in docs
+- more detailed docs
 
-- just doc changes
+## 2.0.0
 
-The reason this is called a "major" change is that the `resize` argument went from `Arr (In min_ max_) ...` to `Arr length_ ...`.
-
-### 14.1.0
-
-- added `Arr.fromList` & `.toList`
-
-## 15.0.0
-
-- renamed `Arr.values` to `.whenJust`
-- renamed `InArr.extend` & `MinArr.extend` to `.append`
-- renamed `InArr.extendIn` to `.appendIn`
-- added `InArr.prepend` & `MinArr.prepend`
-- added `InArr.prependIn`
-- regrouped doc tags
-
-## 16.0.0
-
-- made `Arr.replaceAt` & `.updateAt` index type more general → allow indices out of bounds (not a breaking change)
-- allow `In-/MinArr.insertAt length ...`
-- added `Arr.order`
-- used custom serialize errors instead of directly converting every error to a `String` (thanks [MartinSStewart](https://github.com/MartinSStewart) for your help!)
-
-## 17.0.0
-
-- updated `bounded-nat` to 19.0.0
-- used different `Error` type
-- added `Error` & `generalizeError` for `MinNat` and `InNat`
-- added `Arr.whenAllJust`
-- added `all` & `any`
-
-## 18.0.0
-
-- moved `MinArr.value` to `Arr.toMin`
-- added `Arr.to1` to `.to14`
-- added `Arr.toMaybe` & `.fromMaybe`
-- added `InArr.` & `MinArr.intersperse`
-
-#### 18.0.1
-
-- upgraded to `bounded-nat` 20.0.0
+- updated `elm-bounded-nat` to 9.0.0 → type changes
+- removed redundant `NArr` module & `InArr.value` & `Arr.restoreLength`
