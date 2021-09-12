@@ -213,8 +213,7 @@ map2 combine aArr bArr =
         map2Val a b =
             { array =
                 Array.map2 combine a.array b.array
-            , length =
-                Nat.theSmaller a.length b.length
+            , length = Typed.min a.length b.length
             }
     in
     internalVal2 map2Val Arr aArr Arr bArr
