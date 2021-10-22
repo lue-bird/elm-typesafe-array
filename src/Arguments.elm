@@ -1,4 +1,4 @@
-module Arguments exposing (apply1, apply10, apply11, apply12, apply13, apply14, apply15, apply16, apply2, apply3, apply4, apply5, apply6, apply7, apply8, apply9)
+module Arguments exposing (apply1, apply10, apply11, apply12, apply13, apply14, apply15, apply2, apply3, apply4, apply5, apply6, apply7, apply8, apply9)
 
 
 apply1 : (a -> b) -> (b -> c) -> a -> c
@@ -74,8 +74,3 @@ apply14 f more =
 apply15 : (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> k -> l -> m -> n -> o -> p) -> (p -> q) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> k -> l -> m -> n -> o -> q
 apply15 f more =
     \a -> apply14 (f a) more
-
-
-apply16 : (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> k -> l -> m -> n -> o -> p -> q) -> (q -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> k -> l -> m -> n -> o -> p -> r
-apply16 f more =
-    \a -> apply15 (f a) more
