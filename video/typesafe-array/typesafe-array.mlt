@@ -1,0 +1,17 @@
+<?xml version="1.0" standalone="no"?>
+<mlt LC_NUMERIC="C" version="7.0.0" title="Shotcut version 21.05.01" parent="producer0" in="00:00:00.000" out="00:00:03.960">
+  <profile description="HD 1080p 25 fps" width="1920" height="1080" progressive="1" sample_aspect_num="1" sample_aspect_den="1" display_aspect_num="16" display_aspect_den="9" frame_rate_num="25" frame_rate_den="1" colorspace="709"/>
+  <producer id="producer0" title="Shotcut version 21.05.01" in="00:00:00.000" out="00:00:03.960">
+    <property name="length">04:00:00.000</property>
+    <property name="eof">pause</property>
+    <property name="resource">#FF00120B</property>
+    <property name="aspect_ratio">1</property>
+    <property name="mlt_service">color</property>
+    <property name="mlt_image_format">rgba</property>
+    <property name="shotcut:caption">#FF00120B</property>
+    <property name="shotcut:detail">#FF00120B</property>
+    <property name="ignore_points">0</property>
+    <property name="shotcut:projectAudioChannels">2</property>
+    <property name="shotcut:projectFolder">1</property>
+  </producer>
+</mlt>
