@@ -1,14 +1,18 @@
 module Internal exposing
-    ( empty, fromArray, repeat, nats, minNats, random
+    ( ArrTag
+    , empty, fromArray, repeat, nats, minNats, random
     , at, length
     , inIsLengthInRange, inIsLength, inIsLengthAtLeast, inIsLengthAtMost, minIsLength, minIsLengthAtLeast, minIsLengthAtMost
     , toArray, map, map2
-    , serialize, serializeIn, serializeMin, Expectation(..)
+    , serialize, serializeIn, serializeMin
+    , Expectation(..)
     , replaceAt, push, insertAt, inRemoveAt, minRemoveAt, resize, order
+    , inIntersperse, minIntersperse
     , appendIn, inAppend, minAppend, minPrepend, inPrepend, prependIn
     , when, whenJust, whenAllJust
     , take, takeMax, inDrop, minDrop, groupsOf
-    , ArrTag, Content, inIntersperse, lowerMinLength, minIntersperse, restoreMaxLength, toMinArr
+    , lowerMinLength, toMinArr
+    , restoreMaxLength
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -16,6 +20,8 @@ No other module can modify the underlying array or length and decide its length 
 Ideally, this module should be as short as possible and contain as little `isChecked Arr` calls as possible.
 
 Calling `isChecked Arr` marks unsafe operations.
+
+@docs ArrTag
 
 
 # create
@@ -36,11 +42,12 @@ Calling `isChecked Arr` marks unsafe operations.
 # transform
 
 @docs toArray, map, map2
+@docs serialize, serializeIn, serializeMin
 
 
-## serialize
+## error
 
-@docs serialize, serializeIn, serializeMin, Expectation, generalizeError, errorToString
+@docs Expectation
 
 
 # modify
@@ -50,7 +57,7 @@ Calling `isChecked Arr` marks unsafe operations.
 
 ## separate elements
 
-@docs inSeparateElementsBy, minSeparateElementsBy
+@docs inIntersperse, minIntersperse
 
 
 ## glue
@@ -60,12 +67,22 @@ Calling `isChecked Arr` marks unsafe operations.
 
 ## filter
 
-@docs when, dropWhen, whenJust, whenAllJust
+@docs when, whenJust, whenAllJust
 
 
 ## part
 
 @docs take, takeMax, inDrop, minDrop, groupsOf
+
+
+## drop information
+
+@docs lowerMinLength, toMinArr
+
+
+## restore
+
+@docs restoreMaxLength
 
 -}
 
@@ -81,7 +98,7 @@ import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
 import Random
 import Serialize exposing (Codec)
-import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, internalVal2, isChecked, tag, val, val2)
+import Typed exposing (Checked, Internal, Tagged, Typed, internalVal, isChecked, tag, val, val2)
 
 
 type alias Arr length element =
@@ -89,17 +106,16 @@ type alias Arr length element =
 
 
 type alias ArrAs whoCanCreate length element =
-    Typed whoCanCreate ArrTag Internal (Content length element)
+    Typed
+        whoCanCreate
+        ArrTag
+        Internal
+        { array : Array element, length : Nat length }
 
 
-type alias Content length element =
-    { array : Array element, length : Nat length }
-
-
-{-| **Constructor should not be exposed!**
--}
 type ArrTag
-    = Arr
+    = --Constructor should not be exposed!
+      Arr
 
 
 from :
@@ -216,7 +232,9 @@ map2 combine aArr bArr =
             , length = Typed.min a.length b.length
             }
     in
-    internalVal2 map2Val Arr aArr Arr bArr
+    map2Val
+        (internalVal Arr aArr)
+        (internalVal Arr bArr)
         |> tag
         |> isChecked Arr
 
@@ -508,24 +526,33 @@ removeAtTemplate index direction sub1 =
 {-| Should not be exposed.
 -}
 glueTemplate :
-    ((Array element -> Array element -> Array element)
+    (Array element
      -> Array element
-     -> Array element
-     -> Array element
+     -> ( Array element, Array element )
     )
     -> Arr addedLength element
     -> (Nat addedLength -> Nat length -> Nat lengthSum)
     -> Arr length element
     -> ArrAs Tagged lengthSum element
 glueTemplate direction extension addLength =
-    let
-        appendVal a b =
-            { array = direction Array.append b.array a.array
-            , length = addLength a.length b.length
-            }
-    in
-    internalVal2 appendVal Arr extension Arr
-        >> tag
+    \arr ->
+        let
+            toAdd =
+                internalVal Arr extension
+
+            current =
+                internalVal Arr arr
+        in
+        { array =
+            let
+                ( left, right ) =
+                    direction current.array (.array toAdd)
+            in
+            Array.append left right
+        , length =
+            current.length |> addLength (.length toAdd)
+        }
+            |> tag
 
 
 {-| Should not be exposed.
@@ -536,7 +563,7 @@ appendTemplate :
     -> Arr length element
     -> ArrAs Tagged lengthSum element
 appendTemplate extension addLength =
-    glueTemplate (\app a b -> app a b) extension addLength
+    glueTemplate (\a b -> ( a, b )) extension addLength
 
 
 inAppend :
@@ -620,7 +647,7 @@ prependTemplate :
     -> Arr length element
     -> ArrAs Tagged lengthSum element
 prependTemplate extension addLength =
-    glueTemplate (\app a b -> app b a) extension addLength
+    glueTemplate (\a b -> ( b, a )) extension addLength
 
 
 prependIn :
