@@ -11,11 +11,6 @@ module ArrayExtra exposing
 @docs natLength
 
 
-# modify
-
-@docs reverse, intersperse
-
-
 # transform
 
 @docs whenAllJust
