@@ -1,5 +1,5 @@
 module Arr exposing
-    ( Arr
+    ( Arr, ArrTag
     , fromArray, fromList, fromMaybe, repeat, nats, minNats, random
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
@@ -49,7 +49,7 @@ Is this any useful? Let's look at an example:
 
 The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` simply knows more about the length at compile time, so you can e.g. call `foldWith` without a worry.
 
-@docs Arr
+@docs Arr, ArrTag
 
 
 # create
@@ -122,18 +122,17 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 -}
 
-import Arguments exposing (..)
+import Arguments exposing (apply1, apply10, apply11, apply12, apply13, apply14, apply15, apply2, apply3, apply4, apply5, apply6, apply7, apply8, apply9)
 import Array exposing (Array)
 import Array.LinearDirection as Array
-import ArrayExtra as Array
 import InNat
-import Internal as Internal exposing (push)
+import Internal exposing (push)
 import LinearDirection exposing (LinearDirection(..))
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
 import Random
 import Toop
-import Typed exposing (Checked, Internal, Typed, isChecked, val)
+import Typed exposing (Checked, Internal, Typed, val)
 
 
 {-| An `Arr` describes an array where you know more about the amount of elements.
@@ -201,9 +200,15 @@ Arr (In Nat4 Nat15) ...
 type alias Arr length element =
     Typed
         Checked
-        Internal.ArrTag
+        ArrTag
         Internal
-        (Internal.Content length element)
+        { array : Array element, length : Nat length }
+
+
+{-| Internally tags a valid [`Arr`](Arr#Arr)
+-}
+type alias ArrTag =
+    Internal.ArrTag
 
 
 {-| Convert the `Arr` to an `Array`.
