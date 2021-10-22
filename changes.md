@@ -1,6 +1,6 @@
 # changelog
 
-#### 18.0.2
+#### 18.1.0
 
 - updated `typed-value` to 6.0.0
 
