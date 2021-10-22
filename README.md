@@ -268,9 +268,9 @@ maybePush maybePushedElement =
 ## ready? go!
 
 - [some example apps that use `Arr`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
-- [elm-bits](bits): bits stored in `Arr`
+- [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in `Arr`
 
 [bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
 [static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
 [linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
-[bits]: https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/
+
