@@ -39,9 +39,6 @@ use these operations instead of the ones in [`Arr`](Arr) or [`MinArr`](MinArr).
 
 # transform
 
-
-## serialize
-
 @docs serialize, serializeIn
 
 
@@ -54,7 +51,7 @@ use these operations instead of the ones in [`Arr`](Arr) or [`MinArr`](MinArr).
 import Arr exposing (Arr)
 import Common exposing (fromInternalError)
 import Internal
-import LinearDirection exposing (LinearDirection(..))
+import LinearDirection exposing (LinearDirection)
 import Nat exposing (ArgIn, In, Is, Min, N, Nat, Only, To)
 import Nats exposing (..)
 import Serialize exposing (Codec)

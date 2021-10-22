@@ -40,9 +40,6 @@ use these operations instead of the ones in [`Arr`](Arr) or [`InArr`](InArr).
 
 # transform
 
-
-## serialize
-
 @docs serialize
 
 
