@@ -1,5 +1,5 @@
 module Arr exposing
-    ( Arr, ArrTag, Content
+    ( Arr, ArrTag
     , fromArray, fromList, fromMaybe, repeat, nats, minNats, random
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
@@ -49,7 +49,7 @@ Is this any useful? Let's look at an example:
 
 The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` simply knows more about the length at compile time, so you can e.g. call `foldWith` without a worry.
 
-@docs Arr, ArrTag, Content
+@docs Arr, ArrTag
 
 
 # create
