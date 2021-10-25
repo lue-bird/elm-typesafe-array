@@ -1,6 +1,10 @@
 # changelog
 
-#### 18.1.0
+### 18.2.0
+
+- added `Arr.fromNonEmptyList` and `toNonEmptyList`
+
+### 18.1.0
 
 - updated `typed-value` to 6.0.0
 
