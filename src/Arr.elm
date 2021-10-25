@@ -1,13 +1,13 @@
 module Arr exposing
     ( Arr, ArrTag
-    , fromArray, fromList, fromMaybe, repeat, nats, minNats, random
+    , fromArray, fromNonEmptyList, fromList, fromMaybe, repeat, nats, minNats, random
     , empty, from1
     , from2, from3, from4, from5, from6, from7, from8, from9, from10, from11, from12, from13, from14, from15, from16
     , length, at, all, any
     , replaceAt, updateAt, resize, reverse, order
     , when, dropWhen, whenJust, whenAllJust
     , take, takeMax, groupsOf
-    , map, fold, foldWith, toArray, toList, toMaybe
+    , map, foldWith, fold, toArray, toNonEmptyList, toList, toMaybe
     , to1
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
@@ -54,7 +54,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # create
 
-@docs fromArray, fromList, fromMaybe, repeat, nats, minNats, random
+@docs fromArray, fromNonEmptyList, fromList, fromMaybe, repeat, nats, minNats, random
 
 
 ## exact
@@ -88,7 +88,7 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 
 # transform
 
-@docs map, fold, foldWith, toArray, toList, toMaybe
+@docs map, foldWith, fold, toArray, toNonEmptyList, toList, toMaybe
 
 
 ## extract
@@ -237,7 +237,7 @@ toArray =
 
 
 {-| Short for `Arr.toArray arr |> Array.toList`. Convert the `Arr` to a `List`.
-Just do this in the end.
+Make these kinds of operations the final step.
 Try to keep extra information as long as you can.
 
     Arr.nats nat5
@@ -253,9 +253,31 @@ toList =
     toArray >> Array.toList
 
 
+{-| Convert the `Arr` to a `List`.
+Make these kinds of operations the final step.
+Try to keep extra information as long as you can.
+
+    Arr.nats nat5
+        |> Arr.map val
+        |> Arr.toNonEmptyList
+    --> ( 0, [ 1, 2, 3, 4 ] )
+
+`val` refers to [`Typed.val`](https://package.elm-lang.org/packages/lue-bird/elm-typed-value/latest/Typed#val).
+
+-}
+toNonEmptyList :
+    Arr (In (Nat1Plus minLengthMinus1_) maxLength_) element
+    -> ( element, List element )
+toNonEmptyList =
+    \arr ->
+        ( arr |> at nat0 FirstToLast
+        , arr |> toList |> List.drop 1
+        )
+
+
 {-| `Nothing` if the `Arr` is `empty`, else `Just` it's only value.
 -}
-toMaybe : Arr (In min_ Nat1) element -> Maybe element
+toMaybe : Arr (In minLength_ Nat1) element -> Maybe element
 toMaybe =
     \arr ->
         case
@@ -545,7 +567,7 @@ Don't use it this way:
         (Array.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
     --> big no
 
-Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
+Make sure the compiler knows as much as you about the amount of elements!
 
     Arr.from7 0 1 2 3 4 5 6
     --> ok
@@ -559,19 +581,14 @@ fromArray array =
     Internal.fromArray array
 
 
-{-| Short for `Array.fromList list |> Arr.fromArray`. Create an `Arr` from a `List`.
-
-As every `List` has `>= 0` elements:
-
-    Arr.fromList listFromSomewhere
-    --> : Arr (Min Nat0)
+{-| Short for `Array.fromList list |> Arr.fromArray`. Convert a `List` to an `Arr (Min Nat0)`.
 
 Don't use it this way:
 
     Arr.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
     --> big no!
 
-Tell the compiler if you know the amount of elements. Make sure the it knows as much as you!
+Make sure the compiler knows as much as you about the amount of elements!
 
     Arr.from7 0 1 2 3 4 5 6
     --> ok
@@ -583,6 +600,33 @@ Tell the compiler if you know the amount of elements. Make sure the it knows as 
 fromList : List element -> Arr (Min Nat0) element
 fromList list =
     list |> Array.fromList |> fromArray
+
+
+{-| Convert a non-empty list tuple into an `Arr (Min Nat1)`.
+
+Don't use it this way:
+
+    Arr.fromNonEmptyList ( 0, [ 1, 2, 3, 4, 5, 6 ] )
+    --> big no!
+
+Make sure the compiler knows as much as you about the amount of elements!
+
+    Arr.from7 0 1 2 3 4 5 6
+    --> ok
+
+    Arr.nats nat7
+    --> big yes
+
+-}
+fromNonEmptyList :
+    ( element, List element )
+    -> Arr (Min Nat1) element
+fromNonEmptyList nonEmptyList =
+    let
+        ( head, tail ) =
+            nonEmptyList
+    in
+    from1 head |> Internal.minAppend nat0 (fromList tail)
 
 
 {-| `Arr.from1` if `Just`, `empty` if `Nothing`.
