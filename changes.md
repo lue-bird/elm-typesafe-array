@@ -2,7 +2,8 @@
 
 ### 18.2.0
 
-- added `Arr.fromNonEmptyList` and `toNonEmptyList`
+- added `Arr.fromNonEmptyList` and `.toNonEmptyList`
+- corrected `Arr.fold` and `.foldWith` examples
 
 ### 18.1.0
 
