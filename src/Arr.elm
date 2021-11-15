@@ -1299,12 +1299,12 @@ map4 combine aArr bArr cArr dArr =
 
 {-| Reduce an `Arr` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/).
 
-    Arr.from5 "l" "i" "v" "e"
-        |> Arr.fold FirstToLast (++) ""
+    Arr.from5 'l' 'i' 'v' 'e'
+        |> Arr.fold LastToFirst String.cons ""
     --> "live"
 
-    Arr.from5 "l" "i" "v" "e"
-        |> Arr.fold LastToFirst (++) ""
+    Arr.from5 'l' 'i' 'v' 'e'
+        |> Arr.fold FirstToLast String.cons ""
     --> "evil"
 
     sum =
@@ -1326,13 +1326,14 @@ fold direction reduce initial =
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/) where the initial result is the first value in the `Arr`.
 
-    Arr.foldWith FirstToLast maximum
-        (Arr.from3 234 345 543)
+    Arr.from3 234 345 543
+        |> Arr.foldWith FirstToLast max
     --> 543
 
-    Arr.foldWith LastToFirst (++)
-        (Arr.from3 "m" "l" "e")
-    --> "elm"
+    Arr.foldWith LastToFirst
+        (\word soFar -> soFar ++ " " ++ word)
+        (Arr.from3 "go" "to" "school")
+    --> "school to go"
 
 -}
 foldWith :
@@ -1385,20 +1386,20 @@ order direction =
 
 {-| Resize an `Arr` in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/), padding with a given value.
 
-    Arr.resize LastToFirst nat4 0
-        (Arr.from2 1 2)
+    Arr.from2 1 2
+        |> Arr.resize LastToFirst nat4 0
     --> Arr.from4 0 0 1 2
 
-    Arr.resize LastToFirst nat2 0
-        (Array.from3 1 2 3)
+    Array.from3 1 2 3
+        |> Arr.resize LastToFirst nat2 0
     --> Arr.from2 2 3
 
-    Arr.resize FirstToLast nat4 0
-        (Array.from2 1 2)
+    Array.from2 1 2
+        |> Arr.resize FirstToLast nat4 0
     --> Arr.from4 1 2 0 0
 
-    Arr.resize FirstToLast nat2 0
-        (Array.from3 1 2 3)
+    Array.from3 1 2 3
+        |> Arr.resize FirstToLast nat2 0
     --> Arr.from2 1 2
 
 This is a quick way to gain some type-level knowledge about the length.
