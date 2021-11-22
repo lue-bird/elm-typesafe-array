@@ -2,6 +2,7 @@
 
 ## plans for 19.0.0
 
+- remove `Arr.Content` type alias
 - change `Arr.fold dir red init` to `.foldFrom init dir red`
 - rename `Arr.foldWith` to `.fold`
 - rename `.groupsOf` to `.toChunksOf`
