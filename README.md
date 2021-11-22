@@ -17,8 +17,8 @@ type alias TicTacToeBoard =
     -- 3 by 3
     Arr (Only Nat3) (Arr (Only Nat3) Field)
 
-type Field =
-    Empty
+type Field
+    = Empty
     | X
     | O
 
@@ -110,8 +110,13 @@ type Field
     = Empty
     | Piece PieceKind Color
 
-type PieceKind = Pawn --| ...
-type Color = Black | White
+type PieceKind
+    = Pawn
+    --| ...
+
+type Color
+    = Black
+    | White
 
 initialChessBoard : ChessBoard
 initialChessBoard =
@@ -142,7 +147,8 @@ initialChessBoard
 ```elm
 -- the max tag count should be 53
 tag : Arr (In min_ Nat53) String -> a -> Tagged a
-tag tags toTag = ...
+tag tags toTag =
+    ...
 
 tag (Arr.from3 "fun" "easy" "fresh")
 --> valid
@@ -161,7 +167,8 @@ Development of `typesafe-array` started before `static-array` was published but 
 
 `static-array`:
 ```elm
-six = StaticArray.Length.five |> StaticArray.Length.plus1
+six =
+    StaticArray.Length.five |> StaticArray.Length.plus1
 
 StaticArray.fromList six 0 [ 1, 2, 3, 4, 5 ]
 ```
@@ -230,7 +237,7 @@ It silently gave us back an element at the wrong (first) index!
 arr1, arr2 : Arr (In Nat6 (Nat6Plus a_)) ...
 
 arr1 |> InArr.append nat6 arr2
--- : Arr (In Nat12 (Nat12Plus a_)) ...
+--: Arr (In Nat12 (Nat12Plus a_)) ...
 ```
 
 type-safe.
@@ -239,7 +246,7 @@ type-safe.
 
 `static-array`:
 ```elm
-maybePush : Maybe a -> StaticArray n a -> -- what result type?
+maybePush : Maybe a -> StaticArray n a -> ? --what result type?
 
 type MaybePushResult lengthBefore
     = Pushed
@@ -273,4 +280,3 @@ maybePush maybePushedElement =
 [bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
 [static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
 [linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
-
