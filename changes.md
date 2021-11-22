@@ -3,8 +3,9 @@
 ## plans for 19.0.0
 
 - change `Arr.fold dir red init` to `.foldFrom init dir red`
-- renamed `Arr.foldWith` to `.fold`
-- updated `bounded-nat` to 21.0.0
+- rename `Arr.foldWith` to `.fold`
+- rename `.groupsOf` to `.toChunksOf`
+- update `bounded-nat` to 21.0.0
     - `NatX` types are now `NX`
 
 ### 18.2.0
