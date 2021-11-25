@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-typesafe-array",
     "summary": "typed array that you can access safely",
     "license": "MIT",
-    "version": "18.2.0",
+    "version": "18.3.0",
     "exposed-modules": [
         "Arr",
         "MinArr",
