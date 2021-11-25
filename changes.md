@@ -9,6 +9,10 @@
 - update `bounded-nat` to 21.0.0
     - `NatX` types are now `NX`
 
+### 18.3.0
+
+- added `Arr.to15` and `.to16`
+
 ### 18.2.0
 
 - added `Arr.fromNonEmptyList` and `.toNonEmptyList`
