@@ -10,7 +10,7 @@ module Arr exposing
     , map, foldWith, fold, toArray, toNonEmptyList, toList, toMaybe
     , to1
     , to2
-    , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
+    , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , map2, map3, map4
     , lowerMinLength, toMin
     , restoreMaxLength
@@ -96,9 +96,9 @@ The `Array` type doesn't give us the info that it contains 1+ elements. `Arr` si
 @docs to1
 @docs to2
 
-[Skip to `to14`](Arr#to14).
+[Skip to `to16`](Arr#to16).
 
-@docs to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14
+@docs to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
 
 
 ## combine
@@ -531,6 +531,57 @@ to14 =
             (at nat11 FirstToLast arr)
             (at nat12 FirstToLast arr)
             (at nat13 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T15`. This makes accessing elements and pattern matching easier.
+-}
+to15 :
+    Arr (Only Nat15) element
+    -> Toop.T15 element element element element element element element element element element element element element element element
+to15 =
+    \arr ->
+        Toop.T15
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+            (at nat11 FirstToLast arr)
+            (at nat12 FirstToLast arr)
+            (at nat13 FirstToLast arr)
+            (at nat14 FirstToLast arr)
+
+
+{-| Transform the `Arr` into a `Toop.T16`. This makes accessing elements and pattern matching easier.
+-}
+to16 :
+    Arr (Only Nat16) element
+    -> Toop.T16 element element element element element element element element element element element element element element element element
+to16 =
+    \arr ->
+        Toop.T16
+            (at nat0 FirstToLast arr)
+            (at nat1 FirstToLast arr)
+            (at nat2 FirstToLast arr)
+            (at nat3 FirstToLast arr)
+            (at nat4 FirstToLast arr)
+            (at nat5 FirstToLast arr)
+            (at nat6 FirstToLast arr)
+            (at nat7 FirstToLast arr)
+            (at nat8 FirstToLast arr)
+            (at nat9 FirstToLast arr)
+            (at nat10 FirstToLast arr)
+            (at nat11 FirstToLast arr)
+            (at nat12 FirstToLast arr)
+            (at nat13 FirstToLast arr)
+            (at nat14 FirstToLast arr)
+            (at nat15 FirstToLast arr)
 
 
 
