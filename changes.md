@@ -1,5 +1,3 @@
-# changes
-
 ## plans for 19.0.0
 
 - remove `Arr.Content` type alias
@@ -9,6 +7,8 @@
 - rename `.groupsOf` to `.toChunksOf`
 - update `bounded-nat` to 21.0.0
     - `NatX` types are now `NX`
+
+# changelog
 
 ### 18.3.0
 
