@@ -4,6 +4,9 @@
     "Arr",
     "InArr",
     "MinArr",
+    "ArrayExtra",
+    "Common",
+    "Internal",
     "./README.md"
   ]
 }
