@@ -158,10 +158,33 @@ at index direction =
                 element
 
             Nothing ->
-                -- `|>` means that TCO doesn't kick in
-                -- https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions
-                -- forcing a stack overflow
-                arr |> at index direction
+                failLoudlyWithStackOverflow
+                    { details =
+                        [ "Arr doesn't hold its length promised by the type.\n"
+                        , "💙 Please report under https://github.com/lue-bird/elm-typesafe-array/issues"
+                        ]
+                    , culprit = arr
+                    }
+
+
+{-| The [mutual recursion prevents TCO](https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions),
+forcing a stack overflow runtime exception.
+
+The arguments help identify the cause on inspection when debugging.
+
+-}
+failLoudlyWithStackOverflow :
+    { details : List String, culprit : culprit_ }
+    -> valueThatWillNeverBeCreatedDueToRuntimeError_
+failLoudlyWithStackOverflow messageAndCulprit =
+    let
+        failLoudlyWithStackOverflowMutuallyRecursive :
+            { details : List String, culprit : culprit_ }
+            -> valueThatWillNeverBeCreatedDueToRuntimeError_
+        failLoudlyWithStackOverflowMutuallyRecursive messageAndCulpritRecursive =
+            failLoudlyWithStackOverflow messageAndCulpritRecursive
+    in
+    failLoudlyWithStackOverflowMutuallyRecursive messageAndCulprit
 
 
 length : Arr length element_ -> Nat length
