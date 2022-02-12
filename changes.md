@@ -1,4 +1,4 @@
-## plans for 19.0.0
+## 19.0.0 plans
 
 - remove `Arr.Content` type alias
 - change `Arr.fold dir red init` to `.foldFrom init dir red`
@@ -6,7 +6,11 @@
 - rename `Arr.foldWith` to `.fold`
 - rename `.groupsOf` to `.toChunksOf`
 - update `bounded-nat` to 21.0.0
-    - `Nat`<x>(`Plus`) types are now `N`<x>(`Plus`)
+    - `Nat` is now `NThat`
+    - `Nats.Nat`<x>(`Plus`) are now `Nat.N`/`Add`<x>
+    - `Min` is now `IsMin`
+    - `In` is now `IsIn`
+    - additional dependency `emptiness-typed`
 
 # changelog
 
