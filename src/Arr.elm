@@ -174,7 +174,7 @@ Arr (In (Nat4Plus minMinus4_) Nat15) ...
 ```
 
 
-## as storage types
+## stored in types
 
 To store in your `Model` for example (which means: no type variables)
 
