@@ -150,15 +150,18 @@ at :
 at index direction =
     \arr ->
         case
-            Array.LinearDirection.at (val index)
-                direction
-                (toArray arr)
+            arr
+                |> toArray
+                |> Array.LinearDirection.at (val index) direction
         of
             Just element ->
                 element
 
             Nothing ->
-                at index direction arr
+                -- `|>` means that TCO doesn't kick in
+                -- https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions
+                -- forcing a stack overflow
+                arr |> at index direction
 
 
 length : Arr length element_ -> Nat length
