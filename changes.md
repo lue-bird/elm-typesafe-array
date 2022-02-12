@@ -2,11 +2,11 @@
 
 - remove `Arr.Content` type alias
 - change `Arr.fold dir red init` to `.foldFrom init dir red`
-- rename `Arr` module and type to `ArrayIs`
+- rename `Arr` module and type to `ArrayWithLengthThat`
 - rename `Arr.foldWith` to `.fold`
 - rename `.groupsOf` to `.toChunksOf`
 - update `bounded-nat` to 21.0.0
-    - `NatX` types are now `NX`
+    - `Nat`<x>(`Plus`) types are now `N`<x>(`Plus`)
 
 # changelog
 
