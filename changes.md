@@ -2,6 +2,7 @@
 
 - remove `Arr.Content` type alias
 - change `Arr.fold dir red init` to `.foldFrom init dir red`
+- remove `Arr.order`
 - rename `Arr` module and type to `ArrayWithLengthThat`
 - rename `Arr.foldWith` to `.fold`
 - rename `.groupsOf` to `.toChunksOf`
