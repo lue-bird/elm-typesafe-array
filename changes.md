@@ -1,17 +1,19 @@
 ## 19.0.0 plans
 
-- remove `Arr.Content` type alias
-- change `Arr.fold dir red init` to `.foldFrom init dir red`
-- remove `Arr.order`
-- rename `Arr` module and type to `ArrayWithLengthThat`
-- rename `Arr.foldWith` to `.fold`
-- rename `.groupsOf` to `.toChunksOf`
-- update `bounded-nat` to 21.0.0
-    - `Nat` is now `NThat`
-    - `Nats.Nat`<x>(`Plus`) are now `Nat.N`/`Add`<x>
-    - `Min` is now `IsMin`
-    - `In` is now `IsIn`
-    - additional dependency `emptiness-typed`
+  - rename `Arr` module and type to `ArraySized`
+      - remove `Arr.Content` type alias
+      - change `Arr.fold dir red init` to `.foldFrom init dir red`
+      - remove `Arr.order`
+      - rename `Arr.foldWith` to `.fold`
+      - rename `.groupsOf` to `.toChunksOf`
+      - update `bounded-nat` to 21.0.0
+          - `Nat` is now `N`
+              - which additionally stores its `range`
+          - `Nats.Nat`<x>(`Plus`) are now `Nat.N`/`Add`<x>
+          - additional dependency `allowable-state`
+
+  - rename `InArr` module to `ArraySizedIn`
+  - rename `MinArr` module to `ArraySizedMin`
 
 # changelog
 
