@@ -1,5 +1,10 @@
 # changelog
 
+#### 19.0.1
+
+  - readme `static-array` comparison format change
+  - `maxOpen` link correct
+
 ## 19.0.0
 
   - (`module InArr`, `module MinArr`) >- `module Arr` 
