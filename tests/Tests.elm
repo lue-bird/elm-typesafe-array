@@ -1,10 +1,10 @@
-module Tests exposing (startBoard, suite)
+module Tests exposing (suite)
 
 import ArraySized exposing (ArraySized, In)
 import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
 import Expect exposing (Expectation)
 import Linear exposing (DirectionLinear(..))
-import N exposing (Add1, Add4, Exactly, Min, N4, N8, n0, n1, n3, n4, n6, n8)
+import N exposing (Add1, Exactly, Min, N8, n0, n1, n3, n4, n8)
 import Test exposing (Test, describe, test)
 
 
@@ -44,6 +44,11 @@ arraySizedTests =
                 )
             ]
         ]
+
+
+isEven : Int -> Bool
+isEven =
+    modBy 2 >> (==) 0
 
 
 maximumConstrainedTest : Test
@@ -90,13 +95,15 @@ maximumConstrainedTest =
         ]
 
 
-num1234 : ArraySized (In N4 (Add4 a_)) number_
-num1234 =
-    ArraySized.l4 1 2 3 4
+expectEqualArraySized : ArraySized range a -> (ArraySized range a -> Expectation)
+expectEqualArraySized expected actual =
+    Expect.equalLists
+        (expected |> ArraySized.toList)
+        (actual |> ArraySized.toList)
 
 
 maybePush :
-    Emptiable a possiblyOrNever
+    Emptiable a possiblyOrNever_
     -> ArraySized (In min max) a
     -> ArraySized (In min (Add1 max)) a
 maybePush maybePushedElement =
@@ -157,19 +164,3 @@ type Field
 type Piece
     = Pawn
     | Other
-
-
-
--- ↓ not important
-
-
-isEven : Int -> Bool
-isEven =
-    modBy 2 >> (==) 0
-
-
-expectEqualArraySized : ArraySized range a -> (ArraySized range a -> Expectation)
-expectEqualArraySized expected actual =
-    Expect.equalLists
-        (expected |> ArraySized.toList)
-        (actual |> ArraySized.toList)

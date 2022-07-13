@@ -41,7 +41,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # alter
 
-@docs elementReplace, elementRemove, push, insert, elementRemove, reverse
+@docs elementReplace, elementRemove, push, insert, reverse
 
 
 ## intersperse
@@ -51,7 +51,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## glue
 
-@docs glue, glueAtLeast, glueIn
+@docs glueAtLeast, glueIn
 
 
 ## filter
@@ -75,9 +75,8 @@ import Array.Extra as Array
 import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
-import Linear exposing (DirectionLinear(..))
-import List.Linear
-import N exposing (Add1, Add2, Diff, Exactly, Is, Min, N, N0, To, n0, n1, noDiff)
+import Linear exposing (DirectionLinear)
+import N exposing (Add1, Diff, Is, Min, N, N0, To, n0, n1)
 import Random
 import Stack
 
@@ -172,7 +171,7 @@ map :
          -> ArraySized length bElement
         )
 map alter =
-    -- TODO: supply indexes
+    -- supply indexes?
     \arr ->
         arr
             |> toArray
@@ -641,7 +640,7 @@ maxUp lengthMaximumIncrement =
 
 
 has :
-    N (N.In comparedAgainstMin (Add1 comparedAgainstMaxMinus1) comparedAgainstDifference)
+    N (N.In comparedAgainstMin (Add1 comparedAgainstMaxMinus1) comparedAgainstDifference_)
     ->
         (ArraySized (In min max) element
          ->

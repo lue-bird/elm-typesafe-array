@@ -19,8 +19,17 @@ module ArrayExtra exposing
 
 import Array exposing (Array)
 import Emptiable exposing (Emptiable, fillMap, filled)
-import Linear exposing (DirectionLinear(..))
 import N exposing (Min, N, N0, n0)
+
+
+areAllFilled :
+    Array (Emptiable element possiblyOrNever)
+    -> Emptiable (Array element) possiblyOrNever
+areAllFilled maybes =
+    maybes
+        |> Array.toList
+        |> areAllFilledInList
+        |> fillMap Array.fromList
 
 
 areAllFilledInList :
@@ -34,16 +43,6 @@ areAllFilledInList =
                     (\( fills, fill ) -> fills |> (::) fill)
         )
         ([] |> filled)
-
-
-areAllFilled :
-    Array (Emptiable element possiblyOrNever)
-    -> Emptiable (Array element) possiblyOrNever
-areAllFilled maybes =
-    maybes
-        |> Array.toList
-        |> areAllFilledInList
-        |> fillMap Array.fromList
 
 
 lengthN : Array element_ -> N (Min N0)

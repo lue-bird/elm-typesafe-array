@@ -136,13 +136,12 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 
 import Array exposing (Array)
 import Array.Linear
-import ArraySized.Internal exposing (push)
+import ArraySized.Internal
 import Emptiable exposing (Emptiable)
 import Linear exposing (DirectionLinear(..))
-import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Diff, Exactly, In, Is, Min, N, N0, N0able, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, n0, n1, n10, n11, n12, n13, n14, n15, n16, n2, n3, n4, n5, n6, n7, n8, n9)
+import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Diff, Exactly, In, Is, Min, N, N0, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
-import Stack exposing (Stacked)
 import Toop
 
 
@@ -1554,7 +1553,7 @@ maxOpen maximumLength =
     ArraySized.Internal.maxOpen maximumLength
 
 
-{-| Have a specific maximum in mind? → [`maxOpen`](#maximum)
+{-| Have a specific maximum in mind? → [`maxOpen`](#maxOpen)
 
 Want to increase the upper bound by a fixed amount? ↓
 
@@ -1627,6 +1626,38 @@ insert :
         )
 insert ( direction, index ) insertedElement =
     ArraySized.Internal.insert ( direction, index ) insertedElement
+
+
+{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    import Linear exposing (DirectionLinear(..))
+    import N exposing (n0, n1)
+
+    atLeast5Elements
+        |> ArraySized.minInsert ( Down, n1 )
+            "before last"
+    --: ArraySized (Min N6) String
+
+    cons :
+        element
+        -> ArraySized (In min maxLength_) element
+        -> ArraySized (Min (Add1 min)) element
+    cons =
+        ArraySized.minInsert ( Up, n0 )
+
+-}
+minInsert :
+    ( DirectionLinear
+    , N (N.In indexMin_ min indexDifference_)
+    )
+    -> element
+    ->
+        (ArraySized (In min maxLength_) element
+         -> ArraySized (Min (Add1 min)) element
+        )
+minInsert ( direction, index ) toInsert =
+    insert ( direction, index ) toInsert
+        >> noMax
 
 
 {-| Place a value between all members.
@@ -1789,6 +1820,29 @@ glue direction addedLength extension =
         extension
 
 
+{-| Attach elements of an `ArraySized` to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    ArraySized.l3 1 2 3
+        |> ArraySized.glueAtLeast Up n3 atLeast3Elements
+    --: ArraySized (Min N6) ...
+
+    ArraySized.l3 1 2 3
+        |> ArraySized.glueAtLeast Down n3 atLeast3Elements
+    --: ArraySized (Min N6) ...
+
+-}
+glueAtLeast :
+    DirectionLinear
+    -> N (N.In minAdded atLeastMinAdded_ (Is (Diff min To minLengthSum) is_))
+    -> ArraySized (In minAdded maxAdded_) element
+    ->
+        (ArraySized (In min maxLength_) element
+         -> ArraySized (Min minLengthSum) element
+        )
+glueAtLeast direction minAddedLength extension =
+    ArraySized.Internal.glueAtLeast direction minAddedLength extension
+
+
 {-| Kick an element out of the `ArraySized`
 at a given index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
@@ -1810,6 +1864,42 @@ elementRemove :
         )
 elementRemove ( direction, index ) =
     ArraySized.Internal.elementRemove ( direction, index )
+
+
+{-| Put a new element after the others.
+
+    atLeast5Elements
+        |> ArraySized.minPush "becomes the last"
+    --: ArraySized (Min N6) String
+
+-}
+minPush :
+    element
+    ->
+        (ArraySized (In min maxLength_) element
+         -> ArraySized (Min (Add1 min)) element
+        )
+minPush newLastElement =
+    push newLastElement >> noMax
+
+
+{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+    removeLast =
+        TypeSized.minElementRemove ( Down, n0 )
+
+-}
+minElementRemove :
+    ( DirectionLinear
+    , N (N.In indexMin_ minLengthMinus1 indexDifference_)
+    )
+    ->
+        (ArraySized (In (Add1 minLengthMinus1) max) element
+         -> ArraySized (In minLengthMinus1 max) element
+        )
+minElementRemove ( direction, index ) =
+    maxUp n1
+        >> elementRemove ( direction, index )
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -1848,8 +1938,38 @@ drop direction droppedAmount =
     ArraySized.Internal.drop direction droppedAmount
 
 
+{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
--- ## scan length
+    import Linear exposing (DirectionLinear(..))
+    import N exposing (n2)
+
+    atLeast6Elements
+        |> ArraySized.minDrop Down n2
+    --: ArraySized (Min N4) ...
+
+-}
+minDrop :
+    DirectionLinear
+    ->
+        N
+            (N.In
+                dropped_
+                atLeastDropped_
+                (Is
+                    (Diff minTaken To min)
+                    is_
+                )
+            )
+    ->
+        (ArraySized (In min max) element
+         -> ArraySized (In minTaken max) element
+        )
+minDrop direction droppedAmount =
+    ArraySized.Internal.minDrop direction droppedAmount
+
+
+
+-- ## length compare
 
 
 {-| Compare its length to a given exact length. Does it match or is it `BelowOrAbove`?
@@ -1872,7 +1992,7 @@ drop direction droppedAmount =
 
 -}
 has :
-    N (N.In comparedAgainstMin (Add1 comparedAgainstMaxMinus1) comparedAgainstDifference)
+    N (N.In comparedAgainstMin (Add1 comparedAgainstMaxMinus1) comparedAgainstDifference_)
     ->
         (ArraySized (In min max) element
          ->
@@ -2009,128 +2129,3 @@ hasAtMost :
         )
 hasAtMost upperLimit =
     ArraySized.Internal.hasAtMost upperLimit
-
-
-
--- ## alter
-
-
-{-| Put a new element after the others.
-
-    atLeast5Elements
-        |> ArraySized.minPush "becomes the last"
-    --: ArraySized (Min N6) String
-
--}
-minPush :
-    element
-    ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (Min (Add1 min)) element
-        )
-minPush newLastElement =
-    push newLastElement >> noMax
-
-
-{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
-
-    import Linear exposing (DirectionLinear(..))
-    import N exposing (n0, n1)
-
-    atLeast5Elements
-        |> ArraySized.minInsert ( Down, n1 )
-            "before last"
-    --: ArraySized (Min N6) String
-
-    cons :
-        element
-        -> ArraySized (In min maxLength_) element
-        -> ArraySized (Min (Add1 min)) element
-    cons =
-        ArraySized.minInsert ( Up, n0 )
-
--}
-minInsert :
-    ( DirectionLinear
-    , N (N.In indexMin_ min indexDifference_)
-    )
-    -> element
-    ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (Min (Add1 min)) element
-        )
-minInsert ( direction, index ) toInsert =
-    insert ( direction, index ) toInsert
-        >> noMax
-
-
-{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
-
-    removeLast =
-        TypeSized.minElementRemove ( Down, n0 )
-
--}
-minElementRemove :
-    ( DirectionLinear
-    , N (N.In indexMin_ minLengthMinus1 indexDifference_)
-    )
-    ->
-        (ArraySized (In (Add1 minLengthMinus1) max) element
-         -> ArraySized (In minLengthMinus1 max) element
-        )
-minElementRemove ( direction, index ) =
-    maxUp n1
-        >> elementRemove ( direction, index )
-
-
-{-| Attach elements of an `ArraySized` to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
-
-    ArraySized.l3 1 2 3
-        |> ArraySized.glueAtLeast Up n3 atLeast3Elements
-    --: ArraySized (Min N6) ...
-
-    ArraySized.l3 1 2 3
-        |> ArraySized.glueAtLeast Down n3 atLeast3Elements
-    --: ArraySized (Min N6) ...
-
--}
-glueAtLeast :
-    DirectionLinear
-    -> N (N.In minAdded atLeastMinAdded_ (Is (Diff min To minLengthSum) is_))
-    -> ArraySized (In minAdded maxAdded_) element
-    ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (Min minLengthSum) element
-        )
-glueAtLeast direction minAddedLength extension =
-    ArraySized.Internal.glueAtLeast direction minAddedLength extension
-
-
-{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
-
-    import Linear exposing (DirectionLinear(..))
-    import N exposing (n2)
-
-    atLeast6Elements
-        |> ArraySized.minDrop Down n2
-    --: ArraySized (Min N4) ...
-
--}
-minDrop :
-    DirectionLinear
-    ->
-        N
-            (N.In
-                dropped_
-                atLeastDropped_
-                (Is
-                    (Diff minTaken To min)
-                    is_
-                )
-            )
-    ->
-        (ArraySized (In min max) element
-         -> ArraySized (In minTaken max) element
-        )
-minDrop direction droppedAmount =
-    ArraySized.Internal.minDrop direction droppedAmount
