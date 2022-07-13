@@ -214,7 +214,7 @@ forbiddenFunctionOrValues =
 
 forbiddenWords : List String
 forbiddenWords =
-    [ [ "REPLACEME", "replaceme", "replace-me", "ReplaceMe" ]
+    [ [ "REPLACEME", "replace-me", "ReplaceMe" ]
     , [ "ToReplace", "TOREPLACE", "to-replace" ]
     , [ "TODO", "todo", "Todo", "to-do", "ToDo" ]
     , [ "- []" ]
