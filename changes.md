@@ -10,7 +10,7 @@
         `type ArraySized`
       - `type alias Arr.Content` remove
       - `type ArrTag` remove
-      - `bounded-nat` → version 21.1.0
+      - `bounded-nat` → version 21.2.0
           - `Nat range` is now `N range`
               - which additionally stores its `range`
           - `Nats.Nat<x>`, `Nat<x>Plus` are now `N.N<x>`/`Add<x>`
