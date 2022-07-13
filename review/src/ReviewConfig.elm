@@ -165,7 +165,7 @@ config =
         |> List.concat
         |> Pipeline.rule
     , NoPrimitiveTypeAlias.rule
-    , ExactlyAllSingleUseTypeVarsEndWith_.rule
+    , OnlyAllSingleUseTypeVarsEndWith_.rule
     , NoRecordAliasConstructor.rule
     , NoDebug.TodoOrToString.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
