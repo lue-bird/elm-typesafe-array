@@ -1,34 +1,37 @@
-module Main exposing (Field(..), GameOver(..), Player(..), isGameOver, main)
+module App exposing (Field(..), GameOver(..), Player(..), isGameOver, main)
 
-import Arr exposing (Arr)
+import ArraySized exposing (ArraySized)
 import Browser
 import Element as Ui
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as UiInput
-import LinearDirection exposing (LinearDirection(..))
+import Linear exposing (DirectionLinear(..))
 import Maybe.Extra as Maybe
-import Nat exposing (In, Nat, Only)
-import Nats exposing (..)
+import N exposing (Exactly, In, N, N0, N2, N3, n2, n3)
+import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
+import Stack
+import Toop
 
 
 type alias Model =
-    { board : Board
-    , gameStage : GameStage
-    }
+    RecordWithoutConstructorFunction
+        { board : Board
+        , gameStage : GameStage
+        }
 
 
 initialModel : Model
 initialModel =
     { gameStage = Playing O
     , board =
-        Arr.repeat nat3
-            (Arr.repeat nat3 FieldNotSet)
+        ArraySized.repeat n3
+            (ArraySized.repeat n3 FieldNotSet)
     }
 
 
 type alias Board =
-    Arr (Only Nat3) (Arr (Only Nat3) Field)
+    ArraySized (Exactly N3) (ArraySized (Exactly N3) Field)
 
 
 type Field
@@ -63,8 +66,8 @@ main =
 
 type Msg
     = FieldSetByPlayer
-        ( Nat (In Nat0 Nat2)
-        , Nat (In Nat0 Nat2)
+        ( N (N.In N0 N2 {})
+        , N (N.In N0 N2 {})
         )
         Player
     | ClearBoardClicked
@@ -77,26 +80,24 @@ update msg model =
             ( let
                 field =
                     model.board
-                        |> Arr.at x FirstToLast
-                        |> Arr.at y FirstToLast
+                        |> ArraySized.element ( Up, x )
+                        |> ArraySized.element ( Up, y )
               in
               case field of
                 FieldNotSet ->
                     let
                         updatedBoard =
                             model.board
-                                |> Arr.updateAt x
-                                    FirstToLast
-                                    (Arr.replaceAt y
-                                        FirstToLast
-                                        (FieldSet player)
+                                |> ArraySized.elementAlter ( Up, x )
+                                    (ArraySized.elementReplace ( Up, y )
+                                        (\() -> FieldSet player)
                                     )
                     in
                     { board = updatedBoard
                     , gameStage =
                         case isGameOver updatedBoard of
                             Nothing ->
-                                Playing (otherPlayer player)
+                                Playing (playerOpponent player)
 
                             Just gameOver ->
                                 GameOver gameOver
@@ -114,87 +115,94 @@ update msg model =
 isGameOver : Board -> Maybe GameOver
 isGameOver board =
     let
-        allXorO fields =
-            if fields |> Arr.all ((==) (FieldSet O)) then
-                Just O
+        won fields =
+            case fields |> ArraySized.to3 of
+                Toop.T3 (FieldSet O) (FieldSet O) (FieldSet O) ->
+                    Just O
 
-            else if fields |> Arr.all ((==) (FieldSet X)) then
-                Just X
+                Toop.T3 (FieldSet X) (FieldSet X) (FieldSet X) ->
+                    Just X
+
+                _ ->
+                    Nothing
+
+        rowWon =
+            ArraySized.until n2
+                |> ArraySized.map
+                    (\i ->
+                        board
+                            |> ArraySized.element ( Up, i )
+                            |> won
+                    )
+
+        columnWon =
+            ArraySized.until n2
+                |> ArraySized.map
+                    (\i ->
+                        board
+                            |> ArraySized.map (ArraySized.element ( Up, i ))
+                            |> won
+                    )
+
+        diagonal xDirection =
+            ArraySized.until n2
+                |> ArraySized.map
+                    (\i ->
+                        board
+                            |> ArraySized.element ( xDirection, i )
+                            |> ArraySized.element ( Up, i )
+                    )
+
+        noEmptyFields =
+            ArraySized.map ArraySized.toList
+                >> ArraySized.toList
+                >> List.concat
+                >> List.all ((/=) FieldNotSet)
+
+        wonPlayer =
+            Maybe.orList
+                ([ [ diagonal Up |> won
+                   , diagonal Down |> won
+                   ]
+                 , rowWon |> ArraySized.toList
+                 , columnWon |> ArraySized.toList
+                 ]
+                    |> List.concat
+                )
+    in
+    case wonPlayer of
+        Just playerWon ->
+            playerWon |> PlayerWon |> Just
+
+        Nothing ->
+            if noEmptyFields board then
+                Draw |> Just
 
             else
                 Nothing
 
-        wonInRow =
-            Nat.range nat0 nat2
-                |> List.map
-                    (\i ->
-                        board
-                            |> Arr.at i FirstToLast
-                            |> allXorO
-                    )
 
-        wonInColumn =
-            Nat.range nat0 nat2
-                |> List.map
-                    (\i ->
-                        board
-                            |> Arr.map (Arr.at i FirstToLast)
-                            |> allXorO
-                    )
+playerOpponent : Player -> Player
+playerOpponent =
+    \player ->
+        case player of
+            O ->
+                X
 
-        wonDiagonally xDirection =
-            Arr.nats nat3
-                |> Arr.map
-                    (\i ->
-                        board
-                            |> Arr.at i xDirection
-                            |> Arr.at i FirstToLast
-                    )
-                |> allXorO
-
-        noEmptyFields =
-            Arr.map Arr.toList
-                >> Arr.toList
-                >> List.concat
-                >> List.all ((/=) FieldNotSet)
-    in
-    Maybe.orList
-        ([ [ wonDiagonally FirstToLast
-           , wonDiagonally LastToFirst
-           ]
-         , wonInRow
-         , wonInColumn
-         ]
-            |> List.concat
-        )
-        |> Maybe.map PlayerWon
-        |> Maybe.orElse
-            (if noEmptyFields board then
-                Just Draw
-
-             else
-                Nothing
-            )
-
-
-otherPlayer : Player -> Player
-otherPlayer player =
-    case player of
-        O ->
-            X
-
-        X ->
-            O
+            X ->
+                O
 
 
 playerToString : Player -> String
 playerToString player =
     case player of
         O ->
-            "🞅"
+            -- 🞅 | ⭘ | ○ | 𝡶
+            "⭘"
 
         X ->
-            "⨯"
+            -- ⨯
+            "⯅"
 
 
 view : Model -> Browser.Document Msg
@@ -266,23 +274,22 @@ viewBoard { gameStage } board =
                                 |> Ui.el
                                     [ Ui.centerX
                                     , Ui.centerY
-                                    , Ui.moveDown 5
                                     , Font.size ((fieldSize * 0.7) |> round)
                                     ]
-            in
-            { onPress =
-                (case gameStage of
-                    Playing player ->
-                        player |> FieldSetByPlayer ( x, y )
 
-                    GameOver _ ->
-                        ClearBoardClicked
-                )
-                    |> Just
+                action =
+                    case gameStage of
+                        Playing player ->
+                            player |> FieldSetByPlayer ( x, y )
+
+                        GameOver _ ->
+                            ClearBoardClicked
+            in
+            { onPress = action |> Just
             , label =
                 board
-                    |> Arr.at x FirstToLast
-                    |> Arr.at y FirstToLast
+                    |> ArraySized.element ( Up, x )
+                    |> ArraySized.element ( Up, y )
                     |> fieldToShape
             }
                 |> UiInput.button
@@ -294,17 +301,19 @@ viewBoard { gameStage } board =
         boardSize =
             fieldSize * 3 + spacing * 2
     in
-    Nat.range nat0 nat2
-        |> List.map
+    ArraySized.until n2
+        |> ArraySized.map
             (\x ->
-                Nat.range nat0 nat2
-                    |> List.map (\y -> viewField x y)
+                ArraySized.until n2
+                    |> ArraySized.map (\y -> viewField x y)
+                    |> ArraySized.toList
                     |> Ui.column
                         [ Ui.width Ui.fill
                         , Ui.height Ui.fill
                         , Ui.spacing spacing
                         ]
             )
+        |> ArraySized.toList
         |> Ui.row
             [ Ui.width (Ui.px boardSize)
             , Ui.height (Ui.px boardSize)

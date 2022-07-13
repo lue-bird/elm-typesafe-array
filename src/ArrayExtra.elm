@@ -1,6 +1,6 @@
 module ArrayExtra exposing
-    ( natLength
-    , whenAllJust
+    ( lengthN
+    , areAllFilled
     )
 
 {-| Should be replaced by Array.Extra functions if they are added there.
@@ -8,33 +8,44 @@ module ArrayExtra exposing
 
 # scan
 
-@docs natLength
+@docs lengthN
 
 
 # transform
 
-@docs whenAllJust
+@docs areAllFilled
 
 -}
 
 import Array exposing (Array)
-import Nat exposing (Min, Nat)
-import Nats exposing (Nat0, nat0)
+import Emptiable exposing (Emptiable, fillMap, filled)
+import Linear exposing (DirectionLinear(..))
+import N exposing (Min, N, N0, n0)
 
 
-whenAllJustInList : List (Maybe a) -> Maybe (List a)
-whenAllJustInList =
-    List.foldr (Maybe.map2 (::)) (Just [])
+areAllFilledInList :
+    List (Emptiable element possiblyOrNever)
+    -> Emptiable (List element) possiblyOrNever
+areAllFilledInList =
+    List.foldr
+        (\element ->
+            Emptiable.fillAnd element
+                >> Emptiable.fillMap
+                    (\( fills, fill ) -> fills |> (::) fill)
+        )
+        ([] |> filled)
 
 
-whenAllJust : Array (Maybe a) -> Maybe (Array a)
-whenAllJust maybes =
+areAllFilled :
+    Array (Emptiable element possiblyOrNever)
+    -> Emptiable (Array element) possiblyOrNever
+areAllFilled maybes =
     maybes
         |> Array.toList
-        |> whenAllJustInList
-        |> Maybe.map Array.fromList
+        |> areAllFilledInList
+        |> fillMap Array.fromList
 
 
-natLength : Array a_ -> Nat (Min Nat0)
-natLength =
-    Array.length >> Nat.intAtLeast nat0
+lengthN : Array element_ -> N (Min N0)
+lengthN =
+    Array.length >> N.intAtLeast n0

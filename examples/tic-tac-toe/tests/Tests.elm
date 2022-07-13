@@ -1,9 +1,9 @@
 module Tests exposing (..)
 
-import Arr
+import App exposing (Field(..), GameOver(..), Player(..), isGameOver)
+import ArraySized
 import Expect
-import Main exposing (Field(..), GameOver(..), Player(..), isGameOver)
-import Nats exposing (nat3)
+import N exposing (n3)
 import Test exposing (..)
 
 
@@ -13,18 +13,18 @@ suite =
         [ test "same in a row"
             (\() ->
                 isGameOver
-                    (Arr.from3
-                        (Arr.repeat nat3 FieldNotSet)
-                        (Arr.repeat nat3 (FieldSet O))
-                        (Arr.repeat nat3 FieldNotSet)
+                    (ArraySized.l3
+                        (ArraySized.repeat n3 FieldNotSet)
+                        (ArraySized.repeat n3 (FieldSet O))
+                        (ArraySized.repeat n3 FieldNotSet)
                     )
                     |> Expect.equal (Just (PlayerWon O))
             )
         , test "same in a column"
             (\() ->
                 isGameOver
-                    (Arr.repeat nat3
-                        (Arr.from3 FieldNotSet (FieldSet O) FieldNotSet)
+                    (ArraySized.repeat n3
+                        (ArraySized.l3 FieldNotSet (FieldSet O) FieldNotSet)
                     )
                     |> Expect.equal (Just (PlayerWon O))
             )
@@ -32,20 +32,20 @@ suite =
             [ test "top-left to bottom-right"
                 (\() ->
                     isGameOver
-                        (Arr.from3
-                            (Arr.from3 (FieldSet O) FieldNotSet FieldNotSet)
-                            (Arr.from3 FieldNotSet (FieldSet O) FieldNotSet)
-                            (Arr.from3 FieldNotSet FieldNotSet (FieldSet O))
+                        (ArraySized.l3
+                            (ArraySized.l3 (FieldSet O) FieldNotSet FieldNotSet)
+                            (ArraySized.l3 FieldNotSet (FieldSet O) FieldNotSet)
+                            (ArraySized.l3 FieldNotSet FieldNotSet (FieldSet O))
                         )
                         |> Expect.equal (Just (PlayerWon O))
                 )
             , test "top-right to bottom-left"
                 (\() ->
                     isGameOver
-                        (Arr.from3
-                            (Arr.from3 FieldNotSet FieldNotSet (FieldSet O))
-                            (Arr.from3 FieldNotSet (FieldSet O) FieldNotSet)
-                            (Arr.from3 (FieldSet O) FieldNotSet FieldNotSet)
+                        (ArraySized.l3
+                            (ArraySized.l3 FieldNotSet FieldNotSet (FieldSet O))
+                            (ArraySized.l3 FieldNotSet (FieldSet O) FieldNotSet)
+                            (ArraySized.l3 (FieldSet O) FieldNotSet FieldNotSet)
                         )
                         |> Expect.equal (Just (PlayerWon O))
                 )
@@ -53,10 +53,10 @@ suite =
         , test "draw"
             (\() ->
                 isGameOver
-                    (Arr.from3
-                        (Arr.from3 (FieldSet O) (FieldSet X) (FieldSet O))
-                        (Arr.from3 (FieldSet X) (FieldSet X) (FieldSet O))
-                        (Arr.from3 (FieldSet O) (FieldSet O) (FieldSet X))
+                    (ArraySized.l3
+                        (ArraySized.l3 (FieldSet O) (FieldSet X) (FieldSet O))
+                        (ArraySized.l3 (FieldSet X) (FieldSet X) (FieldSet O))
+                        (ArraySized.l3 (FieldSet O) (FieldSet O) (FieldSet X))
                     )
                     |> Expect.equal (Just Draw)
             )

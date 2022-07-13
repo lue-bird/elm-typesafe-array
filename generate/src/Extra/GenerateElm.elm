@@ -418,7 +418,7 @@ stringFromModuleFile moduleFile =
                 )
 
         PackageInternalModule ->
-            Pretty.pretty 5000
+            Pretty.pretty 120
                 (fromModuleComment Nothing)
 
 

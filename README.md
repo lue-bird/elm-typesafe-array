@@ -1,110 +1,99 @@
-# elm-typesafe-array
+## [elm-typesafe-array](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/)
 
-Knowing more about the length of an `Array` at compile-time to help you **access elements safely**.
+Knowing more about the length of an `Array` at compile-time to help you **access elements safely**
 
 ```elm
 ticTacToeBoard
-    |> Arr.at nat2 FirstToLast
-    |> Arr.at nat0 FirstToLast
+    |> ArraySized.element ( Up, n2 )
+    |> ArraySized.element ( Up, n0 )
 ```
 
-_returns a value, not a `Maybe`_ if `ticTacToeBoard`'s type can promise that it contains enough elements.
-
-A type that can hold that promise could be:
+_returns a value, not a `Maybe`_ if `ticTacToeBoard`'s type can promise that it contains enough elements. A type that can hold that promise could be:
 
 ```elm
 type alias TicTacToeBoard =
     -- 3 by 3
-    Arr (Only Nat3) (Arr (Only Nat3) Field)
+    ArraySized (Exactly N3) (ArraySized (Exactly N3) Field)
 
 type Field
     = Empty
     | X
     | O
 
-aTicTacToeBoard : TicTacToeBoard
-aTicTacToeBoard =
-    Arr.from3
-        (Arr.from3 Empty Empty O)
-        (Arr.from3 Empty O Empty)
-        (Arr.from3 O Empty Empty)
-```
+ticTacToeBoard : TicTacToeBoard
+ticTacToeBoard =
+    ArraySized.l3
+        (ArraySized.l3 Empty Empty O)
+        (ArraySized.l3 Empty O Empty)
+        (ArraySized.l3 O Empty Empty)
 
-**We & the compiler know** there are enough elements in `aTicTacToeBoard`:
-
-```elm
-aTicTacToeBoard
-    |> Arr.at nat2 FirstToLast
-    |> Arr.at nat0 FirstToLast
---> O
+ticTacToeBoard
+    |> ArraySized.element ( Up, n2 )
+    |> ArraySized.element ( Up, n0 )
+--→ O
 ```
+**We & the compiler knew** there are enough elements in `ticTacToeBoard`
 
 ## Setup
 
 ```noformattingples
 elm install lue-bird/elm-linear-direction
-elm install lue-bird/elm-typed-value
 elm install lue-bird/elm-bounded-nat
 elm install lue-bird/elm-typesafe-array
 ```
 
-You can take a 👀 at these packages:
-- [`bounded-nat`][bounded-nat]: `nat...`, `Nat...`, `Min`, `In`, `Only`
-- a small extra: [`linear-direction`][linear-direction]: `FirstToLast` & `LastToFirst`
+👀 if you want
+  - [`bounded-nat`][bounded-nat]: `n...`, `N...`, `Add...`, `Min`, `In`, `Exactly`
+  - extra: [`linear-direction`][linear-direction]: `Up` & `Down`
 
 ```elm
-import LinearDirection exposing (LinearDirection(..))
-
-import Nat exposing (Nat, Only, In, Min)
-import Nats exposing (..)
-    -- nat0-160, Nat0-160 & -Plus
-
-import Typed
-
-import Arr exposing (Arr)
-import InArr
-import MinArr
+import Linear exposing (DirectionLinear(..))
+import N exposing (N, Exactly, Min)
+import ArraySized exposing (ArraySized, In)
 ```
 
-You can define & use operations for `Arr`s with a certain amount.
+Let's define & use operations for `ArraySized`s with a certain amount of elements ↓
 
 ## a minimum length?
 
 ```elm
 last :
-    Arr (In (Nat1Plus orMore_) max_) element
+    ArraySized (In (Add1 minMinus1_) max_) element
     -> element
 last =
-    Arr.at nat0 LastToFirst
+    ArraySized.element ( Down, n0 )
 
-biggest :
-    Arr (In (Nat1Plus orMore_) max_) comparable
+greatest :
+    ArraySized (In (Add1 minMinus1_) max_) comparable
     -> comparable
-biggest =
-    Arr.foldWith FirstToLast max
+greatest =
+    ArraySized.fold Up max
 
-first Arr.empty --> compile-time error
-biggest Arr.empty --> compile-time error
+first ArraySized.empty -- compile-time error
+greatest ArraySized.empty -- compile-time error
 ```
 
-`Arr (In (Nat1Plus orMore_) max_)` means what exactly?
-→ It constrains the length of possible `Arr`s.
+`ArraySized (In (Add1 orMore_) max_)` means what exactly?
+→ It constrains the length of possible `ArraySized`s.
 
-The types are explained in more detail in [`bounded-nat`][bounded-nat] (only `In`, `Min` & `Only` is needed). In this example:
+The types are explained in more detail in [`bounded-nat`][bounded-nat] (`In`, `Min`, `Exactly`). In this example:
 
-- `Array` with type info about its length: `Arr`
-    - length is in a range: `In`
-        - the minimum length is >= 1: `Nat1Plus orMore_`
-        - no maximum length or any maximum length: `max_`
+length is `In` a range
+  - the minimum length constraint is `>= 1` → `Add1 minMinus1_`
+  - any maximum length constraint (even [`NoMax`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#NoMax)) → `max_`
 
 ## an exact length?
 
-Like in the tic-tac-toe example.
+Like in the tic-tac-toe example
 
 ```elm
+import Linear exposing (DirectionLinear(..))
+import N exposing (n1, n4, n6, n8, N8, Exactly)
+import ArraySized exposing (ArraySized)
+
 type alias ChessBoard =
     -- 8 by 8
-    Arr (Only Nat8) (Arr (Only Nat8) Field)
+    ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
 
 type Field
     = Empty
@@ -112,7 +101,7 @@ type Field
 
 type PieceKind
     = Pawn
-    --| ...
+    | Other --...
 
 type Color
     = Black
@@ -122,22 +111,22 @@ initialChessBoard : ChessBoard
 initialChessBoard =
     let
         pawnRow color =
-            Arr.repeat nat8 (Piece Pawn color)
-
+            ArraySized.repeat n8 (Piece Pawn color)
         firstRow color =
-            Arr.repeat nat8 (Piece Other color)
+            ArraySized.repeat n8 (Piece Other color)
     in
-    Arr.empty
-        |> InArr.push (firstRow White)
-        |> InArr.push (pawnRow White)
-        |> InArr.append nat4
-            (Arr.repeat nat4 (Arr.repeat nat8 Empty))
-        |> InArr.push (pawnRow Black)
-        |> InArr.push (firstRow Black)
+    ArraySized.empty
+        |> ArraySized.push (firstRow White)
+        |> ArraySized.push (pawnRow White)
+        |> ArraySized.glue Up
+            n4
+            (ArraySized.repeat n4 (ArraySized.repeat n8 Empty))
+        |> ArraySized.push (pawnRow Black)
+        |> ArraySized.push (firstRow Black)
 
 initialChessBoard
-    |> Arr.at nat1 FirstToLast
-    |> Arr.at nat6 FirstToLast
+    |> ArraySized.element ( Up, n1 )
+    |> ArraySized.element ( Up, n6 )
 --> Piece Pawn White
 ```
 
@@ -146,49 +135,55 @@ initialChessBoard
   
 ```elm
 -- the max tag count should be 53
-tag : Arr (In min_ Nat53) String -> a -> Tagged a
+tag : ArraySized (In min_ N53) String -> (a -> Tagged a)
 tag tags toTag =
     ...
 
-tag (Arr.from3 "fun" "easy" "fresh")
---> valid
-
-tag (Arr.repeat nat100 "please-get-me-into-the-trends")
---> compile-time error
+tag (ArraySized.l3 "fun" "easy" "simple") -- valid
+tag (ArraySized.repeat n100 "into-the-trends") -- type error
 ```
 
-Now take a look at modules like `Arr` to get started!
+## ready? go!
 
-## comparison to [Orasund's static-array][static-array]
+  - [`module ArraySized`](ArraySized) documents everything to start
+  - [some example apps using `ArraySized`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
+  - [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in [`ArraySized`](ArraySized#ArraySized)
 
-Development of `typesafe-array` started before `static-array` was published but the idea is the same as from this package.
+[bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
+[static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
+[linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
 
-#### creating
 
-`static-array`:
+## comparison to [Orasund's `static-array`][static-array]
+
+Development of `typesafe-array` started before `static-array` was published
+but the ideas are quite similar.
+
+### create
+
+#### `static-array`
 ```elm
-six =
-    StaticArray.Length.five |> StaticArray.Length.plus1
+eleven =
+    StaticArray.Length.ten |> StaticArray.Length.plus1
 
-StaticArray.fromList six 0 [ 1, 2, 3, 4, 5 ]
+StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 ```
-It makes it easy to forget the length if you add a new element to the list:
+makes it easy to forget the length if you add a new element or remove one:
 
 ```elm
-StaticArray.fromList six 0 [ 1, 2, 3, 4, 5, 6 ]
+StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
 ```
 
-The added element `6` is simply ignored!
+The added element `11` is simply ignored!
 
-`typesafe-array`:
+#### `typesafe-array`
 ```elm
-Arr.from6 0 1 2 3 4 5
+ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10
 
-Arr.from6 0 1 2 3 4 5 6
---> compile-time error
+ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10 11 -- type error
 ```
 
-#### appending
+### append
 
 `static-array`:
 ```elm
@@ -207,7 +202,7 @@ StaticArray.fromRecord
     , tail = Array.append (array1.tail |> Array.push array2.head) array2.tail
     }
 ```
-important note from static-array:
+important note from `static-array`:
 
 > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
 
@@ -234,49 +229,42 @@ It silently gave us back an element at the wrong (first) index!
 
 `typesafe-array`:
 ```elm
-arr1, arr2 : Arr (In Nat6 (Nat6Plus a_)) ...
+arr1, arr2 : ArraySized (In N6 (Add6 a_)) ...
 
-arr1 |> InArr.append nat6 arr2
---: Arr (In Nat12 (Nat12Plus a_)) ...
+arr1 |> ArraySized.glue Up n6 arr2
+--: ArraySized (In N12 (Add12 a_)) ...
 ```
 
 type-safe.
 
-#### length in a range
+### length in a range
 
-`static-array`:
+#### `static-array`
 ```elm
-maybePush : Maybe a -> StaticArray n a -> ? --what result type?
+maybePush :
+    Maybe element
+    -> StaticArray length element
+    -> ? -- what result type?
 
-type MaybePushResult lengthBefore
+type MaybePushResult lengthBefore element
     = Pushed
         (StaticArray    
             (StaticArray.Index.OnePlus lengthBefore)
+            element
         )
-    | DidntPush (StaticArray lengthBefore)
+    | DidntPush (StaticArray lengthBefore element)
 
-maybePush : Maybe a -> StaticArray n a -> MaybePushResult n
+maybePush :
+    Maybe element
+    -> StaticArray length element
+    -> MaybePushResult length element
 ```
-That's really inconvenient.
+really inconvenient.
 
 `typesafe-array`:
 ```elm
-maybePush :
-    Maybe a
-    -> Arr (In min max) a
-    -> Arr (In min (Nat1Plus max)) a
-maybePush maybePushedElement =
-    InArr.appendIn nat0 nat1
-        (Arr.from1 maybePushedElement
-            |> Arr.whenJust
-        )
+pushMaybe :
+    Maybe element
+    -> ArraySized (In min max) element
+    -> ArraySized (In min (Add1 max)) element
 ```
-
-## ready? go!
-
-- [some example apps that use `Arr`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
-- [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in `Arr`
-
-[bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
-[static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
-[linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/

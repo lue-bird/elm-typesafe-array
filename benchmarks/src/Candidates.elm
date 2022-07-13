@@ -1,17 +1,17 @@
-module Candidates exposing (whenAllJustWithListCons, whenAllJustWithArrayPush)
+module Candidates exposing (areAllFilledWithListCons, areAllFilledWithArrayPush)
 
 import Array exposing (Array)
 import Maybe
 
-whenAllJustWithListCons : Array (Maybe a) -> Maybe (Array a)
-whenAllJustWithListCons =
+areAllFilledWithListCons : Array (Maybe a) -> Maybe (Array a)
+areAllFilledWithListCons =
     Array.toList
-        >> whenAllJustInList
+        >> areAllFilledInList
         >> Maybe.map (Array.fromList)
 
-whenAllJustInList =
+areAllFilledInList =
     List.foldr (Maybe.map2 (::)) (Just [])
 
-whenAllJustWithArrayPush : Array (Maybe a) -> Maybe (Array a)
-whenAllJustWithArrayPush =
+areAllFilledWithArrayPush : Array (Maybe a) -> Maybe (Array a)
+areAllFilledWithArrayPush =
     Array.foldl (Maybe.map2 Array.push) (Just Array.empty)

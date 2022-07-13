@@ -15,17 +15,17 @@ main =
 suite : Benchmark
 suite =
     describe "array"
-        [ let   
+        [ let
             maybes =
                 ints1To100 |> Array.map Just
           in
-          compare "whenAllJust"
+          compare "areAllFilled"
             (\f -> f maybes)
             ( "with List.cons"
-            , whenAllJustWithListCons
+            , areAllFilledWithListCons
             )
             ( "with Array.push"
-            , whenAllJustWithArrayPush
+            , areAllFilledWithArrayPush
             )
         ]
 

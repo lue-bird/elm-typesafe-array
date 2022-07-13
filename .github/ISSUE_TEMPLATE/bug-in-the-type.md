@@ -1,7 +1,7 @@
 ---
-name: bug in the type
-about: a problem in the type
-title: calling `someFunction` returns an unexpected type
+name: bug in ``'s type
+about: a problem in ``'s type
+title: calling `` returns an unexpected type
 labels: ''
 assignees: ''
 
@@ -11,22 +11,22 @@ A clear and concise description of what the bug is.
 
 When using
 ```elm
-Arr.from2 "a" "b"
-    |> Arr.someFunction
+ArraySized.l2 "a" "b"
+    |> ArraySized.
 ```
 
 the result type makes it able to call
 
 ```elm
-|> Arr.at nat10
+|> ArraySized.element ( Up, n10 )
 ```
 
 which results in a
 
 > RangeError: Maximum call stack size exceeded
 
-To avoid this runtime error, correct the `someFunction` type to
+To avoid this runtime error, correct the `` type to
 
 ```elm
-someFunction : Arr ... -> Arr ...
+: ArraySized ... -> ArraySized ...
 ```

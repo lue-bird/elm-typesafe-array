@@ -1,21 +1,101 @@
-## 19.0.0 plans
-
-  - rename `Arr` module and type to `ArraySized`
-      - remove `Arr.Content` type alias
-      - change `Arr.fold dir red init` to `.foldFrom init dir red`
-      - remove `Arr.order`
-      - rename `Arr.foldWith` to `.fold`
-      - rename `.groupsOf` to `.toChunksOf`
-      - update `bounded-nat` to 21.0.0
-          - `Nat` is now `N`
-              - which additionally stores its `range`
-          - `Nats.Nat`<x>(`Plus`) are now `Nat.N`/`Add`<x>
-          - additional dependency `allowable-state`
-
-  - rename `InArr` module to `ArraySizedIn`
-  - rename `MinArr` module to `ArraySizedMin`
-
 # changelog
+
+## 19.0.0
+
+  - (`module InArr`, `module MinArr`) >- `module Arr` 
+      - name → `ArraySized`
+      - original `MinArr` members prefixed with `min`-
+      - `type alias Arr = Typed` change
+        →
+        `type ArraySized`
+      - `type alias Arr.Content` remove
+      - `type ArrTag` remove
+      - `bounded-nat` → version 21.1.0
+          - `Nat range` is now `N range`
+              - which additionally stores its `range`
+          - `Nats.Nat`<x>(`Plus`) are now `N.N`/`Add`<x>
+      - `fold dir reduce init`
+        →
+        `foldFrom init dir reduce`
+      - `order` remove
+          - in favor of `reverse` conditional
+      - `foldWith` name → `fold`
+      - `groupsOf` change
+        ```elm
+        groupsOf :
+            Nat
+                (ArgIn
+                    (Nat1Plus minGroupSizeMinus1)
+                    maxGroupSize
+                    groupSizeIfN_
+                )
+            -> LinearDirection
+            -> Arr (In minLength_ maxLength) element
+            -> { groups :
+                    Arr
+                        (In Nat0 maxLength)
+                        (Arr (In (Nat1Plus minGroupSizeMinus1) maxGroupSize) element)
+               , remaining : Arr (In Nat0 maxGroupSize) element
+               }
+        ```
+        →
+        ```elm
+        toChunksOf :
+            N (N.In (Add1 chunkSizeMinMinus1) (Add1 chunkSizeMaxMinus1) chunkSizeDifference_)
+            -> { remainder : DirectionLinear }
+            -> ArraySized (In minLength_ max) element
+            ->
+                { chunks :
+                    ArraySized
+                        (In N0 max)
+                        (ArraySized
+                            (In (Add1 chunkSizeMinMinus1) (Add1 chunkSizeMaxMinus1))
+                            element
+                        )
+                , remainder : ArraySized (In N0 chunkSizeMaxMinus1) element
+                }
+        ```
+      - appends, prepends >- `glue`, `glueIn`, `glueAtLeast`
+      - serialize, error remove
+      - min length comparisons remove
+      - `map`<n> remove
+      - `fromNonEmptyList ( head, tail )`,
+        `toNonEmptyList : ... -> ( head, tail )` remove
+      - `resize` remove
+          - in favor of more explicit `take`, `drop`, `glue`
+      - `when`, `dropWhen` remove
+          - in favor of `fills`
+      - `nats`, `minNats` remove
+          - in favor of `until`
+      - `whenJust` change
+        →
+        `fills : ... Emptiable ... -> ...`
+      - `whenAllJust` change
+        →
+        `areAllFilled : ... Emptiable ... -> ...`
+      - `toMaybe` change
+        →
+        `toEmptiable : ... -> Emptiable ...`
+      - `fromMaybe` change
+        →
+        `fromEmptiable : Emptiable ... -> ...`
+      - length comparisons `isLength<condition>` → `has<condition>`
+      - element operations prefix `element`- add
+      - -at suffix remove
+      - `all` name → `areAll`
+      - `any` name → `isAny`
+      - `takeMax` name → `takeAtMost`
+      - `lowerMinLength` name → `minLower`
+      - `toMin` name → `noMax`
+      - `restoreMaxLength` name → `maxOpen`
+      - arguments `index direction` → `( direction, index )`
+      - ```elm
+        type alias In min max =
+            N.In min max {}
+        ```
+        add
+      - `until` add
+      - `maxUp` add
 
 ### 18.3.0
 

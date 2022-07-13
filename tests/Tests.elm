@@ -1,201 +1,147 @@
 module Tests exposing (startBoard, suite)
 
-import Arr exposing (Arr)
+import ArraySized exposing (ArraySized, In)
+import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
 import Expect exposing (Expectation)
-import InArr
-import LinearDirection exposing (LinearDirection(..))
-import MinArr
-import Nat exposing (In, Min, Only)
-import Nats exposing (..)
+import Linear exposing (DirectionLinear(..))
+import N exposing (Add1, Add4, Exactly, Min, N4, N8, n0, n1, n3, n4, n6, n8)
 import Test exposing (Test, describe, test)
 
 
 suite : Test
 suite =
     describe "typesafe-array"
-        [ inArrTests
-        , arrTests
+        [ maximumConstrainedTest
+        , arraySizedTests
         ]
 
 
-arrTests : Test
-arrTests =
-    describe "Arr"
-        [ test "when"
-            (\() ->
-                Arr.when (\n -> n >= 3)
-                    (Arr.from5 1 2 3 4 5)
-                    |> Arr.toList
-                    |> Expect.equal [ 3, 4, 5 ]
-            )
-        , test "dropWhen"
-            (\() ->
-                Arr.dropWhen (\n -> n < 3)
-                    (Arr.from5 1 2 3 4 5)
-                    |> Arr.toList
-                    |> Expect.equal [ 3, 4, 5 ]
-            )
-        , describe "all"
+arraySizedTests : Test
+arraySizedTests =
+    describe "ArraySized"
+        [ describe "all"
             [ test "True"
                 (\() ->
-                    Arr.all isEven (Arr.from2 2 4)
+                    ArraySized.areAll isEven (ArraySized.l2 2 4)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    Arr.all isEven (Arr.from2 2 3)
+                    ArraySized.areAll isEven (ArraySized.l2 2 3)
                         |> Expect.equal False
                 )
             ]
         , describe "any"
             [ test "True"
                 (\() ->
-                    Arr.any isEven (Arr.from2 1 2)
+                    ArraySized.isAny isEven (ArraySized.l2 1 2)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    Arr.any isEven (Arr.from2 1 3)
+                    ArraySized.isAny isEven (ArraySized.l2 1 3)
                         |> Expect.equal False
                 )
             ]
-        , test "errorToString"
-            (\() ->
-                { expected = Arr.ExpectLength (Nat.intAtLeast nat0 11)
-                , actual = { length = Nat.intAtLeast nat0 10 }
-                }
-                    |> Arr.errorToString
-                    |> Expect.equal
-                        "Expected an array of length 11, but the actual length was 10."
-            )
         ]
 
 
-inArrTests : Test
-inArrTests =
-    describe "InArr"
+maximumConstrainedTest : Test
+maximumConstrainedTest =
+    describe "maximum constrained"
         [ test "append"
             (\() ->
-                Arr.from3 1 1 1
-                    |> InArr.append nat3 (Arr.from3 0 0 0)
-                    |> Arr.toList
-                    |> Expect.equalLists
-                        [ 1, 1, 1, 0, 0, 0 ]
+                ArraySized.l3 1 1 1
+                    |> ArraySized.glue Up n3 (ArraySized.l3 0 0 0)
+                    |> expectEqualArraySized
+                        (ArraySized.l6 1 1 1 0 0 0)
             )
         , test "prepend"
             (\() ->
-                Arr.from3 1 1 1
-                    |> InArr.prepend nat3 (Arr.from3 0 0 0)
-                    |> Arr.toList
-                    |> Expect.equalLists
-                        [ 0, 0, 0, 1, 1, 1 ]
+                ArraySized.l3 1 1 1
+                    |> ArraySized.glue Down n3 (ArraySized.l3 0 0 0)
+                    |> expectEqualArraySized
+                        (ArraySized.l6 0 0 0 1 1 1)
             )
-        , describe "resize"
-            [ describe "FirstToLast"
-                [ test "length less than current"
-                    (\() ->
-                        Arr.resize FirstToLast nat3 0 num1234
-                            |> expectEqualArr
-                                (Arr.from3 1 2 3)
-                    )
-                , test "length greater than current"
-                    (\() ->
-                        Arr.resize FirstToLast nat6 0 num1234
-                            |> expectEqualArr
-                                (Arr.from6 1 2 3 4 0 0)
-                    )
-                ]
-            , describe "LastToFirst"
-                [ test "length less than current"
-                    (\() ->
-                        Arr.resize LastToFirst nat3 0 num1234
-                            |> expectEqualArr
-                                (Arr.from3 2 3 4)
-                    )
-                , test "length greater than current"
-                    (\() ->
-                        Arr.resize LastToFirst nat6 0 num1234
-                            |> expectEqualArr
-                                (Arr.from6 0 0 1 2 3 4)
-                    )
-                ]
-            ]
-        , describe "whenAllJust"
-            [ test "all are Just"
+        , describe "areAllFilled"
+            [ test "all are Filled"
                 (\() ->
-                    Arr.from3 (Just 1) (Just 2) (Just 3)
-                        |> Arr.whenAllJust
-                        |> Maybe.map
-                            (Arr.toList >> Expect.equalLists [ 1, 2, 3 ])
-                        |> Maybe.withDefault
-                            (Expect.fail "was Nothing, expected Just")
+                    ArraySized.l3 (filled 1) (filled 2) (filled 3)
+                        |> ArraySized.areAllFilled
+                        |> fillMap
+                            (ArraySized.toList >> Expect.equalLists [ 1, 2, 3 ])
+                        |> fillElseOnEmpty
+                            (\_ -> Expect.fail "was Nothing, expected Just")
                 )
             , test "one is Nothing"
                 (\() ->
-                    Arr.from3 (Just 1) Nothing (Just 3)
-                        |> Arr.whenAllJust
-                        |> Expect.equal Nothing
+                    ArraySized.l3 (filled 1) Emptiable.empty (filled 3)
+                        |> ArraySized.areAllFilled
+                        |> Expect.equal Emptiable.empty
                 )
             ]
         , test "intersperse"
             (\() ->
-                Arr.from3 "turtles" "turtles" "turtles"
-                    |> InArr.intersperse "on" nat3 nat3
-                    |> expectEqualArr
-                        (Arr.from5 "turtles" "on" "turtles" "on" "turtles")
+                ArraySized.l3 "turtles" "turtles" "turtles"
+                    |> ArraySized.intersperseIn ( n3, n3 ) "on"
+                    |> expectEqualArraySized
+                        (ArraySized.l5 "turtles" "on" "turtles" "on" "turtles")
             )
         ]
 
 
-num1234 : Arr (In Nat4 (Nat4Plus a_)) number_
+num1234 : ArraySized (In N4 (Add4 a_)) number_
 num1234 =
-    Arr.from4 1 2 3 4
+    ArraySized.l4 1 2 3 4
 
 
 maybePush :
-    Maybe a
-    -> Arr (In min max) a
-    -> Arr (In min (Nat1Plus max)) a
+    Emptiable a possiblyOrNever
+    -> ArraySized (In min max) a
+    -> ArraySized (In min (Add1 max)) a
 maybePush maybePushedElement =
-    InArr.appendIn nat0
-        nat1
-        (Arr.from1 maybePushedElement
-            |> Arr.whenJust
+    ArraySized.glueIn Up
+        ( n0, n1 )
+        (ArraySized.l1 maybePushedElement
+            |> ArraySized.fills
         )
 
 
 minCons :
     element
-    -> Arr (In minLength maxLength_) element
-    -> Arr (Min (Nat1Plus minLength)) element
+    -> ArraySized (In min maxLength_) element
+    -> ArraySized (Min (Add1 min)) element
 minCons =
-    MinArr.insertAt nat0 FirstToLast
+    ArraySized.minInsert ( Up, n0 )
 
 
-inCons :
+cons :
     element
-    -> Arr (In minLength maxLength) element
-    -> Arr (In (Nat1Plus minLength) (Nat1Plus maxLength)) element
-inCons =
-    InArr.insertAt nat0 FirstToLast
+    -> ArraySized (In min max) element
+    -> ArraySized (In (Add1 min) (Add1 max)) element
+cons =
+    ArraySized.insert ( Up, n0 )
 
 
-startBoard : Arr (Only Nat8) (Arr (Only Nat8) Field)
+startBoard : ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
 startBoard =
     let
         pawnRow color =
-            Arr.repeat nat8 (Piece Pawn color)
+            ArraySized.repeat n8 (Piece Pawn color)
 
         firstRow color =
-            Arr.repeat nat8 (Piece Other color)
+            ArraySized.repeat n8 (Piece Other color)
     in
-    Arr.empty
-        |> InArr.push (firstRow White)
-        |> InArr.push (pawnRow White)
-        |> InArr.append nat4
-            (Arr.repeat nat4 (Arr.repeat nat8 Empty))
-        |> InArr.push (pawnRow Black)
-        |> InArr.push (firstRow Black)
+    ArraySized.empty
+        |> ArraySized.push (firstRow White)
+        |> ArraySized.push (pawnRow White)
+        |> ArraySized.glue Up
+            n4
+            (ArraySized.repeat n4
+                (ArraySized.repeat n8 Empty)
+            )
+        |> ArraySized.push (pawnRow Black)
+        |> ArraySized.push (firstRow Black)
 
 
 type Color
@@ -222,8 +168,8 @@ isEven =
     modBy 2 >> (==) 0
 
 
-expectEqualArr : Arr l a -> Arr l a -> Expectation
-expectEqualArr expected actual =
+expectEqualArraySized : ArraySized range a -> (ArraySized range a -> Expectation)
+expectEqualArraySized expected actual =
     Expect.equalLists
-        (expected |> Arr.toList)
-        (actual |> Arr.toList)
+        (expected |> ArraySized.toList)
+        (actual |> ArraySized.toList)

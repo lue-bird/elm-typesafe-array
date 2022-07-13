@@ -1,12 +1,9 @@
 {
   "root": "../src",
   "tests": [
-    "Arr",
-    "InArr",
-    "MinArr",
+    "ArraySized",
     "ArrayExtra",
-    "Common",
-    "Internal",
+    "ArraySized.Internal",
     "./README.md"
   ]
 }
