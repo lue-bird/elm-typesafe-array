@@ -154,117 +154,110 @@ tag (ArraySized.repeat n100 "into-the-trends") -- type error
 [linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
 
 
-## comparison to [Orasund's `static-array`][static-array]
+## [Orasund's `static-array`][static-array] – comparison
 
-Development of `typesafe-array` started before `static-array` was published
-but the ideas are quite similar.
+`typesafe-array` development started before `static-array` was published
+but the ideas are really similar.
 
 ### create
 
-#### `static-array`
-```elm
-eleven =
-    StaticArray.Length.ten |> StaticArray.Length.plus1
+  - `static-array`
+    ```elm
+    eleven =
+        StaticArray.Length.ten |> StaticArray.Length.plus1
 
-StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
-```
-makes it easy to forget the length if you add a new element or remove one:
+    StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+    ```
+    makes it easy to forget the length if you add a new element or remove one:
+    ```elm
+    StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
+    ```
+    The added element `11` is simply ignored!
 
-```elm
-StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
-```
+  - `typesafe-array`
+    ```elm
+    ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10
 
-The added element `11` is simply ignored!
-
-#### `typesafe-array`
-```elm
-ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10
-
-ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10 11 -- type error
-```
+    ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10 11 -- type error
+    ```
 
 ### append
 
-`static-array`:
-```elm
-staticArray1, staticArray2 : StaticArray Six ...
+  - `static-array`:
+    ```elm
+    staticArray1, staticArray2 : StaticArray Six ...
 
-let
-    array1 =
-        staticArray1 |> StaticArray.toRecord
-    
-    array2 =
-        staticArray2 |> StaticArray.toRecord
-in
-StaticArray.fromRecord
-    { length = StaticArray.Length.twelve
-    , head = array1.head
-    , tail = Array.append (array1.tail |> Array.push array2.head) array2.tail
-    }
-```
-important note from `static-array`:
-
-> Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
-
-→ You could easily do
-
-```elm
-wrong =
+    let
+        array1 =
+            staticArray1 |> StaticArray.toRecord
+        
+        array2 =
+            staticArray2 |> StaticArray.toRecord
+    in
     StaticArray.fromRecord
-        { length = StaticArray.Length.eight
+        { length = StaticArray.Length.twelve
         , head = array1.head
-        , tail = Array.empty
+        , tail = Array.append (array1.tail |> Array.push array2.head) array2.tail
         }
-```
+    ```
+    important note from `static-array`:
 
-→ length in the type doesn't match the actual length
+    > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
 
-```elm
-wrong
-    |> StaticArray.get
-        (StaticArray.Index.last StaticArray.Length.eight)
-```
+    → You could easily do
+    ```elm
+    wrong =
+        StaticArray.fromRecord
+            { length = StaticArray.Length.eight
+            , head = array1.head
+            , tail = Array.empty
+            }
+    ```
+    → length in the type doesn't match the actual length
+    ```elm
+    wrong
+        |> StaticArray.get
+            (StaticArray.Index.last StaticArray.Length.eight)
+    ```
+    It silently gave us back an element at the wrong (first) index!
 
-It silently gave us back an element at the wrong (first) index!
+  - `typesafe-array`:
+    ```elm
+    arr1, arr2 : ArraySized (In N6 (Add6 a_)) ...
 
-`typesafe-array`:
-```elm
-arr1, arr2 : ArraySized (In N6 (Add6 a_)) ...
-
-arr1 |> ArraySized.glue Up n6 arr2
---: ArraySized (In N12 (Add12 a_)) ...
-```
-
-type-safe.
+    arr1 |> ArraySized.glue Up n6 arr2
+    --: ArraySized (In N12 (Add12 a_)) ...
+    ```
+    type-safe
 
 ### length in a range
 
-#### `static-array`
-```elm
-maybePush :
-    Maybe element
-    -> StaticArray length element
-    -> ? -- what result type?
+  - `static-array`
+    ```elm
+    maybePush :
+        Maybe element
+        -> StaticArray length element
+        -> ? -- what result type?
 
-type MaybePushResult lengthBefore element
-    = Pushed
-        (StaticArray    
-            (StaticArray.Index.OnePlus lengthBefore)
-            element
-        )
-    | DidntPush (StaticArray lengthBefore element)
+    type MaybePushResult lengthBefore element
+        = Pushed
+            (StaticArray    
+                (StaticArray.Index.OnePlus lengthBefore)
+                element
+            )
+        | DidntPush (StaticArray lengthBefore element)
 
-maybePush :
-    Maybe element
-    -> StaticArray length element
-    -> MaybePushResult length element
-```
-really inconvenient.
+    maybePush :
+        Maybe element
+        -> StaticArray length element
+        -> MaybePushResult length element
+    ```
+    really inconvenient.
 
-`typesafe-array`:
-```elm
-pushMaybe :
-    Maybe element
-    -> ArraySized (In min max) element
-    -> ArraySized (In min (Add1 max)) element
-```
+  - `typesafe-array`
+    ```elm
+    pushMaybe :
+        Maybe element
+        -> ArraySized (In min max) element
+        -> ArraySized (In min (Add1 max)) element
+    ```
