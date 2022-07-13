@@ -4,7 +4,7 @@
 
   - (`module InArr`, `module MinArr`) >- `module Arr` 
       - name → `ArraySized`
-      - original `MinArr` members prefixed with `min`-
+      - previous `MinArr` members prefixed with `min`-
       - `type alias Arr = Typed` change
         →
         `type ArraySized`
