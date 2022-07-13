@@ -13,7 +13,7 @@
       - `bounded-nat` → version 21.1.0
           - `Nat range` is now `N range`
               - which additionally stores its `range`
-          - `Nats.Nat`<x>(`Plus`) are now `N.N`/`Add`<x>
+          - `Nats.Nat<x>`, `Nat<x>Plus` are now `N.N<x>`/`Add<x>`
       - `fold dir reduce init`
         →
         `foldFrom init dir reduce`
@@ -58,7 +58,7 @@
       - appends, prepends >- `glue`, `glueIn`, `glueAtLeast`
       - serialize, error remove
       - min length comparisons remove
-      - `map`<n> remove
+      - `map<n>` remove
       - `fromNonEmptyList ( head, tail )`,
         `toNonEmptyList : ... -> ( head, tail )` remove
       - `resize` remove
