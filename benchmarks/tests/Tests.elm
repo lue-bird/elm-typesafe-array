@@ -9,7 +9,7 @@ import Test exposing (..)
 suite : Test
 suite =
     describe "candidates"
-        [ describe "areAllFilled"
+        [ describe "allFill"
             [ test "areAllFilledWithListCons"
                 (\() ->
                     areAllFilledWithListCons

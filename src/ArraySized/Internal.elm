@@ -5,11 +5,13 @@ module ArraySized.Internal exposing
     , has, hasAtLeast, hasAtMost, hasIn
     , toArray, map
     , elementReplace, elementRemove, push, insert, reverse
-    , intersperseIn, intersperseAtLeast
-    , glueAtLeast, glueIn
-    , fills, areAllFilled
-    , take, takeAtMost, drop, minDrop, toChunks
-    , minLower, noMax, maxOpen, maxUp
+    , fills, allFill
+    , glue, minGlue
+    , interweave, minInterweave
+    , take, drop, minDrop
+    , toChunksOf
+    , minDown, maxNo, maxUp
+    , min, max
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -44,29 +46,27 @@ Ideally, this module should be as small as possible and contain as little `Array
 @docs elementReplace, elementRemove, push, insert, reverse
 
 
-## intersperse
-
-@docs intersperseIn, intersperseAtLeast
-
-
-## glue
-
-@docs glueAtLeast, glueIn
-
-
 ## filter
 
-@docs fills, areAllFilled
+@docs fills, allFill
+
+
+## combine
+
+@docs glue, minGlue
+@docs interweave, minInterweave
 
 
 ## part
 
-@docs take, takeAtMost, drop, minDrop, toChunks
+@docs take, drop, minDrop
+@docs toChunksOf
 
 
 ## type information
 
-@docs minLower, noMax, maxOpen, maxUp
+@docs minDown, maxNo, maxUp
+@docs min, max
 
 -}
 
@@ -76,17 +76,13 @@ import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
 import Linear exposing (DirectionLinear)
-import N exposing (Add1, Diff, Is, Min, N, N0, To, n0, n1)
+import N exposing (Add1, Add2, Down, Fixed, In, Min, N, To, Up, n0, n1)
 import Random
 import Stack
 
 
-type ArraySized length element
-    = ArraySized (N length) (Array element)
-
-
-type alias In min max =
-    N.In min max {}
+type ArraySized lengthRange element
+    = ArraySized (N lengthRange) (Array element)
 
 
 
@@ -104,10 +100,10 @@ instead of failing silently like [Orasund's static-array](https://package.elm-la
 -}
 element :
     ( DirectionLinear
-    , N (N.In indexMin_ minMinus1 indexDifference_)
+    , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
-        (ArraySized (In (Add1 minMinus1) max_) element
+        (ArraySized (In (Fixed (Add1 minMinus1)) max_) element
          -> element
         )
 element ( direction, index ) =
@@ -150,7 +146,7 @@ failLoudlyWithStackOverflow messageAndCulprit =
     failLoudlyWithStackOverflowMutuallyRecursive messageAndCulprit
 
 
-length : ArraySized length element_ -> N length
+length : ArraySized lengthRange element_ -> N lengthRange
 length =
     \(ArraySized length_ _) -> length_
 
@@ -159,7 +155,7 @@ length =
 -- ## transform
 
 
-toArray : ArraySized length_ element -> Array element
+toArray : ArraySized lengthRange_ element -> Array element
 toArray =
     \(ArraySized _ array) -> array
 
@@ -167,8 +163,8 @@ toArray =
 map :
     (aElement -> bElement)
     ->
-        (ArraySized length aElement
-         -> ArraySized length bElement
+        (ArraySized lengthRange aElement
+         -> ArraySized lengthRange bElement
         )
 map alter =
     -- supply indexes?
@@ -179,74 +175,11 @@ map alter =
             |> ArraySized (arr |> length)
 
 
-intersperseIn :
-    ( N
-        (N.In
-            min
-            minAtLeast_
-            (Is
-                (Diff min To (Add1 minDoubleLengthMinus1))
-                minDiff1_
-            )
-        )
-    , N
-        (N.In
-            max
-            maxAtLeast_
-            (Is
-                maxDiff0_
-                (Diff max To (Add1 maxDoubleLengthMinus1))
-            )
-        )
-    )
-    -> element
-    ->
-        (ArraySized (In min max) element
-         -> ArraySized (In minDoubleLengthMinus1 maxDoubleLengthMinus1) element
-        )
-intersperseIn ( min, max ) separatorBetweenTheElements =
-    \arr ->
-        arr
-            |> toArray
-            |> Array.intersperse separatorBetweenTheElements
-            |> ArraySized
-                ((arr |> length)
-                    |> N.addIn ( min, max |> N.differencesSwap )
-                        (arr |> length)
-                    |> N.sub n1
-                )
-
-
-intersperseAtLeast :
-    N
-        (N.In
-            min
-            minAtLeast_
-            (Is
-                (Diff min To (Add1 minDoubleLengthMinus1))
-                minDiff1_
-            )
-        )
-    -> element
-    ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (Min minDoubleLengthMinus1) element
-        )
-intersperseAtLeast min separatorBetweenTheElements =
-    \arr ->
-        arr
-            |> toArray
-            |> Array.intersperse separatorBetweenTheElements
-            |> ArraySized
-                ((arr |> length)
-                    |> N.addAtLeast min (arr |> length)
-                    |> N.minSub n1
-                )
-
-
 fills :
-    ArraySized (In min_ max) (Emptiable value possiblyOrNever_)
-    -> ArraySized (In N0 max) value
+    ArraySized
+        (In (Fixed min_) max)
+        (Emptiable value possiblyOrNever_)
+    -> ArraySized (In (Up minX To minX) max) value
 fills =
     \arr ->
         let
@@ -259,18 +192,18 @@ fills =
             |> ArraySized
                 (filtered
                     |> Array.lengthN
-                    |> N.atMost (arr |> length |> N.minDown n0)
+                    |> N.in_ ( n0, arr |> length )
                 )
 
 
-areAllFilled :
-    ArraySized length (Emptiable value possiblyOrNever)
-    -> Emptiable (ArraySized length value) possiblyOrNever
-areAllFilled =
+allFill :
+    ArraySized lengthRange (Emptiable value possiblyOrNever)
+    -> Emptiable (ArraySized lengthRange value) possiblyOrNever
+allFill =
     \arr ->
         arr
             |> toArray
-            |> Array.areAllFilled
+            |> Array.allFill
             |> fillMap (ArraySized (arr |> length))
 
 
@@ -278,21 +211,21 @@ areAllFilled =
 -- ## create
 
 
-empty : ArraySized (In N0 atLeast0_) element_
+empty : ArraySized (In (Up minX To minX) (Up maxX To maxX)) element_
 empty =
-    Array.empty |> ArraySized (n0 |> N.noDiff)
+    Array.empty |> ArraySized n0
 
 
 repeat :
-    N (N.In min max difference_)
-    -> element
-    -> ArraySized (In min max) element
-repeat amount elementToRepeat =
-    Array.repeat (amount |> N.toInt) elementToRepeat
-        |> ArraySized (amount |> N.noDiff)
+    element
+    -> N range
+    -> ArraySized range element
+repeat elementToRepeat howOftenToRepeat =
+    Array.repeat (howOftenToRepeat |> N.toInt) elementToRepeat
+        |> ArraySized howOftenToRepeat
 
 
-fromArray : Array element -> ArraySized (Min N0) element
+fromArray : Array element -> ArraySized (Min (Up x To x)) element
 fromArray =
     -- could be folded from Array
     -- ↓ helps keeping conversions from internal Arrays more performant
@@ -301,11 +234,11 @@ fromArray =
 
 
 until :
-    N (N.In min max difference_)
+    N (In (Fixed min) (Up maxX To maxPlusX))
     ->
         ArraySized
-            (In (Add1 min) (Add1 max))
-            (N (N.In N0 max {}))
+            (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
+            (N (In (Up minX To minX) (Up maxX To maxPlusX)))
 until last =
     N.until last
         |> Stack.toList
@@ -314,16 +247,16 @@ until last =
 
 
 random :
-    N (N.In min max difference_)
-    -> Random.Generator element
-    -> Random.Generator (ArraySized (In min max) element)
-random amount generateElement =
-    Random.list (amount |> N.toInt) generateElement
+    Random.Generator element
+    -> N range
+    -> Random.Generator (ArraySized range element)
+random elementRandomGenerator amount =
+    Random.list (amount |> N.toInt) elementRandomGenerator
         |> Random.map
             (\list ->
                 list
                     |> Array.fromList
-                    |> ArraySized (amount |> N.noDiff)
+                    |> ArraySized amount
             )
 
 
@@ -335,8 +268,8 @@ elementReplace :
     ( DirectionLinear, N index_ )
     -> (() -> element)
     ->
-        (ArraySized length element
-         -> ArraySized length element
+        (ArraySized lengthRange element
+         -> ArraySized lengthRange element
         )
 elementReplace ( direction, index ) replacement =
     \arr ->
@@ -352,8 +285,14 @@ elementReplace ( direction, index ) replacement =
 push :
     element
     ->
-        (ArraySized (In min max) element
-         -> ArraySized (In (Add1 min) (Add1 max)) element
+        (ArraySized (In (Up minX To minPlusX) (Up maxX To maxPlusX)) element
+         ->
+            ArraySized
+                (In
+                    (Up minX To (Add1 minPlusX))
+                    (Up maxX To (Add1 maxPlusX))
+                )
+                element
         )
 push elementToPush =
     \arr ->
@@ -364,11 +303,24 @@ push elementToPush =
 
 
 insert :
-    ( DirectionLinear, N (N.In indexMin_ min indexDifference_) )
+    ( DirectionLinear
+    , N (In indexMin_ (Up indexMaxToMin_ To min))
+    )
     -> element
     ->
-        (ArraySized (In min max) element
-         -> ArraySized (In (Add1 min) (Add1 max)) element
+        (ArraySized
+            (In
+                (Fixed min)
+                (Up maxX To maxPlusX)
+            )
+            element
+         ->
+            ArraySized
+                (In
+                    (Fixed (Add1 min))
+                    (Up maxX To (Add1 maxPlusX))
+                )
+                element
         )
 insert ( direction, index ) insertedElement =
     \arr ->
@@ -383,11 +335,22 @@ insert ( direction, index ) insertedElement =
 
 elementRemove :
     ( DirectionLinear
-    , N (N.In indexMin_ minMinus1 difference_)
+    , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
-        (ArraySized (In (Add1 minMinus1) (Add1 maxLengthMinus1)) element
-         -> ArraySized (In minMinus1 maxLengthMinus1) element
+        (ArraySized
+            (In
+                (Fixed (Add1 minMinus1))
+                (Up maxX To (Add1 maxMinus1PlusX))
+            )
+            element
+         ->
+            ArraySized
+                (In
+                    (Fixed minMinus1)
+                    (Up maxX To maxMinus1PlusX)
+                )
+                element
         )
 elementRemove ( direction, index ) =
     \arr ->
@@ -398,7 +361,7 @@ elementRemove ( direction, index ) =
             |> ArraySized (arr |> length |> N.sub n1)
 
 
-reverse : ArraySized length element -> ArraySized length element
+reverse : ArraySized range element -> ArraySized range element
 reverse =
     \arr ->
         (arr |> toArray)
@@ -410,63 +373,114 @@ reverse =
 -- ## glue
 
 
-glueIn :
+glue :
     DirectionLinear
     ->
-        ( N
-            (N.In
-                minAdded
-                minAddedAtLeast_
-                (Is (Diff min To minSum) minAddedDiff1_)
+        ArraySized
+            (In
+                (Up minPlusX To minSumPlusX)
+                (Up maxPlusX To maxSumPlusX)
             )
-        , N
-            (N.In
-                maxAdded
-                maxAddedAtLeast_
-                (Is maxAddedDiff0_ (Diff max To maxSum))
-            )
-        )
-    -> ArraySized (In minAdded maxAdded) element
+            element
     ->
-        (ArraySized (In min max) element
-         -> ArraySized (In minSum maxSum) element
+        (ArraySized
+            (In
+                (Up minX To minPlusX)
+                (Up maxX To maxPlusX)
+            )
+            element
+         ->
+            ArraySized
+                (In
+                    (Up minX To minSumPlusX)
+                    (Up maxX To maxSumPlusX)
+                )
+                element
         )
-glueIn direction ( extensionMin, extensionMax ) extension =
+glue direction extension =
     \arr ->
         (arr |> toArray)
             |> Array.Linear.glue direction
                 (extension |> toArray)
             |> ArraySized
                 ((arr |> length)
-                    |> N.addIn ( extensionMin, extensionMax |> N.differencesSwap )
-                        (extension |> length)
+                    |> N.add (extension |> length)
                 )
 
 
-glueAtLeast :
+interweave :
+    ArraySized
+        (In
+            (Up minPlusX To minSumPlusX)
+            (Up maxPlusX To maxSumPlusX)
+        )
+        element
+    ->
+        (ArraySized (In (Up x To minPlusX) (Up x To maxPlusX)) element
+         ->
+            ArraySized
+                (In
+                    (Up x To minSumPlusX)
+                    (Up x To maxSumPlusX)
+                )
+                element
+        )
+interweave separatorsToPlaceBetweenTheElements =
+    \arr ->
+        arr
+            |> toArray
+            |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.add (separatorsToPlaceBetweenTheElements |> length)
+                )
+
+
+minInterweave :
+    ArraySized
+        (In
+            (Up minPlusX To minSumPlusX)
+            interweaveMax_
+        )
+        element
+    ->
+        (ArraySized (In (Up x To minPlusX) max_) element
+         ->
+            ArraySized
+                (Min (Up x To minSumPlusX))
+                element
+        )
+minInterweave separatorsToPlaceBetweenTheElements =
+    \arr ->
+        arr
+            |> toArray
+            |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.minAdd (separatorsToPlaceBetweenTheElements |> length)
+                )
+
+
+minGlue :
     DirectionLinear
     ->
-        N
-            (N.In
-                minAdded
-                atLeastMinAdded_
-                (Is
-                    (Diff min To minSumLength)
-                    is_
-                )
+        ArraySized
+            (In
+                (Up minPlusX To minSumPlusX)
+                extensionMax_
             )
-    -> ArraySized (In minAdded maxAdded_) element
+            element
     ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (Min minSumLength) element
+        (ArraySized (In (Up x To minPlusX) max_) element
+         -> ArraySized (Min (Up x To minSumPlusX)) element
         )
-glueAtLeast direction minAddedLength extension =
+minGlue direction extension =
     \arr ->
         (arr |> toArray)
             |> Array.Linear.glue direction
                 (extension |> toArray)
             |> ArraySized
-                ((arr |> length) |> N.minAdd minAddedLength)
+                ((arr |> length) |> N.minAdd (extension |> length))
 
 
 
@@ -474,96 +488,124 @@ glueAtLeast direction minAddedLength extension =
 
 
 drop :
-    DirectionLinear
+    ( DirectionLinear
+    , N
+        (In
+            (Down maxPlusX To takenMaxPlusX)
+            (Down minPlusX To takenMinPlusX)
+        )
+    )
     ->
-        N
-            (N.In
-                dropped_
-                atLeastDropped_
-                (Is
-                    (Diff minTaken To min)
-                    (Diff maxTaken To max)
-                )
+        (ArraySized
+            (In
+                (Up minX To minPlusX)
+                (Up maxX To maxPlusX)
             )
-    -> ArraySized (In min max) element
-    -> ArraySized (In minTaken maxTaken) element
-drop direction droppedAmount =
+            element
+         ->
+            ArraySized
+                (In
+                    (Up minX To takenMinPlusX)
+                    (Up maxX To takenMaxPlusX)
+                )
+                element
+        )
+drop ( direction, droppedAmount ) =
     \arr ->
         arr
             |> toArray
             |> Array.Linear.drop
                 ( direction, droppedAmount |> N.toInt )
-            |> ArraySized (arr |> length |> N.sub droppedAmount)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.sub droppedAmount
+                )
 
 
 minDrop :
-    DirectionLinear
+    ( DirectionLinear
+    , N
+        (In
+            dropped_
+            (Down minPlusX To takenMinPlusX)
+        )
+    )
     ->
-        N
-            (N.In
-                dropped_
-                atLeastDropped_
-                (Is (Diff minTaken To min) is_)
+        (ArraySized
+            (In
+                (Up minX To minPlusX)
+                max
             )
-    -> ArraySized (In min max) element
-    -> ArraySized (In minTaken max) element
-minDrop direction droppedAmount =
+            element
+         ->
+            ArraySized
+                (In
+                    (Up minX To takenMinPlusX)
+                    max
+                )
+                element
+        )
+minDrop ( direction, droppedAmount ) =
     \arr ->
         arr
             |> toArray
             |> Array.Linear.drop
                 ( direction, droppedAmount |> N.toInt )
-            |> ArraySized (arr |> length |> N.minSub droppedAmount)
-
-
-takeAtMost :
-    DirectionLinear
-    -> N (N.In maxTaken takenMaxAtLeast (Is (Diff maxTakenToMin_ To min) diff1_))
-    -> N (N.In minTaken maxTaken takenDifference_)
-    ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (In minTaken takenMaxAtLeast) element
-        )
-takeAtMost direction toTakeAmountMaximum amountToTake =
-    \arr ->
-        arr
-            |> toArray
-            |> Array.Linear.take ( direction, amountToTake |> N.toInt )
-            |> ArraySized (amountToTake |> N.maxOpen toTakeAmountMaximum)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.minSub droppedAmount
+                )
 
 
 take :
-    DirectionLinear
-    -> N (N.In taken atLeastTaken (Is (Diff takenToMin_ To min) diff1_))
+    ( DirectionLinear
+    , N (In (Fixed takenMin) takenMax)
+    )
     ->
-        (ArraySized (In min maxLength_) element
-         -> ArraySized (In taken atLeastTaken) element
+        (ArraySized (In (Down minMinusTakenMin_ To takenMin) max_) element
+         ->
+            ArraySized
+                (In (Fixed takenMin) takenMax)
+                element
         )
-take direction amountToTake =
+take ( direction, amountToTake ) =
     \arr ->
         arr
             |> toArray
             |> Array.Linear.take ( direction, amountToTake |> N.toInt )
-            |> ArraySized (amountToTake |> N.noDiff)
+            |> ArraySized amountToTake
 
 
-toChunks :
-    N (N.In (Add1 chunkSizeMinMinus1) (Add1 chunkSizeMaxMinus1) chunkSizeDifference_)
+toChunksOf :
+    N
+        (In
+            (Fixed (Add1 chunkMinMinus1))
+            (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+        )
     -> { remainder : DirectionLinear }
     ->
         (ArraySized (In minLength_ max) element
          ->
             { chunks :
                 ArraySized
-                    (In N0 max)
+                    (In (Up minX To minX) max)
                     (ArraySized
-                        (In (Add1 chunkSizeMinMinus1) (Add1 chunkSizeMaxMinus1))
+                        (In
+                            (Fixed (Add1 chunkMinMinus1))
+                            (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+                        )
                         element
                     )
-            , remainder : ArraySized (In N0 chunkSizeMaxMinus1) element
+            , remainder :
+                ArraySized
+                    (In
+                        (Up minX To minX)
+                        (Up chunkMaxX To chunkMaxMinus1PlusX)
+                    )
+                    element
             }
         )
-toChunks chunkSize { remainder } =
+toChunksOf chunkSize { remainder } =
     \arr ->
         let
             chunked =
@@ -576,7 +618,7 @@ toChunks chunkSize { remainder } =
         in
         { chunks =
             chunked.chunks
-                |> Array.map (ArraySized (chunkSize |> N.noDiff))
+                |> Array.map (ArraySized chunkSize)
                 |> ArraySized (arr |> length |> N.div chunkSize)
         , remainder =
             chunked.remainder
@@ -591,48 +633,80 @@ toChunks chunkSize { remainder } =
 -- ## type information
 
 
-minLower :
-    N (N.In newMinLength min difference_)
-    ->
-        (ArraySized (In min max) element
-         -> ArraySized (In newMinLength max) element
+minDown :
+    N
+        (In
+            maxDecreaseMin_
+            (Down minPlusX To minDecreasedPlusX)
         )
-minLower lengthMinimumLower =
+    ->
+        (ArraySized (In (Up x To minPlusX) max) element
+         -> ArraySized (In (Up x To minDecreasedPlusX) max) element
+        )
+minDown lengthMinimumLower =
     \arr ->
         (arr |> toArray)
-            |> ArraySized (arr |> length |> N.minDown lengthMinimumLower)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.minDown lengthMinimumLower
+                )
 
 
-noMax :
+maxNo :
     ArraySized (In min maxLength_) element
     -> ArraySized (Min min) element
-noMax =
+maxNo =
     \arr ->
-        arr |> toArray |> ArraySized (arr |> length |> N.noMax)
-
-
-maxOpen :
-    N (N.In max newMaxLength difference_)
-    ->
-        (ArraySized (In min max) element
-         -> ArraySized (In min newMaxLength) element
-        )
-maxOpen lengthMaximumOpen =
-    \arr ->
-        (arr |> toArray)
-            |> ArraySized (arr |> length |> N.maxOpen lengthMaximumOpen)
+        arr |> toArray |> ArraySized (arr |> length |> N.maxNo)
 
 
 maxUp :
-    N (N.In increase_ increaseAtLeast_ (Is (Diff max To maxIncreased) diff1_))
+    N
+        (In
+            maxIncreaseMin_
+            (Up maxPlusX To maxIncreasedPlusX)
+        )
     ->
-        (ArraySized (In min max) element
-         -> ArraySized (In min maxIncreased) element
+        (ArraySized (In min (Up x To maxPlusX)) element
+         -> ArraySized (In min (Up x To maxIncreasedPlusX)) element
         )
 maxUp lengthMaximumIncrement =
     \arr ->
         (arr |> toArray)
-            |> ArraySized (arr |> length |> N.maxUp lengthMaximumIncrement)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.maxUp lengthMaximumIncrement
+                )
+
+
+max :
+    N (In (Fixed maxNewMin) maxNew)
+    ->
+        (ArraySized (In min (Up maxToMaxNewMin_ To maxNewMin)) element
+         -> ArraySized (In min maxNew) element
+        )
+max lengthMaximumNew =
+    \arr ->
+        (arr |> toArray)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.max lengthMaximumNew
+                )
+
+
+min :
+    N (In minNew (Up minNewMaxToMin_ To min))
+    ->
+        (ArraySized (In (Fixed min) max) element
+         -> ArraySized (In minNew max) element
+        )
+min lengthMinimumNew =
+    \arr ->
+        (arr |> toArray)
+            |> ArraySized
+                ((arr |> length)
+                    |> N.min lengthMinimumNew
+                )
 
 
 
@@ -640,16 +714,38 @@ maxUp lengthMaximumIncrement =
 
 
 has :
-    N (N.In comparedAgainstMin (Add1 comparedAgainstMaxMinus1) comparedAgainstDifference_)
+    N
+        (In
+            (Up minX To (Add1 comparedAgainstMinPlusXMinus1))
+            (Up maxX To (Add1 comparedAgainstMaxPlusXMinus1))
+        )
     ->
         (ArraySized (In min max) element
          ->
             Result
                 (N.BelowOrAbove
-                    (ArraySized (In min comparedAgainstMaxMinus1) element)
-                    (ArraySized (In (Add1 comparedAgainstMin) max) element)
+                    (ArraySized
+                        (In
+                            min
+                            (Up maxX To comparedAgainstMaxPlusXMinus1)
+                        )
+                        element
+                    )
+                    (ArraySized
+                        (In
+                            (Up minX To (Add2 comparedAgainstMinPlusXMinus1))
+                            max
+                        )
+                        element
+                    )
                 )
-                (ArraySized (In comparedAgainstMin (Add1 comparedAgainstMaxMinus1)) element)
+                (ArraySized
+                    (In
+                        (Up minX To (Add1 comparedAgainstMinPlusXMinus1))
+                        (Up maxX To (Add1 comparedAgainstMaxPlusXMinus1))
+                    )
+                    element
+                )
         )
 has lengthToCompareAgainst =
     \arr ->
@@ -660,7 +756,7 @@ has lengthToCompareAgainst =
                     |> Err
 
             Ok equal ->
-                (arr |> toArray |> ArraySized (equal |> N.noDiff))
+                (arr |> toArray |> ArraySized equal)
                     |> Ok
 
             Err (N.Above greater) ->
@@ -671,16 +767,14 @@ has lengthToCompareAgainst =
 
 hasIn :
     ( N
-        (N.In
+        (In
             lowerLimitMin
-            (Add1 lowerLimitMaxMinus1)
-            lowerLimitDifference_
+            (Up lowerLimitMaxX To (Add1 lowerLimitMaxPlusXMinus1))
         )
     , N
-        (N.In
-            upperLimitMin
+        (In
+            (Up upperLimitMinX To upperLimitMinPlusX)
             upperLimitMax
-            upperLimitDifference_
         )
     )
     ->
@@ -688,8 +782,20 @@ hasIn :
          ->
             Result
                 (N.BelowOrAbove
-                    (ArraySized (In min lowerLimitMaxMinus1) element)
-                    (ArraySized (In (Add1 upperLimitMin) max) element)
+                    (ArraySized
+                        (In
+                            min
+                            (Up lowerLimitMaxX To lowerLimitMaxPlusXMinus1)
+                        )
+                        element
+                    )
+                    (ArraySized
+                        (In
+                            (Up upperLimitMinX To (Add1 upperLimitMinPlusX))
+                            max
+                        )
+                        element
+                    )
                 )
                 (ArraySized (In lowerLimitMin upperLimitMax) element)
         )
@@ -715,16 +821,18 @@ hasIn ( lowerLimit, upperLimit ) =
 
 hasAtLeast :
     N
-        (N.In
+        (In
             lowerLimitMin
-            (Add1 lowerLimitMaxMinus1)
-            lowerLimitDifference_
+            (Up lowerLimitMaxX To (Add1 lowerLimitMaxMinus1PlusX))
         )
     ->
         (ArraySized (In min max) element
          ->
             Result
-                (ArraySized (In min lowerLimitMaxMinus1) element)
+                (ArraySized
+                    (In min (Up lowerLimitMaxX To lowerLimitMaxMinus1PlusX))
+                    element
+                )
                 (ArraySized (In lowerLimitMin max) element)
         )
 hasAtLeast lowerLimit =
@@ -740,17 +848,15 @@ hasAtLeast lowerLimit =
 
 
 hasAtMost :
-    N
-        (N.In
-            upperLimitMin
-            upperLimitMax
-            upperLimitDifference_
-        )
+    N (In (Up upperLimitMinX To upperLimitMinPlusX) upperLimitMax)
     ->
         (ArraySized (In min max) element
          ->
             Result
-                (ArraySized (In (Add1 upperLimitMin) max) element)
+                (ArraySized
+                    (In (Up upperLimitMinX To (Add1 upperLimitMinPlusX)) max)
+                    element
+                )
                 (ArraySized (In min upperLimitMax) element)
         )
 hasAtMost upperLimit =

@@ -14,17 +14,18 @@ suite =
             (\() ->
                 isGameOver
                     (ArraySized.l3
-                        (ArraySized.repeat n3 FieldNotSet)
-                        (ArraySized.repeat n3 (FieldSet O))
-                        (ArraySized.repeat n3 FieldNotSet)
+                        (ArraySized.repeat FieldNotSet n3)
+                        (ArraySized.repeat (FieldSet O) n3)
+                        (ArraySized.repeat FieldNotSet n3)
                     )
                     |> Expect.equal (Just (PlayerWon O))
             )
         , test "same in a column"
             (\() ->
                 isGameOver
-                    (ArraySized.repeat n3
+                    (ArraySized.repeat
                         (ArraySized.l3 FieldNotSet (FieldSet O) FieldNotSet)
+                        n3
                     )
                     |> Expect.equal (Just (PlayerWon O))
             )

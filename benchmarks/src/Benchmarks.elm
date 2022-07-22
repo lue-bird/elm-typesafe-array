@@ -19,7 +19,7 @@ suite =
             maybes =
                 ints1To100 |> Array.map Just
           in
-          compare "areAllFilled"
+          compare "allFill"
             (\f -> f maybes)
             ( "with List.cons"
             , areAllFilledWithListCons

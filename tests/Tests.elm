@@ -1,10 +1,10 @@
 module Tests exposing (suite)
 
-import ArraySized exposing (ArraySized, In)
+import ArraySized exposing (ArraySized)
 import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
 import Expect exposing (Expectation)
 import Linear exposing (DirectionLinear(..))
-import N exposing (Add1, Exactly, Min, N8, n0, n1, n3, n4, n8)
+import N exposing (Add1, Exactly, In, N8, To, Up, n2, n3, n4, n8)
 import Test exposing (Test, describe, test)
 
 
@@ -22,24 +22,24 @@ arraySizedTests =
         [ describe "all"
             [ test "True"
                 (\() ->
-                    ArraySized.areAll isEven (ArraySized.l2 2 4)
+                    ArraySized.allAre isEven (ArraySized.l2 2 4)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    ArraySized.areAll isEven (ArraySized.l2 2 3)
+                    ArraySized.allAre isEven (ArraySized.l2 2 3)
                         |> Expect.equal False
                 )
             ]
         , describe "any"
             [ test "True"
                 (\() ->
-                    ArraySized.isAny isEven (ArraySized.l2 1 2)
+                    ArraySized.anyIs isEven (ArraySized.l2 1 2)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    ArraySized.isAny isEven (ArraySized.l2 1 3)
+                    ArraySized.anyIs isEven (ArraySized.l2 1 3)
                         |> Expect.equal False
                 )
             ]
@@ -57,22 +57,22 @@ maximumConstrainedTest =
         [ test "append"
             (\() ->
                 ArraySized.l3 1 1 1
-                    |> ArraySized.glue Up n3 (ArraySized.l3 0 0 0)
+                    |> ArraySized.glue Up (ArraySized.l3 0 0 0)
                     |> expectEqualArraySized
                         (ArraySized.l6 1 1 1 0 0 0)
             )
         , test "prepend"
             (\() ->
                 ArraySized.l3 1 1 1
-                    |> ArraySized.glue Down n3 (ArraySized.l3 0 0 0)
+                    |> ArraySized.glue Down (ArraySized.l3 0 0 0)
                     |> expectEqualArraySized
                         (ArraySized.l6 0 0 0 1 1 1)
             )
-        , describe "areAllFilled"
+        , describe "allFill"
             [ test "all are Filled"
                 (\() ->
                     ArraySized.l3 (filled 1) (filled 2) (filled 3)
-                        |> ArraySized.areAllFilled
+                        |> ArraySized.allFill
                         |> fillMap
                             (ArraySized.toList >> Expect.equalLists [ 1, 2, 3 ])
                         |> fillElseOnEmpty
@@ -81,14 +81,14 @@ maximumConstrainedTest =
             , test "one is Nothing"
                 (\() ->
                     ArraySized.l3 (filled 1) Emptiable.empty (filled 3)
-                        |> ArraySized.areAllFilled
+                        |> ArraySized.allFill
                         |> Expect.equal Emptiable.empty
                 )
             ]
         , test "intersperse"
             (\() ->
                 ArraySized.l3 "turtles" "turtles" "turtles"
-                    |> ArraySized.intersperseIn ( n3, n3 ) "on"
+                    |> ArraySized.interweave (ArraySized.repeat "on" n2)
                     |> expectEqualArraySized
                         (ArraySized.l5 "turtles" "on" "turtles" "on" "turtles")
             )
@@ -103,49 +103,42 @@ expectEqualArraySized expected actual =
 
 
 maybePush :
-    Emptiable a possiblyOrNever_
-    -> ArraySized (In min max) a
-    -> ArraySized (In min (Add1 max)) a
+    Emptiable element possiblyOrNever_
+    ->
+        (ArraySized
+            (In
+                (Up minX To minSumPlusX)
+                (Up maxX To maxPlusX)
+            )
+            element
+         ->
+            ArraySized
+                (In (Up minX To minSumPlusX) (Up maxX To (Add1 maxPlusX)))
+                element
+        )
 maybePush maybePushedElement =
-    ArraySized.glueIn Up
-        ( n0, n1 )
+    ArraySized.glue Up
         (ArraySized.l1 maybePushedElement
             |> ArraySized.fills
         )
-
-
-minCons :
-    element
-    -> ArraySized (In min maxLength_) element
-    -> ArraySized (Min (Add1 min)) element
-minCons =
-    ArraySized.minInsert ( Up, n0 )
-
-
-cons :
-    element
-    -> ArraySized (In min max) element
-    -> ArraySized (In (Add1 min) (Add1 max)) element
-cons =
-    ArraySized.insert ( Up, n0 )
 
 
 startBoard : ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
 startBoard =
     let
         pawnRow color =
-            ArraySized.repeat n8 (Piece Pawn color)
+            ArraySized.repeat (Piece Pawn color) n8
 
         firstRow color =
-            ArraySized.repeat n8 (Piece Other color)
+            ArraySized.repeat (Piece Other color) n8
     in
     ArraySized.empty
         |> ArraySized.push (firstRow White)
         |> ArraySized.push (pawnRow White)
         |> ArraySized.glue Up
-            n4
-            (ArraySized.repeat n4
-                (ArraySized.repeat n8 Empty)
+            (ArraySized.repeat
+                (ArraySized.repeat Empty n8)
+                n4
             )
         |> ArraySized.push (pawnRow Black)
         |> ArraySized.push (firstRow Black)

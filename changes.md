@@ -1,4 +1,30 @@
-# changelog
+# change log
+
+## 20.0.0
+
+  - `bounded-nat` upgrade → `22.0.0`
+      - limits as differences `Up` or `Fixed`
+      - length arguments like `glue Up n3 (l3 ...)` are no longer necessary
+        as `ArraySized`'s length range type can add and subtract
+  - `intersperse` remove
+      - in favor of `interweave`
+  - `In` remove
+      - `N.In` covers the same use
+  - `repeat n v` → `repeat v n`
+  - `random n v` → `random v n`
+  - `take`
+    taken amount maximum doesn't have to be below the `ArraySized`'s length minimum
+  - `areAllFilled` name → `allFill`
+  - `areAll` name → `allAre`
+  - `isAny` name → `anyIs`
+  - `minLower` name → `min`
+      - symmetrical to `N.min`
+  - `maxOpen` name → `max`
+      - symmetrical to `N.max
+  - `noMax` name → `maxNo`
+      - symmetrical to `N.maxNo`
+  - `interweave` add
+  - `elementTry` add
 
 #### 19.0.1
 

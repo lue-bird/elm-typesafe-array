@@ -1,6 +1,7 @@
 module ArrayExtra exposing
     ( lengthN
-    , areAllFilled
+    , interweave
+    , allFill
     )
 
 {-| Should be replaced by Array.Extra functions if they are added there.
@@ -11,21 +12,26 @@ module ArrayExtra exposing
 @docs lengthN
 
 
+# alter
+
+@docs interweave
+
+
 # transform
 
-@docs areAllFilled
+@docs allFill
 
 -}
 
 import Array exposing (Array)
 import Emptiable exposing (Emptiable, fillMap, filled)
-import N exposing (Min, N, N0, n0)
+import N exposing (Min, N, To, Up, n0)
 
 
-areAllFilled :
+allFill :
     Array (Emptiable element possiblyOrNever)
     -> Emptiable (Array element) possiblyOrNever
-areAllFilled maybes =
+allFill maybes =
     maybes
         |> Array.toList
         |> areAllFilledInList
@@ -45,6 +51,42 @@ areAllFilledInList =
         ([] |> filled)
 
 
-lengthN : Array element_ -> N (Min N0)
+lengthN : Array element_ -> N (Min (Up x To x))
 lengthN =
     Array.length >> N.intAtLeast n0
+
+
+{-| TOREPLACE once <https://github.com/elm-community/array-extra/pull/30> goes through
+-}
+interweave : Array element -> (Array element -> Array element)
+interweave toInterweave =
+    \array ->
+        let
+            untilArrayEnd =
+                array
+                    |> Array.foldl
+                        (\element soFar ->
+                            case soFar.toInterweave of
+                                [] ->
+                                    { interwoven =
+                                        element :: soFar.interwoven
+                                    , toInterweave = []
+                                    }
+
+                                toInterweaveHead :: toInterweaveTail ->
+                                    { interwoven =
+                                        toInterweaveHead
+                                            :: element
+                                            :: soFar.interwoven
+                                    , toInterweave = toInterweaveTail
+                                    }
+                        )
+                        { interwoven = []
+                        , toInterweave = toInterweave |> Array.toList
+                        }
+        in
+        (untilArrayEnd.interwoven
+            |> List.reverse
+        )
+            ++ untilArrayEnd.toInterweave
+            |> Array.fromList

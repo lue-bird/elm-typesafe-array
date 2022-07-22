@@ -8,7 +8,7 @@ import Element.Font as Font
 import Element.Input as UiInput
 import Linear exposing (DirectionLinear(..))
 import Maybe.Extra as Maybe
-import N exposing (Exactly, In, N, N0, N2, N3, n2, n3)
+import N exposing (Exactly, Fixed, In, N, N0, N2, N3, n2, n3)
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Stack
 import Toop
@@ -25,8 +25,9 @@ initialModel : Model
 initialModel =
     { gameStage = Playing O
     , board =
-        ArraySized.repeat n3
-            (ArraySized.repeat n3 FieldNotSet)
+        ArraySized.repeat
+            (ArraySized.repeat FieldNotSet n3)
+            n3
     }
 
 
@@ -66,8 +67,8 @@ main =
 
 type Msg
     = FieldSetByPlayer
-        ( N (N.In N0 N2 {})
-        , N (N.In N0 N2 {})
+        ( N (In (Fixed N0) (Fixed N2))
+        , N (In (Fixed N0) (Fixed N2))
         )
         Player
     | ClearBoardClicked

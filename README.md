@@ -1,4 +1,4 @@
-## [elm-typesafe-array](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/)
+## [elm typesafe array](https://dark.elm.dmy.fr/packages/lue-bird/elm-typesafe-array/latest/)
 
 Knowing more about the length of an `Array` at compile-time to help you **access elements safely**
 
@@ -8,7 +8,9 @@ ticTacToeBoard
     |> ArraySized.element ( Up, n0 )
 ```
 
-_returns a value, not a `Maybe`_ if `ticTacToeBoard`'s type can promise that it contains enough elements. A type that can hold that promise could be:
+_returns a value, not a `Maybe`_
+if `ticTacToeBoard`'s type can promise that it contains enough elements.
+Such a type could be:
 
 ```elm
 type alias TicTacToeBoard =
@@ -32,9 +34,9 @@ ticTacToeBoard
     |> ArraySized.element ( Up, n0 )
 --→ O
 ```
-**We & the compiler knew** there are enough elements in `ticTacToeBoard`
+**We & the compiler knew** there were enough elements in `ticTacToeBoard`
 
-## Setup
+## building blocks
 
 ```noformattingples
 elm install lue-bird/elm-linear-direction
@@ -42,14 +44,15 @@ elm install lue-bird/elm-bounded-nat
 elm install lue-bird/elm-typesafe-array
 ```
 
-👀 if you want
-  - [`bounded-nat`][bounded-nat]: `n...`, `N...`, `Add...`, `Min`, `In`, `Exactly`
-  - extra: [`linear-direction`][linear-direction]: `Up` & `Down`
+  - numbers – [`bounded-nat`][bounded-nat]
+      - `n<x>`, `N<x>`, `Add<x>`, `Min`, `In`, `Exactly`, `Up`, `Fixed`
+  - from which side to look – [`linear-direction`][linear-direction]
+      - `Up`, `Down`
 
 ```elm
-import Linear exposing (DirectionLinear(..))
-import N exposing (N, Exactly, Min)
-import ArraySized exposing (ArraySized, In)
+import Linear exposing (DirectionLinear(..)) -- Up or Down
+import N exposing (N, Exactly, Min, In, Up, To, Fixed)
+import ArraySized exposing (ArraySized)
 ```
 
 Let's define & use operations for `ArraySized`s with a certain amount of elements ↓
@@ -58,13 +61,13 @@ Let's define & use operations for `ArraySized`s with a certain amount of element
 
 ```elm
 last :
-    ArraySized (In (Add1 minMinus1_) max_) element
+    ArraySized (In (Fixed (Add1 minMinus1_)) max_) element
     -> element
 last =
     ArraySized.element ( Down, n0 )
 
 greatest :
-    ArraySized (In (Add1 minMinus1_) max_) comparable
+    ArraySized (In (Fixed (Add1 minMinus1_)) max_) comparable
     -> comparable
 greatest =
     ArraySized.fold Up max
@@ -73,14 +76,19 @@ first ArraySized.empty -- compile-time error
 greatest ArraySized.empty -- compile-time error
 ```
 
-`ArraySized (In (Add1 orMore_) max_)` means what exactly?
+`ArraySized (In (Fixed (Add1 orMore_)) max_)` means what exactly?
 → It constrains the length of possible `ArraySized`s.
 
 The types are explained in more detail in [`bounded-nat`][bounded-nat] (`In`, `Min`, `Exactly`). In this example:
 
 length is `In` a range
-  - the minimum length constraint is `>= 1` → `Add1 minMinus1_`
-  - any maximum length constraint (even [`NoMax`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#NoMax)) → `max_`
+  - the minimum length constraint is,
+    without adding anything,
+    `1 + ` a variable (`1 + 0` | `1 + 1` | `1 + ...`)
+    → `Fixed (Add1 minMinus1_)`
+  - any maximum length constraint is allowed
+    (even [none at all](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#MaxNo))
+    → `max_`
 
 ## an exact length?
 
@@ -111,16 +119,15 @@ initialChessBoard : ChessBoard
 initialChessBoard =
     let
         pawnRow color =
-            ArraySized.repeat n8 (Piece Pawn color)
+            ArraySized.repeat (Piece Pawn color) n8
         firstRow color =
-            ArraySized.repeat n8 (Piece Other color)
+            ArraySized.repeat (Piece Other color) n8
     in
     ArraySized.empty
         |> ArraySized.push (firstRow White)
         |> ArraySized.push (pawnRow White)
         |> ArraySized.glue Up
-            n4
-            (ArraySized.repeat n4 (ArraySized.repeat n8 Empty))
+            (ArraySized.repeat (ArraySized.repeat Empty n8) n4)
         |> ArraySized.push (pawnRow Black)
         |> ArraySized.push (firstRow Black)
 
@@ -168,11 +175,11 @@ but the ideas are really similar.
 
     StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
     ```
-    makes it easy to forget the length if you add a new element or remove one:
+    makes it easy to forget the length if you add a new element or remove one
     ```elm
     StaticArray.fromList eleven 0 [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ]
     ```
-    The added element `11` is simply ignored!
+    the added element `11` is simply ignored!
 
   - `typesafe-array`
     ```elm
@@ -183,7 +190,7 @@ but the ideas are really similar.
 
 ### append
 
-  - `static-array`:
+  - `static-array`
     ```elm
     staticArray1, staticArray2 : StaticArray Six ...
 
@@ -204,29 +211,27 @@ but the ideas are really similar.
 
     > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
 
-    → You could easily do
+    → You can easily do
     ```elm
-    wrong =
-        StaticArray.fromRecord
-            { length = StaticArray.Length.eight
-            , head = array1.head
-            , tail = Array.empty
-            }
-    ```
-    → length in the type doesn't match the actual length
-    ```elm
-    wrong
+    StaticArray.fromRecord
+        { length = StaticArray.Length.eight
+        , head = array1.head
+        , tail = Array.empty
+        }
         |> StaticArray.get
-            (StaticArray.Index.last StaticArray.Length.eight)
+            (StaticArray.Length.eight |> StaticArray.Index.last)
+    --→ array1.head
     ```
-    It silently gave us back an element at the wrong (first) index!
+    The supplied length type doesn't match its actual length
+    → we silently got back an element at the wrong (first) index!
 
-  - `typesafe-array`:
+  - `typesafe-array`
     ```elm
-    arr1, arr2 : ArraySized (In N6 (Add6 a_)) ...
+    arr1, arr2 :
+        ArraySized (In (Up minX To (Add6 minX)) (Up maxX To (Add6 maxX))) ...
 
-    arr1 |> ArraySized.glue Up n6 arr2
-    --: ArraySized (In N12 (Add12 a_)) ...
+    arr1 |> ArraySized.glue Up arr2
+    --: ArraySized (In (Up minX To (Add12 minX)) (Up maxX To (Add12 maxX))) ...
     ```
     type-safe
 
@@ -252,12 +257,16 @@ but the ideas are really similar.
         -> StaticArray length element
         -> MaybePushResult length element
     ```
-    really inconvenient.
+    really inconvenient
 
   - `typesafe-array`
     ```elm
     pushMaybe :
         Maybe element
-        -> ArraySized (In min max) element
-        -> ArraySized (In min (Add1 max)) element
+        -> ArraySized (In min (Up x To maxPlusX)) element
+        -> ArraySized (In min (Up x To (Add1 maxPlusX))) element
     ```
+
+### anything `static-array` is better at?
+  - separating length and index types
+  - simple, easy to understand types

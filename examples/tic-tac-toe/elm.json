@@ -15,9 +15,9 @@
             "elm-community/array-extra": "2.4.0",
             "elm-community/maybe-extra": "5.3.0",
             "lue-bird/elm-allowable-state": "1.0.2",
-            "lue-bird/elm-bounded-nat": "21.1.0",
+            "lue-bird/elm-bounded-nat": "22.0.0",
             "lue-bird/elm-emptiness-typed": "6.0.0",
-            "lue-bird/elm-linear-direction": "5.2.0",
+            "lue-bird/elm-linear-direction": "5.3.0",
             "lue-bird/elm-no-record-type-alias-constructor-function": "1.0.8",
             "mdgriffith/elm-ui": "1.1.8"
         },

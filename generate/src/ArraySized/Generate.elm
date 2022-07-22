@@ -153,20 +153,14 @@ nType n =
 inType : Int -> Gen.TypeAnnotation
 inType n =
     typed "In"
-        [ nXType n
-        , addXType n (typeVar "more")
-        , isType n
+        [ upType n "minX"
+        , upType n "maxX"
         ]
 
 
-isType : Int -> Gen.TypeAnnotation
-isType n =
-    typed "Is" [ diffType n "x0", diffType n "x1" ]
-
-
-diffType : Int -> String -> Gen.TypeAnnotation
-diffType n var =
-    typed "Diff"
+upType : Int -> String -> Gen.TypeAnnotation
+upType n var =
+    typed "Up"
         [ typeVar var
         , toType
         , addXType n (typeVar var)
@@ -246,10 +240,7 @@ lAndTo16 =
                     (funAnn
                         (List.repeat x (typeVar "element"))
                         (typed "ArraySized"
-                            [ typed "In"
-                                [ nXType x
-                                , addXType x (typeVar "a_")
-                                ]
+                            [ inType x
                             , typeVar "element"
                             ]
                         )
@@ -381,10 +372,7 @@ l x =
             (funAnn
                 (List.repeat x (typeVar "element"))
                 (typed "ArraySized"
-                    [ typed "In"
-                        [ nXType x
-                        , addXType x (typeVar "a_")
-                        ]
+                    [ inType x
                     , typeVar "element"
                     ]
                 )
@@ -414,7 +402,6 @@ l x =
                         (\chunkStart ->
                             construct "glue"
                                 [ val "Up"
-                                , val "n16"
                                 , construct "l16"
                                     (List.range chunkStart (chunkStart + 15)
                                         |> List.map (\i -> val ("a" ++ (i |> String.fromInt)))
