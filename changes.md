@@ -1,5 +1,15 @@
 # change log
 
+## 21.0.0
+
+  - `take ( dir, n )` → `take ( dir, n, { atLeast } )`
+    required to proof the taken minimum isn't above the length minimum
+  - `bounded-nat` → 23.0.0
+
+### 20.1.0
+
+  - `splitFrom` add
+
 ## 20.0.0
 
   - `bounded-nat` upgrade → `22.0.0`

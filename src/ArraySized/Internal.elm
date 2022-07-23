@@ -8,7 +8,8 @@ module ArraySized.Internal exposing
     , fills, allFill
     , glue, minGlue
     , interweave, minInterweave
-    , take, drop, minDrop
+    , takeAtLeast
+    , drop, minDrop
     , toChunksOf
     , minDown, maxNo, maxUp
     , min, max
@@ -59,7 +60,8 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## part
 
-@docs take, drop, minDrop
+@docs takeAtLeast
+@docs drop, minDrop
 @docs toChunksOf
 
 
@@ -557,23 +559,21 @@ minDrop ( direction, droppedAmount ) =
                 )
 
 
-take :
+takeAtLeast :
     ( DirectionLinear
-    , N (In (Fixed takenMin) takenMax)
+    , N (In takenMin takenMax)
+    , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
     )
     ->
-        (ArraySized (In (Down minMinusTakenMin_ To takenMin) max_) element
-         ->
-            ArraySized
-                (In (Fixed takenMin) takenMax)
-                element
+        (ArraySized (In (Fixed min) max_) element
+         -> ArraySized (In takenMin takenMax) element
         )
-take ( direction, amountToTake ) =
+takeAtLeast ( direction, toTakeAmount, _ ) =
     \arr ->
         arr
             |> toArray
-            |> Array.Linear.take ( direction, amountToTake |> N.toInt )
-            |> ArraySized amountToTake
+            |> Array.Linear.take ( direction, toTakeAmount |> N.toInt )
+            |> ArraySized toTakeAmount
 
 
 toChunksOf :

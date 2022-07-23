@@ -1212,39 +1212,46 @@ allFill maybes =
 -- ## part
 
 
-{-| A certain number of elements from a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| A given number of elements
+to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+
+An `atLeast` argument is sadly required to proof the taken minimum
+isn't above the [`ArraySized`](#ArraySized)'s length minimum
 
     import Linear exposing (DirectionLinear(..))
     import N exposing (n7)
 
     ArraySized.l8 0 1 2 3 4 5 6 7
-        |> ArraySized.take ( Up, atLeast7 )
-        --: ArraySized (Min (Up N1 To N8)) number_
-
-    ArraySized.l8 0 1 2 3 4 5 6 7
-        |> ArraySized.take ( Up, n7 )
+        |> ArraySized.take ( Up, n7, { atLeast = n7 } )
         --: ArraySized
-        --:     (In (Up N1 To N8) (Up maxX To (Add8 maxX)))
+        --:     (In (Up minX To (Add7 minX)) (Up maxX To (Add7 maxX)))
         --:     number_
         |> ArraySized.toList
     --> [ 0, 1, 2, 3, 4, 5, 6 ]
 
-To make the minimum a difference (for results etc.) → [`|> max`](#max)
+    ArraySized.l8 0 1 2 3 4 5 6 7
+        |> ArraySized.take ( Up, n7AtLeast, { atLeast = n7 } )
+        --: ArraySized (Min (Up x To (Add7 x))) number_
+
+    ArraySized.l8 0 1 2 3 4 5 6 7
+        |> ArraySized.take ( Up, between2And7, { atLeast = n2 } )
+        --: ArraySized
+        --:     (In (Up minX To (Add2 minX)) (Up maxX To (Add7 maxX)))
+        --:     number_
 
 -}
 take :
     ( DirectionLinear
-    , N (In (Fixed takenMin) takenMax)
+    , N (In takenMin takenMax)
+    , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
     )
     ->
-        (ArraySized (In (Down minMinusTakenMin_ To takenMin) max_) element
-         ->
-            ArraySized
-                (In (Fixed takenMin) takenMax)
-                element
+        (ArraySized (In (Fixed min) max_) element
+         -> ArraySized (In takenMin takenMax) element
         )
-take ( direction, toTakeAmount ) =
-    ArraySized.Internal.take ( direction, toTakeAmount )
+take ( direction, toTakeAmount, { atLeast } ) =
+    ArraySized.Internal.takeAtLeast
+        ( direction, toTakeAmount, { atLeast = atLeast } )
 
 
 
