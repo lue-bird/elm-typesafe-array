@@ -1,5 +1,10 @@
 # change log
 
+## 22.0.0
+
+  - `bounded-nat` upgrade → 24.0.0
+  - `drop`, `minDrop` minimum `Fixed`
+
 ## 21.0.0
 
   - `take ( dir, n )` → `take ( dir, n, { atLeast } )`

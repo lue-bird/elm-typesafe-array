@@ -494,20 +494,20 @@ drop :
     , N
         (In
             (Down maxPlusX To takenMaxPlusX)
-            (Down minPlusX To takenMinPlusX)
+            (Down min To takenMin)
         )
     )
     ->
         (ArraySized
             (In
-                (Up minX To minPlusX)
+                (Fixed min)
                 (Up maxX To maxPlusX)
             )
             element
          ->
             ArraySized
                 (In
-                    (Up minX To takenMinPlusX)
+                    (Fixed takenMin)
                     (Up maxX To takenMaxPlusX)
                 )
                 element
@@ -529,22 +529,16 @@ minDrop :
     , N
         (In
             dropped_
-            (Down minPlusX To takenMinPlusX)
+            (Down min To takenMin)
         )
     )
     ->
         (ArraySized
-            (In
-                (Up minX To minPlusX)
-                max
-            )
+            (In (Fixed min) max)
             element
          ->
             ArraySized
-                (In
-                    (Up minX To takenMinPlusX)
-                    max
-                )
+                (In (Fixed takenMin) max)
                 element
         )
 minDrop ( direction, droppedAmount ) =
