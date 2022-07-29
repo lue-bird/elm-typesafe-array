@@ -1,5 +1,10 @@
 # change log
 
+### 22.1.0
+
+  - `toStackFilled`, `fromStackFilled` add
+  - `toStackEmptiable`, `fromStackEmptiable` add
+
 ## 22.0.0
 
   - `bounded-nat` upgrade → 24.0.0

@@ -1,7 +1,7 @@
 module ArraySized exposing
     ( ArraySized
     , repeat, random, until
-    , fromArray, fromList, fromEmptiable
+    , fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
     , empty, l1
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
@@ -16,7 +16,9 @@ module ArraySized exposing
     , glue, minGlue
     , interweave, minInterweave
     , hasIn, has, hasAtLeast, hasAtMost
-    , map, foldFrom, fold, toArray, toList, toEmptiable
+    , map
+    , foldFrom, fold
+    , toArray, toList, toEmptiable, toStackEmptiable, toStackFilled
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , minDown, maxUp, maxNo
@@ -68,7 +70,7 @@ so we can [`fold`](#fold), access, ... without a worry
 # create
 
 @docs repeat, random, until
-@docs fromArray, fromList, fromEmptiable
+@docs fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
 
 
 ## specific length
@@ -121,7 +123,11 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 # transform
 
-@docs map, foldFrom, fold, toArray, toList, toEmptiable
+@docs map
+@docs foldFrom, fold
+@docs toArray, toList, toEmptiable, toStackEmptiable, toStackFilled
+
+You have a use-case for `mapAccumulate`/`mapAccumulateFrom`? → issue/PR
 
 @docs to2
 
@@ -148,6 +154,7 @@ import Linear exposing (DirectionLinear(..))
 import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, Fixed, In, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
+import Stack exposing (Stacked)
 import Toop
 
 
@@ -256,6 +263,58 @@ toList =
     toArray >> Array.toList
 
 
+{-| Convert to an `Emptiable (Stacked ...) Possibly`.
+Make these kinds of conversions your final step.
+Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
+
+    import N exposing (n4)
+
+    ArraySized.until n4
+        |> ArraySized.map N.toInt
+        |> ArraySized.toStackEmptiable
+    --> Stack.topDown [ 0, 1, 2, 3, 4 ]
+    --: Emptiable (Stacked Int) Possibly
+
+Have `>= 1` element? → Keep an `Emptiable ... never_` [`toStackFilled`](#toStackFilled)
+
+-}
+toStackEmptiable :
+    ArraySized lengthRange_ element
+    -> Emptiable (Stacked element) Possibly
+toStackEmptiable =
+    toList >> Stack.fromList
+
+
+{-| Convert to an `Emptiable (Stacked ...) never_`.
+Make these kinds of conversions your final step.
+Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
+
+    import N exposing (n4)
+
+    ArraySized.until n4
+        |> ArraySized.map N.toInt
+        |> ArraySized.toStackFilled
+    --> Stack.topDown [ 0, 1, 2, 3, 4 ]
+    --: Emptiable (Stacked Int) Never
+
+Don't have `>= 1` element? → [`toStackEmptiable`](#toStackEmptiable)
+
+-}
+toStackFilled :
+    ArraySized (In (Fixed (Add1 minMinus1_)) max_) element
+    -> Emptiable (Stacked element) never_
+toStackFilled =
+    \arraySized ->
+        case arraySized |> toList of
+            top :: down ->
+                Stack.topDown top down
+
+            -- doesn't happen
+            -- Preferred over foldFrom (at 0) ... (remove 0) for performance reasons
+            [] ->
+                arraySized |> element ( Up, n0 ) |> Stack.only
+
+
 {-| On [`empty`](#empty) `Nothing`, on [`l1`](#l1) `Just` it's only value.
 
 Sadly, they way natural number constraints are defined,
@@ -346,7 +405,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.up n7 -- big yes
+    ArraySized.until n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -354,6 +413,68 @@ Make sure the compiler knows as much as you about the amount of elements!
 fromList : List element -> ArraySized (Min (Up x To x)) element
 fromList =
     Array.fromList >> fromArray
+
+
+{-| Create from a `Stack`.
+As every `Stack` has `>= 0` elements:
+
+    listFromSomeOtherLibrary |> ArraySized.fromStackEmptiable
+    --: ArraySized (Min (Up x To x))
+
+Don't use for construction:
+
+    ArraySized.fromStackEmptiable
+        (Stack.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
+    -- big no!
+
+Make sure the compiler knows as much as you about the amount of elements!
+
+    ArraySized.l7 0 1 2 3 4 5 6 -- ok
+
+    ArraySized.until n6 -- big yes
+
+["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
+
+Have an `Emptiable (Stacked ...) Never`? → [`fromStackFilled`](#fromStackFilled)
+
+-}
+fromStackEmptiable :
+    Emptiable (Stacked element) possiblyOrNever_
+    -> ArraySized (Min (Up x To x)) element
+fromStackEmptiable =
+    Stack.toList >> fromList
+
+
+{-| Create from a `Stack`.
+As every `Stack` has `>= 0` elements:
+
+    listFromSomeOtherLibrary |> ArraySized.fromStackFilled
+    --: ArraySized (Min (Up x To (Add1 x)))
+
+Don't use for construction:
+
+    ArraySized.fromStackFilled (Stack.topDown 0 [ 1, 2, 3, 4, 5, 6 ])
+    -- big no!
+
+Make sure the compiler knows as much as you about the amount of elements!
+
+    ArraySized.l7 0 1 2 3 4 5 6 -- ok
+
+    ArraySized.until n6 -- big yes
+
+["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
+
+Only have an `Emptiable (Stacked ...) Possibly`? → [`fromStackEmptiable`](#fromStackEmptiable)
+
+-}
+fromStackFilled :
+    Emptiable (Stacked element) Never
+    -> ArraySized (Min (Up x To (Add1 x))) element
+fromStackFilled =
+    \stack ->
+        l1 (stack |> Stack.top)
+            |> minGlue Up
+                (stack |> Stack.topRemove |> fromStackEmptiable)
 
 
 {-| On `Just` [`ArraySized.l1`](#l1), on `Nothing` [`empty`](#empty)
