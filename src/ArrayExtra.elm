@@ -1,6 +1,5 @@
 module ArrayExtra exposing
     ( lengthN
-    , interweave
     , allFill
     )
 
@@ -10,11 +9,6 @@ module ArrayExtra exposing
 # scan
 
 @docs lengthN
-
-
-# alter
-
-@docs interweave
 
 
 # transform
@@ -54,39 +48,3 @@ areAllFilledInList =
 lengthN : Array element_ -> N (Min (Up x To x))
 lengthN =
     Array.length >> N.intAtLeast n0
-
-
-{-| TOREPLACE once <https://github.com/elm-community/array-extra/pull/30> goes through
--}
-interweave : Array element -> (Array element -> Array element)
-interweave toInterweave =
-    \array ->
-        let
-            untilArrayEnd =
-                array
-                    |> Array.foldl
-                        (\element soFar ->
-                            case soFar.toInterweave of
-                                [] ->
-                                    { interwoven =
-                                        element :: soFar.interwoven
-                                    , toInterweave = []
-                                    }
-
-                                toInterweaveHead :: toInterweaveTail ->
-                                    { interwoven =
-                                        toInterweaveHead
-                                            :: element
-                                            :: soFar.interwoven
-                                    , toInterweave = toInterweaveTail
-                                    }
-                        )
-                        { interwoven = []
-                        , toInterweave = toInterweave |> Array.toList
-                        }
-        in
-        (untilArrayEnd.interwoven
-            |> List.reverse
-        )
-            ++ untilArrayEnd.toInterweave
-            |> Array.fromList
