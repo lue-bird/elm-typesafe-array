@@ -1,5 +1,9 @@
 # change log
 
+#### 22.1.1
+
+  - `bounded-nat` → 25.0.0
+
 ### 22.1.0
 
   - `toStackFilled`, `fromStackFilled` add
@@ -7,7 +11,7 @@
 
 ## 22.0.0
 
-  - `bounded-nat` upgrade → 24.0.0
+  - `bounded-nat` → 24.0.0
   - `drop`, `minDrop` minimum `Fixed`
 
 ## 21.0.0
