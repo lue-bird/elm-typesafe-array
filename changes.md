@@ -1,5 +1,10 @@
 # change log
 
+### 22.2.0
+
+  - `bounded-nat` → 25.1.0
+  - `toValue`, `fromValue` add
+
 #### 22.1.1
 
   - `bounded-nat` → 25.0.0

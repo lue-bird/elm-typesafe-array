@@ -21,8 +21,9 @@ module ArraySized exposing
     , toArray, toList, toEmptiable, toStackEmptiable, toStackFilled
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
-    , minDown, maxUp, maxNo
-    , max, min
+    , toValue, fromValue
+    , min, minDown
+    , max, maxUp, maxNo
     )
 
 {-| An `Array` that knows more about the amount of elements it holds.
@@ -139,10 +140,15 @@ You can [generate `to<x>` with `x >= 17` locally](https://lue-bird.github.io/elm
 put them in a `module exposing (to<x>)` + `import as ArraySized`
 
 
+## without internal functions
+
+@docs toValue, fromValue
+
+
 ## type information
 
-@docs minDown, maxUp, maxNo
-@docs max, min
+@docs min, minDown
+@docs max, maxUp, maxNo
 
 -}
 
@@ -151,7 +157,7 @@ import Array.Linear
 import ArraySized.Internal
 import Emptiable exposing (Emptiable)
 import Linear exposing (DirectionLinear(..))
-import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, Fixed, In, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
+import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, Fixed, In, InFixed, InValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -1698,6 +1704,24 @@ toChunksOf chunkLength { remainder } =
 
 
 
+-- ## without internal functions
+
+
+toValue :
+    ArraySized (InFixed min max) element
+    -> ArraySized (InValue min max) element
+toValue =
+    ArraySized.Internal.toValue
+
+
+fromValue :
+    ArraySized (InValue min max) element
+    -> ArraySized (InFixed min max) element
+fromValue =
+    ArraySized.Internal.fromValue
+
+
+
 -- ## type information
 
 
@@ -1755,10 +1779,6 @@ Elm complains:
 maxNo : ArraySized (In min max_) element -> ArraySized (Min min) element
 maxNo =
     ArraySized.Internal.maxNo
-
-
-
--- ## type information
 
 
 {-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length.

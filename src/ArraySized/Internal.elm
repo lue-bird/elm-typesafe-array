@@ -13,6 +13,7 @@ module ArraySized.Internal exposing
     , toChunksOf
     , minDown, maxNo, maxUp
     , min, max
+    , fromValue, toValue
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -78,7 +79,7 @@ import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
 import Linear exposing (DirectionLinear)
-import N exposing (Add1, Add2, Down, Fixed, In, Min, N, To, Up, n0, n1)
+import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, n0, n1)
 import Random
 import Stack
 
@@ -621,6 +622,35 @@ toChunksOf chunkSize { remainder } =
                         |> N.remainderBy chunkSize
                     )
         }
+
+
+
+-- ## without internal functions
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of [`Fixed` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
+→ equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
+-}
+toValue :
+    ArraySized (InFixed min max) element
+    -> ArraySized (InValue min max) element
+toValue =
+    \arraySized ->
+        (arraySized |> toArray)
+            |> ArraySized (arraySized |> length |> N.toValue)
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
+→ [Fixed range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue),
+allowing it to be [altered](#alter), [compared](#length-compare), ...
+-}
+fromValue :
+    ArraySized (InValue min max) element
+    -> ArraySized (InFixed min max) element
+fromValue =
+    \arraySized ->
+        (arraySized |> toArray)
+            |> ArraySized (arraySized |> length |> N.fromValue)
 
 
 
