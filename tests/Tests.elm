@@ -4,7 +4,7 @@ import ArraySized exposing (ArraySized)
 import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
 import Expect exposing (Expectation)
 import Linear exposing (DirectionLinear(..))
-import N exposing (Add1, Exactly, In, N8, To, Up, n2, n3, n4, n8)
+import N exposing (Add1, Exactly, In, N8, To, Up, n2, n4, n8)
 import Test exposing (Test, describe, test)
 
 
