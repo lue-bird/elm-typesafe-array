@@ -628,9 +628,6 @@ toChunksOf chunkSize { remainder } =
 -- ## without internal functions
 
 
-{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of [`Fixed` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
-→ equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
--}
 toValue :
     ArraySized (InFixed min max) element
     -> ArraySized (InValue min max) element
@@ -640,10 +637,6 @@ toValue =
             |> ArraySized (arraySized |> length |> N.toValue)
 
 
-{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
-→ [Fixed range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue),
-allowing it to be [altered](#alter), [compared](#length-compare), ...
--}
 fromValue :
     ArraySized (InValue min max) element
     -> ArraySized (InFixed min max) element
