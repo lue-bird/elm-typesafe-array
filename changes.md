@@ -1,5 +1,10 @@
 # change log
 
+## 23.0.0
+
+  - `toChunksOf chunkLength { remainder = direction }` → `toChunksOf direction chunkLength`
+    including fixing `remainder` length minimum to a separate type variable
+
 ### 22.2.0
 
   - `bounded-nat` → 25.1.0

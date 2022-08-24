@@ -1,19 +1,20 @@
 module ArraySized.Internal exposing
     ( ArraySized
     , empty, fromArray, repeat, until, random
+    , fromValue
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
     , toArray, map
+    , toValue
     , elementReplace, elementRemove, push, insert, reverse
     , fills, allFill
     , glue, minGlue
     , interweave, minInterweave
-    , takeAtLeast
+    , take
     , drop, minDrop
     , toChunksOf
     , minDown, maxNo, maxUp
     , min, max
-    , fromValue, toValue
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -26,6 +27,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 # create
 
 @docs empty, fromArray, repeat, until, random
+@docs fromValue
 
 
 # scan
@@ -41,6 +43,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 # transform
 
 @docs toArray, map
+@docs toValue
 
 
 # alter
@@ -61,7 +64,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## part
 
-@docs takeAtLeast
+@docs take
 @docs drop, minDrop
 @docs toChunksOf
 
@@ -554,7 +557,7 @@ minDrop ( direction, droppedAmount ) =
                 )
 
 
-takeAtLeast :
+take :
     ( DirectionLinear
     , N (In takenMin takenMax)
     , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
@@ -563,7 +566,7 @@ takeAtLeast :
         (ArraySized (In (Fixed min) max_) element
          -> ArraySized (In takenMin takenMax) element
         )
-takeAtLeast ( direction, toTakeAmount, _ ) =
+take ( direction, toTakeAmount, _ ) =
     \arr ->
         arr
             |> toArray
@@ -572,12 +575,13 @@ takeAtLeast ( direction, toTakeAmount, _ ) =
 
 
 toChunksOf :
-    N
-        (In
-            (Fixed (Add1 chunkMinMinus1))
-            (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
-        )
-    -> { remainder : DirectionLinear }
+    DirectionLinear
+    ->
+        N
+            (In
+                (Fixed (Add1 chunkMinMinus1))
+                (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+            )
     ->
         (ArraySized (In minLength_ max) element
          ->
@@ -594,32 +598,32 @@ toChunksOf :
             , remainder :
                 ArraySized
                     (In
-                        (Up minX To minX)
+                        (Up remainderMinX To remainderMinX)
                         (Up chunkMaxX To chunkMaxMinus1PlusX)
                     )
                     element
             }
         )
-toChunksOf chunkSize { remainder } =
+toChunksOf chunkingDirection chunkLength =
     \arr ->
         let
             chunked =
                 arr
                     |> toArray
                     |> Array.Linear.toChunks
-                        { length = chunkSize |> N.toInt
-                        , remainder = remainder
+                        { length = chunkLength |> N.toInt
+                        , remainder = chunkingDirection
                         }
         in
         { chunks =
             chunked.chunks
-                |> Array.map (ArraySized chunkSize)
-                |> ArraySized (arr |> length |> N.div chunkSize)
+                |> Array.map (ArraySized chunkLength)
+                |> ArraySized (arr |> length |> N.div chunkLength)
         , remainder =
             chunked.remainder
                 |> ArraySized
                     (length arr
-                        |> N.remainderBy chunkSize
+                        |> N.remainderBy chunkLength
                     )
         }
 

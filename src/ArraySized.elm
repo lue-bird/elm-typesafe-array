@@ -1377,7 +1377,7 @@ take :
          -> ArraySized (In takenMin takenMax) element
         )
 take ( direction, toTakeAmount, { atLeast } ) =
-    ArraySized.Internal.takeAtLeast
+    ArraySized.Internal.take
         ( direction, toTakeAmount, { atLeast = atLeast } )
 
 
@@ -1638,7 +1638,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
     import N exposing (n0, n5)
 
     ArraySized.l7 1 2 3 4 5 6 7
-        |> ArraySized.toChunksOf n5 { remainder = Up }
+        |> ArraySized.toChunksOf Up n5
         --: { chunks :
         --:     ArraySized
         --:         (In (Up minX To minX) (Up maxX To (Add7 maxX)))
@@ -1652,10 +1652,10 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
         --: , remainder :
         --:     ArraySized
         --:         (In
-        --:             (Up minX To minX)
+        --:             (Up remainderMinX To remainderMinX)
         --:             (Up chunkMaxX To (Add5 chunkMaxX))
         --:         )
-        --:          number_
+        --:         number_
         --: }
         |> .remainder
         |> ArraySized.toList
@@ -1663,19 +1663,20 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 
 
     ArraySized.l7 1 2 3 4 5 6 7
-        |> ArraySized.toChunksOf n5 { remainder = Down }
+        |> ArraySized.toChunksOf Down n5
         |> .remainder
         |> ArraySized.toList
     --> [ 1, 2 ]
 
 -}
 toChunksOf :
-    N
-        (In
-            (Fixed (Add1 chunkMinMinus1))
-            (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
-        )
-    -> { remainder : DirectionLinear }
+    DirectionLinear
+    ->
+        N
+            (In
+                (Fixed (Add1 chunkMinMinus1))
+                (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+            )
     ->
         (ArraySized (In minLength_ max) element
          ->
@@ -1692,15 +1693,14 @@ toChunksOf :
             , remainder :
                 ArraySized
                     (In
-                        (Up minX To minX)
+                        (Up remainderMinX To remainderMinX)
                         (Up chunkMaxX To chunkMaxMinus1PlusX)
                     )
                     element
             }
         )
-toChunksOf chunkLength { remainder } =
-    ArraySized.Internal.toChunksOf chunkLength
-        { remainder = remainder }
+toChunksOf chunkingDirection chunkLength =
+    ArraySized.Internal.toChunksOf chunkingDirection chunkLength
 
 
 
