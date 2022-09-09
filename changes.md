@@ -1,3 +1,7 @@
+## 24.0.0 plans
+
+  - `ArraySized.until` name → `ArraySized.upTo`
+
 # change log
 
 ## 23.0.0
