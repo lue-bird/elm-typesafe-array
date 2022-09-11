@@ -1,14 +1,6 @@
-module ArrayExtra exposing
-    ( lengthN
-    , allFill
-    )
+module ArrayExtra exposing (allFill)
 
 {-| Should be replaced by Array.Extra functions if they are added there.
-
-
-# scan
-
-@docs lengthN
 
 
 # transform
@@ -18,33 +10,29 @@ module ArrayExtra exposing
 -}
 
 import Array exposing (Array)
-import Emptiable exposing (Emptiable, fillMap, filled)
-import N exposing (Min, N, To, Up, n0)
+import Emptiable exposing (Emptiable, fillAnd, fillMap, filled)
 
 
 allFill :
     Array (Emptiable element possiblyOrNever)
     -> Emptiable (Array element) possiblyOrNever
-allFill maybes =
-    maybes
-        |> Array.toList
-        |> areAllFilledInList
-        |> fillMap Array.fromList
+allFill =
+    \array ->
+        array
+            |> Array.toList
+            |> listAllFill
+            |> fillMap Array.fromList
 
 
-areAllFilledInList :
+listAllFill :
     List (Emptiable element possiblyOrNever)
     -> Emptiable (List element) possiblyOrNever
-areAllFilledInList =
+listAllFill =
     List.foldr
-        (\element ->
-            Emptiable.fillAnd element
-                >> Emptiable.fillMap
+        (\element soFar ->
+            soFar
+                |> fillAnd element
+                |> fillMap
                     (\( fills, fill ) -> fills |> (::) fill)
         )
         ([] |> filled)
-
-
-lengthN : Array element_ -> N (Min (Up x To x))
-lengthN =
-    Array.length >> N.intAtLeast n0
