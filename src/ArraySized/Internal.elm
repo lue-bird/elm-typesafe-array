@@ -1,13 +1,14 @@
 module ArraySized.Internal exposing
     ( ArraySized
-    , empty, fromArray, repeat, until, random
+    , empty, fromArray, repeat, upTo, random
     , fromValue
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
-    , toArray, map
-    , toValue
+    , toArray, toValue
     , elementReplace, elementRemove, push, insert, reverse
+    , map
     , fills, allFill
+    , and
     , glue, minGlue
     , interweave, minInterweave
     , take
@@ -26,7 +27,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # create
 
-@docs empty, fromArray, repeat, until, random
+@docs empty, fromArray, repeat, upTo, random
 @docs fromValue
 
 
@@ -42,13 +43,13 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # transform
 
-@docs toArray, map
-@docs toValue
+@docs toArray, toValue
 
 
 # alter
 
 @docs elementReplace, elementRemove, push, insert, reverse
+@docs map
 
 
 ## filter
@@ -58,6 +59,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## combine
 
+@docs and
 @docs glue, minGlue
 @docs interweave, minInterweave
 
@@ -197,7 +199,8 @@ fills =
         filtered
             |> ArraySized
                 (filtered
-                    |> Array.lengthN
+                    |> Array.length
+                    |> N.intAtLeast n0
                     |> N.in_ ( n0, arr |> length )
                 )
 
@@ -236,16 +239,17 @@ fromArray =
     -- could be folded from Array
     -- ↓ helps keeping conversions from internal Arrays more performant
     \array ->
-        array |> ArraySized (array |> Array.lengthN)
+        array
+            |> ArraySized (array |> Array.length |> N.intAtLeast n0)
 
 
-until :
+upTo :
     N (In (Fixed min) (Up maxX To maxPlusX))
     ->
         ArraySized
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
             (N (In (Up minX To minX) (Up maxX To maxPlusX)))
-until last =
+upTo last =
     N.until last
         |> Stack.toList
         |> Array.fromList
@@ -376,7 +380,22 @@ reverse =
 
 
 
--- ## glue
+-- ## combine
+
+
+and :
+    ArraySized length nextElement
+    ->
+        (ArraySized length element
+         -> ArraySized length ( element, nextElement )
+        )
+and nextArraySized =
+    \arraySized ->
+        Array.zip (arraySized |> toArray) (nextArraySized |> toArray)
+            |> ArraySized
+                (Stack.topDown (arraySized |> length) [ nextArraySized |> length ]
+                    |> N.smallest
+                )
 
 
 glue :

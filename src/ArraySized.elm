@@ -13,6 +13,7 @@ module ArraySized exposing
     , fills, allFill
     , take, drop, minDrop
     , toChunksOf
+    , and
     , glue, minGlue
     , interweave, minInterweave
     , hasIn, has, hasAtLeast, hasAtMost
@@ -113,6 +114,7 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 ## combine
 
+@docs and
 @docs glue, minGlue
 @docs interweave, minInterweave
 
@@ -1131,7 +1133,7 @@ until :
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
             (N (In (Up minX To minX) (Up maxX To maxPlusX)))
 until last =
-    ArraySized.Internal.until last
+    ArraySized.Internal.upTo last
 
 
 {-| `Random.Generator` for the given amount of random elements
@@ -2059,6 +2061,45 @@ minInsert =
     \( direction, index ) toInsert ->
         insert ( direction, index ) toInsert
             >> maxNo
+
+
+{-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple.
+
+Every element beyond the minimum [`length`](#length) of both is't part of the final [`ArraySized`](#ArraySized).
+
+    import ArraySized
+
+    answer
+        |> ArraySized.and guess
+        |> ArraySized.map
+            (\( answerChar, guessChar ) ->
+                { directMatch = guessChar == answerChar }
+            )
+
+This is often misused:
+
+  - multiple structures for different attributes of the same thing
+      - example: one list for exercises, one matching the cards' indexes with progress
+      - these should be in the same structure
+  - applying multiple changes for a sequence of indexes
+      - example: <https://github.com/Rototu/storefront/blob/f8fe0b7cb823e3a50f175985a13762f9482ae4a8/frontend/src/Page/Home.elm#L24-L32>
+      - each of those indices seem to have special meaning. Use a record to gain type-safety and be more descriptive
+  - stupid stuff where another operation like map would be more appropriate
+      - example: <https://github.com/dclutr/a-toastmasters-certificates-tool/blob/0cb97c2766c6c51bb32881a1e7c77beb21b1c32a/Main.elm#L165-L172>
+
+-}
+and :
+    ArraySized length nextElement
+    ->
+        (ArraySized length element
+         -> ArraySized length ( element, nextElement )
+        )
+and nextArraySized =
+    ArraySized.Internal.and nextArraySized
+
+
+
+-- glue
 
 
 {-| Place all elements of an [`ArraySized`](#ArraySized)
