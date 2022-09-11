@@ -4,6 +4,11 @@
 
 # change log
 
+### 23.1.0
+
+  - `and` add
+  - `bounded-nat` → 25.2.0
+
 ## 23.0.0
 
   - `toChunksOf chunkLength { remainder = direction }` → `toChunksOf direction chunkLength`
