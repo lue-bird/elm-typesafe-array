@@ -12,7 +12,7 @@ module ArraySized.Internal exposing
     , glue, minGlue
     , interweave, minInterweave
     , take
-    , drop, minDrop
+    , drop, minDrop, dropOverMin
     , toChunksOf
     , minDown, maxNo, maxUp
     , min, max
@@ -67,7 +67,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 ## part
 
 @docs take
-@docs drop, minDrop
+@docs drop, minDrop, dropOverMin
 @docs toChunksOf
 
 
@@ -544,6 +544,36 @@ drop ( direction, droppedAmount ) =
             |> ArraySized
                 ((arr |> length)
                     |> N.sub droppedAmount
+                )
+
+
+dropOverMin :
+    ( DirectionLinear, N (In (Down max To takenMax) takenMax_) )
+    ->
+        (ArraySized (In min_ (Fixed max)) element
+         ->
+            ArraySized
+                (In (Up resultMinX To resultMinX) (Fixed takenMax))
+                element
+        )
+dropOverMin ( direction, lengthToDrop ) =
+    \arr ->
+        arr
+            |> toArray
+            |> Array.Linear.drop
+                ( direction, lengthToDrop |> N.toInt )
+            |> ArraySized
+                ((arr |> length |> N.toInt)
+                    - (lengthToDrop |> N.toInt)
+                    |> N.intIn
+                        ( n0
+                        , arr
+                            |> length
+                            |> N.maximumAsDifference
+                            |> N.differenceDown
+                                (lengthToDrop |> N.minimumAsDifference)
+                            |> N.specific
+                        )
                 )
 
 

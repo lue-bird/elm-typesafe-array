@@ -4,6 +4,10 @@
 
 # change log
 
+### 23.2.0
+
+  - `dropOverMin` add
+
 ### 23.1.0
 
   - `and` add

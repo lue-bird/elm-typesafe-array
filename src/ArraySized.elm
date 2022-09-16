@@ -11,7 +11,7 @@ module ArraySized exposing
     , push, minPush, insert, minInsert
     , elementRemove, minElementRemove
     , fills, allFill
-    , take, drop, minDrop
+    , take, drop, minDrop, dropOverMin
     , toChunksOf
     , and
     , glue, minGlue
@@ -108,7 +108,7 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 ## part
 
-@docs take, drop, minDrop
+@docs take, drop, minDrop, dropOverMin
 @docs toChunksOf
 
 
@@ -2365,7 +2365,8 @@ minElementRemove =
         --:     )
         --:     number_
 
-Don't know its length maximum? → [`minDrop`](#minDrop)
+  - Don't know its length maximum? → [`minDrop`](#minDrop)
+  - Can the dropped length's maximum be greater than its length's minimum? → [`dropOverMin`](#dropOverMin)
 
 -}
 drop :
@@ -2426,6 +2427,29 @@ minDrop :
         )
 minDrop ( direction, droppedAmount ) =
     ArraySized.Internal.minDrop ( direction, droppedAmount )
+
+
+{-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
+
+    import Linear exposing (DirectionLinear(..))
+    import N exposing (n2)
+
+    between3And6Elements
+        |> ArraySized.dropOverMin ( Down, n5 )
+    --: ArraySized (In (Up minX To minX) (Fixed N1)) ...
+
+-}
+dropOverMin :
+    ( DirectionLinear, N (In (Down max To takenMax) takenMax_) )
+    ->
+        (ArraySized (In min_ (Fixed max)) element
+         ->
+            ArraySized
+                (In (Up resultMinX To resultMinX) (Fixed takenMax))
+                element
+        )
+dropOverMin ( direction, lengthToDrop ) =
+    ArraySized.Internal.dropOverMin ( direction, lengthToDrop )
 
 
 
