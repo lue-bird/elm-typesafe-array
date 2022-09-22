@@ -270,7 +270,10 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
 -}
 toList : ArraySized lengthRange_ element -> List element
 toList =
-    toArray >> Array.toList
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> Array.toList
 
 
 {-| Convert to an `Emptiable (Stacked ...) Possibly`.
@@ -292,7 +295,8 @@ toStackEmptiable :
     ArraySized lengthRange_ element
     -> Emptiable (Stacked element) Possibly
 toStackEmptiable =
-    toList >> Stack.fromList
+    \arraySized ->
+        arraySized |> toList |> Stack.fromList
 
 
 {-| Convert to an `Emptiable (Stacked ...) never_`.
@@ -335,8 +339,8 @@ toEmptiable :
     ArraySized (In min_ (Up maxToN1_ To N1)) element
     -> Emptiable element Possibly
 toEmptiable =
-    \arr ->
-        case arr |> hasAtLeast n1 of
+    \arraySized ->
+        case arraySized |> hasAtLeast n1 of
             Err _ ->
                 Emptiable.empty
 
@@ -422,7 +426,8 @@ Make sure the compiler knows as much as you about the amount of elements!
 -}
 fromList : List element -> ArraySized (Min (Up x To x)) element
 fromList =
-    Array.fromList >> fromArray
+    \list ->
+        list |> Array.fromList |> fromArray
 
 
 {-| Create from a `Stack`.
@@ -452,7 +457,8 @@ fromStackEmptiable :
     Emptiable (Stacked element) possiblyOrNever_
     -> ArraySized (Min (Up x To x)) element
 fromStackEmptiable =
-    Stack.toList >> fromList
+    \stack ->
+        stack |> Stack.toList |> fromList
 
 
 {-| Create from a `Stack`.
@@ -819,7 +825,8 @@ l16 a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 =
 -}
 to1 : ArraySized (Exactly N1) element -> element
 to1 =
-    element ( Up, n0 )
+    \arraySized ->
+        arraySized |> element ( Up, n0 )
 
 
 {-| Transform the `ArraySized` into a `Toop.T2`. This makes accessing elements and pattern matching easier.
@@ -1163,8 +1170,8 @@ random :
     Random.Generator element
     -> N range
     -> Random.Generator (ArraySized range element)
-random elementRandomGenerator amount =
-    ArraySized.Internal.random elementRandomGenerator amount
+random elementRandomGenerator length_ =
+    ArraySized.Internal.random elementRandomGenerator length_
 
 
 
@@ -1214,7 +1221,8 @@ elementReplace ( direction, index ) elementReplacement =
 
 
 {-| Change the element at an index
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/) based on its previous value
+in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+based on its previous value
 
     import Linear exposing (DirectionLinear(..))
     import N exposing (n0)
@@ -1249,19 +1257,19 @@ elementAlter :
          -> ArraySized lengthRange element
         )
 elementAlter ( direction, index ) elementAlter_ =
-    \arr ->
+    \arraySized ->
         case
-            arr
+            arraySized
                 |> toArray
                 |> Array.Linear.element ( direction, index |> N.toInt )
         of
             Ok elementFound ->
-                arr
+                arraySized
                     |> elementReplace ( direction, index )
                         (\() -> elementAlter_ elementFound)
 
             Err _ ->
-                arr
+                arraySized
 
 
 {-| Take every `filled value`, drop every `empty`
@@ -1292,8 +1300,8 @@ fills :
         (In (Fixed min_) max)
         (Emptiable value possiblyOrNever_)
     -> ArraySized (In (Up minX To minX) max) value
-fills maybes =
-    ArraySized.Internal.fills maybes
+fills =
+    ArraySized.Internal.fills
 
 
 {-| If every `Emptiable` is `filled`, all of the values.
@@ -1335,8 +1343,8 @@ Funnily, this can sometimes even be nicer than `mapN`/`andMap`
 allFill :
     ArraySized lengthRange (Emptiable value possiblyOrNever)
     -> Emptiable (ArraySized lengthRange value) possiblyOrNever
-allFill maybes =
-    ArraySized.Internal.allFill maybes
+allFill =
+    ArraySized.Internal.allFill
 
 
 
@@ -1381,8 +1389,10 @@ take :
          -> ArraySized (In takenMin takenMax) element
         )
 take ( direction, toTakeAmount, { atLeast } ) =
-    ArraySized.Internal.take
-        ( direction, toTakeAmount, { atLeast = atLeast } )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.take
+                ( direction, toTakeAmount, { atLeast = atLeast } )
 
 
 
@@ -1413,7 +1423,9 @@ map :
          -> ArraySized lengthRange mappedElement
         )
 map alter =
-    ArraySized.Internal.map alter
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.map alter
 
 
 {-| Reduce an `ArraySized` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/).
@@ -1444,8 +1456,10 @@ foldFrom :
          -> result
         )
 foldFrom initial direction reduce =
-    toArray
-        >> Array.Linear.foldFrom ( initial, direction, reduce )
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> Array.Linear.foldFrom ( initial, direction, reduce )
 
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -1553,7 +1567,9 @@ element :
          -> element
         )
 element ( direction, index ) =
-    ArraySized.Internal.element ( direction, index )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.element ( direction, index )
 
 
 {-| Its possible element at a location
@@ -1580,8 +1596,10 @@ elementTry :
          -> Result Linear.ExpectedIndexInRange element
         )
 elementTry ( direction, index ) =
-    toArray
-        >> Array.Linear.element ( direction, index |> N.toInt )
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> Array.Linear.element ( direction, index |> N.toInt )
 
 
 {-| Whether all elements satisfy a given test
@@ -1600,9 +1618,11 @@ allAre :
     (element -> Bool)
     -> (ArraySized lengthRange_ element -> Bool)
 allAre isOkay =
-    foldFrom True
-        Up
-        (\el soFar -> soFar && (el |> isOkay))
+    \arraySized ->
+        arraySized
+            |> foldFrom True
+                Up
+                (\el soFar -> soFar && (el |> isOkay))
 
 
 {-| Whether at least one element satisfies a given test
@@ -1621,9 +1641,11 @@ anyIs :
     (element -> Bool)
     -> (ArraySized lengthRange_ element -> Bool)
 anyIs isOkay =
-    foldFrom False
-        Up
-        (\el soFar -> soFar || (el |> isOkay))
+    \arraySized ->
+        arraySized
+            |> foldFrom False
+                Up
+                (\el soFar -> soFar || (el |> isOkay))
 
 
 
@@ -1704,7 +1726,9 @@ toChunksOf :
             }
         )
 toChunksOf chunkingDirection chunkLength =
-    ArraySized.Internal.toChunksOf chunkingDirection chunkLength
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.toChunksOf chunkingDirection chunkLength
 
 
 
@@ -1718,7 +1742,9 @@ toValue :
     ArraySized (InFixed min max) element
     -> ArraySized (InValue min max) element
 toValue =
-    ArraySized.Internal.toValue
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.toValue
 
 
 {-| [`ArraySized`](#ArraySized) with a [`length`](#length) of equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
@@ -1729,7 +1755,9 @@ fromValue :
     ArraySized (InValue min max) element
     -> ArraySized (InFixed min max) element
 fromValue =
-    ArraySized.Internal.fromValue
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.fromValue
 
 
 
@@ -1763,7 +1791,9 @@ minDown :
          -> ArraySized (In (Up x To minDecreasedPlusX) max) element
         )
 minDown lengthMinimumDecrease =
-    ArraySized.Internal.minDown lengthMinimumDecrease
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minDown lengthMinimumDecrease
 
 
 {-| Convert the `ArraySized (In min ...)` to a `ArraySized (Min min)`.
@@ -1789,7 +1819,9 @@ Elm complains:
 -}
 maxNo : ArraySized (In min max_) element -> ArraySized (Min min) element
 maxNo =
-    ArraySized.Internal.maxNo
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.maxNo
 
 
 {-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length.
@@ -1845,7 +1877,9 @@ max :
          -> ArraySized (In min maxNew) element
         )
 max lengthMaximumNew =
-    ArraySized.Internal.max lengthMaximumNew
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.max lengthMaximumNew
 
 
 {-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length.
@@ -1887,7 +1921,9 @@ min :
          -> ArraySized (In minNew max) element
         )
 min lengthMinimumNew =
-    ArraySized.Internal.min lengthMinimumNew
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.min lengthMinimumNew
 
 
 {-| Have a specific maximum in mind? → [`maxUp`](#maxUp)
@@ -1913,7 +1949,9 @@ maxUp :
          -> ArraySized (In min (Up x To maxIncreasedPlusX)) element
         )
 maxUp lengthMaximumIncrease =
-    ArraySized.Internal.maxUp lengthMaximumIncrease
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.maxUp lengthMaximumIncrease
 
 
 
@@ -1947,7 +1985,9 @@ push :
                 element
         )
 push elementToPutToEndUp =
-    ArraySized.Internal.push elementToPutToEndUp
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.push elementToPutToEndUp
 
 
 {-| Put a new element after all the others
@@ -1971,7 +2011,10 @@ minPush :
          -> ArraySized (Min (Up minX To (Add1 minPlusX))) element
         )
 minPush newLastElement =
-    push newLastElement >> maxNo
+    \arraySized ->
+        arraySized
+            |> push newLastElement
+            |> maxNo
 
 
 {-| Put an element in the `ArraySized` at a given index
@@ -2019,8 +2062,10 @@ insert :
                 )
                 element
         )
-insert ( direction, index ) insertedElement =
-    ArraySized.Internal.insert ( direction, index ) insertedElement
+insert ( direction, index ) elementToInsert =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.insert ( direction, index ) elementToInsert
 
 
 {-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -2059,10 +2104,11 @@ minInsert :
             element
          -> ArraySized (Min (Fixed (Add1 min))) element
         )
-minInsert =
-    \( direction, index ) toInsert ->
-        insert ( direction, index ) toInsert
-            >> maxNo
+minInsert ( direction, index ) toInsert =
+    \arraySized ->
+        arraySized
+            |> insert ( direction, index ) toInsert
+            |> maxNo
 
 
 {-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple.
@@ -2097,7 +2143,9 @@ and :
          -> ArraySized length ( element, nextElement )
         )
 and nextArraySized =
-    ArraySized.Internal.and nextArraySized
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.and nextArraySized
 
 
 
@@ -2153,7 +2201,9 @@ interweave :
                 element
         )
 interweave separatorsToPlaceBetweenTheElements =
-    ArraySized.Internal.interweave separatorsToPlaceBetweenTheElements
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.interweave separatorsToPlaceBetweenTheElements
 
 
 {-| Place all elements of an [`ArraySized`](#ArraySized)
@@ -2189,7 +2239,9 @@ minInterweave :
                 element
         )
 minInterweave separatorsToPlaceBetweenTheElements =
-    ArraySized.Internal.minInterweave separatorsToPlaceBetweenTheElements
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minInterweave separatorsToPlaceBetweenTheElements
 
 
 {-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -2240,7 +2292,9 @@ glue :
                 element
         )
 glue direction extension =
-    ArraySized.Internal.glue direction extension
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.glue direction extension
 
 
 {-| Attach elements of an `ArraySized`
@@ -2271,7 +2325,9 @@ minGlue :
          -> ArraySized (Min (Up x To minSumPlusX)) element
         )
 minGlue direction extension =
-    ArraySized.Internal.minGlue direction extension
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minGlue direction extension
 
 
 {-| Pad in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -2359,7 +2415,9 @@ elementRemove :
                 element
         )
 elementRemove ( direction, index ) =
-    ArraySized.Internal.elementRemove ( direction, index )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.elementRemove ( direction, index )
 
 
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -2388,10 +2446,11 @@ minElementRemove :
                 (Up x To maxPlusX)
             )
             element
-minElementRemove =
-    \( direction, index ) ->
-        maxUp n1
-            >> elementRemove ( direction, index )
+minElementRemove ( direction, index ) =
+    \arraySized ->
+        arraySized
+            |> maxUp n1
+            |> elementRemove ( direction, index )
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -2447,7 +2506,9 @@ drop :
                 element
         )
 drop ( direction, droppedAmount ) =
-    ArraySized.Internal.drop ( direction, droppedAmount )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.drop ( direction, droppedAmount )
 
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
@@ -2480,7 +2541,9 @@ minDrop :
                 element
         )
 minDrop ( direction, droppedAmount ) =
-    ArraySized.Internal.minDrop ( direction, droppedAmount )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minDrop ( direction, droppedAmount )
 
 
 {-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
@@ -2503,7 +2566,9 @@ dropOverMin :
                 element
         )
 dropOverMin ( direction, lengthToDrop ) =
-    ArraySized.Internal.dropOverMin ( direction, lengthToDrop )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.dropOverMin ( direction, lengthToDrop )
 
 
 
@@ -2564,7 +2629,9 @@ has :
                 )
         )
 has lengthToCompareAgainst =
-    ArraySized.Internal.has lengthToCompareAgainst
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.has lengthToCompareAgainst
 
 
 {-| Compared to a range from a lower to an upper bound, is its length in, `BelowOrAbove` range?
@@ -2621,7 +2688,9 @@ hasIn :
                 (ArraySized (In lowerLimitMin upperLimitMax) element)
         )
 hasIn ( lowerLimit, upperLimit ) =
-    ArraySized.Internal.hasIn ( lowerLimit, upperLimit )
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.hasIn ( lowerLimit, upperLimit )
 
 
 {-| Is its length below (`Err`) or atLeast (`Ok`) as big as a given `N`?
@@ -2657,7 +2726,9 @@ hasAtLeast :
                 (ArraySized (In lowerLimitMin max) element)
         )
 hasAtLeast lowerLimit =
-    ArraySized.Internal.hasAtLeast lowerLimit
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.hasAtLeast lowerLimit
 
 
 {-| Is its length atMost (`Ok`) or above (`Err`) a given length?
@@ -2698,4 +2769,6 @@ hasAtMost :
                 (ArraySized (In min upperLimitMax) element)
         )
 hasAtMost upperLimit =
-    ArraySized.Internal.hasAtMost upperLimit
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.hasAtMost upperLimit
