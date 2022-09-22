@@ -281,11 +281,13 @@ Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
     import N exposing (n4)
+    import Emptiable
+    import Stack
 
-    ArraySized.until n4
-        |> ArraySized.map N.toInt
+    ArraySized.l4 (0 |> Emptiable.filled) Emptiable.empty Emptiable.empty (3 |> Emptiable.filled)
+        |> ArraySized.fills
         |> ArraySized.toStackEmptiable
-    --> Stack.topDown [ 0, 1, 2, 3, 4 ]
+    --> Stack.topDown 0 [ 3 ]
     --: Emptiable (Stacked Int) Possibly
 
 Have `>= 1` element? → Keep an `Emptiable ... never_` [`toStackFilled`](#toStackFilled)
@@ -304,11 +306,12 @@ Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
     import N exposing (n4)
+    import Stack
 
     ArraySized.until n4
         |> ArraySized.map N.toInt
         |> ArraySized.toStackFilled
-    --> Stack.topDown [ 0, 1, 2, 3, 4 ]
+    --> Stack.topDown 0 [ 1, 2, 3, 4 ]
     --: Emptiable (Stacked Int) Never
 
 Don't have `>= 1` element? → [`toStackEmptiable`](#toStackEmptiable)
@@ -2334,6 +2337,9 @@ minGlue direction extension =
 with a given [`ArraySized`](#ArraySized)
 to reach a given length.
 
+    import N exposing (n8)
+    import Linear exposing (DirectionLinear(..))
+
     type Bit
         = I
         | O
@@ -2345,7 +2351,7 @@ to reach a given length.
     --> [ O, O, O, O, O, I, O, I ]
 
     ArraySized.l4
-        (ArraySized.l3 I I I)
+        (ArraySized.l3 I I I |> ArraySized.max n8)
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
