@@ -117,9 +117,9 @@ element :
          -> element
         )
 element ( direction, index ) =
-    \arr ->
+    \arraySized ->
         case
-            arr
+            arraySized
                 |> toArray
                 |> Array.Linear.element ( direction, index |> N.toInt )
         of
@@ -132,7 +132,7 @@ element ( direction, index ) =
                         [ "`ArraySized` was shorter than promised by its type.\n"
                         , "💙 Please report under https://github.com/lue-bird/elm-typesafe-array/issues"
                         ]
-                    , culprit = arr
+                    , culprit = arraySized
                     }
 
 
@@ -177,12 +177,11 @@ map :
          -> ArraySized lengthRange bElement
         )
 map alter =
-    -- supply indexes?
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.map alter
-            |> ArraySized (arr |> length)
+            |> ArraySized (arraySized |> length)
 
 
 fills :
@@ -191,10 +190,10 @@ fills :
         (Emptiable value possiblyOrNever_)
     -> ArraySized (In (Up minX To minX) max) value
 fills =
-    \arr ->
+    \arraySizedOfEmptiable ->
         let
             filtered =
-                arr
+                arraySizedOfEmptiable
                     |> toArray
                     |> Array.filterMap Emptiable.toMaybe
         in
@@ -203,7 +202,7 @@ fills =
                 (filtered
                     |> Array.length
                     |> N.intAtLeast n0
-                    |> N.in_ ( n0, arr |> length )
+                    |> N.in_ ( n0, arraySizedOfEmptiable |> length )
                 )
 
 
@@ -211,11 +210,11 @@ allFill :
     ArraySized lengthRange (Emptiable value possiblyOrNever)
     -> Emptiable (ArraySized lengthRange value) possiblyOrNever
 allFill =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.allFill
-            |> fillMap (ArraySized (arr |> length))
+            |> fillMap (ArraySized (arraySized |> length))
 
 
 
@@ -238,8 +237,8 @@ repeat elementToRepeat howOftenToRepeat =
 
 fromArray : Array element -> ArraySized (Min (Up x To x)) element
 fromArray =
-    -- could be folded from Array
-    -- ↓ helps keeping conversions from internal Arrays more performant
+    -- could be implemented safely using fold
+    -- ↓ is for performance reasons
     \array ->
         array
             |> ArraySized (array |> Array.length |> N.intAtLeast n0)
@@ -284,14 +283,14 @@ elementReplace :
          -> ArraySized lengthRange element
         )
 elementReplace ( direction, index ) replacement =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.elementReplace
                 ( ( direction, index |> N.toInt )
                 , replacement
                 )
-            |> ArraySized (arr |> length)
+            |> ArraySized (arraySized |> length)
 
 
 push :
@@ -307,11 +306,11 @@ push :
                 element
         )
 push elementToPush =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.push elementToPush
-            |> ArraySized (arr |> length |> N.add n1)
+            |> ArraySized (arraySized |> length |> N.add n1)
 
 
 insert :
@@ -334,15 +333,15 @@ insert :
                 )
                 element
         )
-insert ( direction, index ) insertedElement =
-    \arr ->
-        arr
+insert ( direction, index ) elementToInsert =
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.insert
                 ( ( direction, index |> N.toInt )
-                , \() -> insertedElement
+                , \() -> elementToInsert
                 )
-            |> ArraySized (arr |> length |> N.add n1)
+            |> ArraySized (arraySized |> length |> N.add n1)
 
 
 elementRemove :
@@ -365,20 +364,21 @@ elementRemove :
                 element
         )
 elementRemove ( direction, index ) =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.elementRemove
                 ( direction, index |> N.toInt )
-            |> ArraySized (arr |> length |> N.sub n1)
+            |> ArraySized (arraySized |> length |> N.sub n1)
 
 
 reverse : ArraySized range element -> ArraySized range element
 reverse =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> Array.reverse
-            |> ArraySized (arr |> length)
+            |> ArraySized (arraySized |> length)
 
 
 
@@ -395,9 +395,7 @@ and nextArraySized =
     \arraySized ->
         Array.zip (arraySized |> toArray) (nextArraySized |> toArray)
             |> ArraySized
-                (Stack.topDown (arraySized |> length) [ nextArraySized |> length ]
-                    |> N.smallest
-                )
+                (N.smaller (arraySized |> length) (nextArraySized |> length))
 
 
 glue :
@@ -425,12 +423,13 @@ glue :
                 element
         )
 glue direction extension =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> Array.Linear.glue direction
                 (extension |> toArray)
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.add (extension |> length)
                 )
 
@@ -453,12 +452,12 @@ interweave :
                 element
         )
 interweave separatorsToPlaceBetweenTheElements =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.add (separatorsToPlaceBetweenTheElements |> length)
                 )
 
@@ -478,12 +477,12 @@ minInterweave :
                 element
         )
 minInterweave separatorsToPlaceBetweenTheElements =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.minAdd (separatorsToPlaceBetweenTheElements |> length)
                 )
 
@@ -502,12 +501,13 @@ minGlue :
          -> ArraySized (Min (Up x To minSumPlusX)) element
         )
 minGlue direction extension =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> Array.Linear.glue direction
                 (extension |> toArray)
             |> ArraySized
-                ((arr |> length) |> N.minAdd (extension |> length))
+                ((arraySized |> length) |> N.minAdd (extension |> length))
 
 
 padToLength :
@@ -567,13 +567,13 @@ drop :
                 element
         )
 drop ( direction, droppedAmount ) =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.drop
                 ( direction, droppedAmount |> N.toInt )
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.sub droppedAmount
                 )
 
@@ -588,17 +588,17 @@ dropOverMin :
                 element
         )
 dropOverMin ( direction, lengthToDrop ) =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.drop
                 ( direction, lengthToDrop |> N.toInt )
             |> ArraySized
-                ((arr |> length |> N.toInt)
+                ((arraySized |> length |> N.toInt)
                     - (lengthToDrop |> N.toInt)
                     |> N.intIn
                         ( n0
-                        , arr
+                        , arraySized
                             |> length
                             |> N.maximumAsDifference
                             |> N.differenceDown
@@ -626,13 +626,13 @@ minDrop :
                 element
         )
 minDrop ( direction, droppedAmount ) =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.drop
                 ( direction, droppedAmount |> N.toInt )
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.minSub droppedAmount
                 )
 
@@ -647,8 +647,8 @@ take :
          -> ArraySized (In takenMin takenMax) element
         )
 take ( direction, toTakeAmount, _ ) =
-    \arr ->
-        arr
+    \arraySized ->
+        arraySized
             |> toArray
             |> Array.Linear.take ( direction, toTakeAmount |> N.toInt )
             |> ArraySized toTakeAmount
@@ -685,10 +685,10 @@ toChunksOf :
             }
         )
 toChunksOf chunkingDirection chunkLength =
-    \arr ->
+    \arraySized ->
         let
             chunked =
-                arr
+                arraySized
                     |> toArray
                     |> Array.Linear.toChunks
                         { length = chunkLength |> N.toInt
@@ -698,11 +698,11 @@ toChunksOf chunkingDirection chunkLength =
         { chunks =
             chunked.chunks
                 |> Array.map (ArraySized chunkLength)
-                |> ArraySized (arr |> length |> N.div chunkLength)
+                |> ArraySized (arraySized |> length |> N.div chunkLength)
         , remainder =
             chunked.remainder
                 |> ArraySized
-                    (length arr
+                    (length arraySized
                         |> N.remainderBy chunkLength
                     )
         }
@@ -717,7 +717,8 @@ toValue :
     -> ArraySized (InValue min max) element
 toValue =
     \arraySized ->
-        (arraySized |> toArray)
+        arraySized
+            |> toArray
             |> ArraySized (arraySized |> length |> N.toValue)
 
 
@@ -726,7 +727,8 @@ fromValue :
     -> ArraySized (InFixed min max) element
 fromValue =
     \arraySized ->
-        (arraySized |> toArray)
+        arraySized
+            |> toArray
             |> ArraySized (arraySized |> length |> N.fromValue)
 
 
@@ -745,10 +747,11 @@ minDown :
          -> ArraySized (In (Up x To minDecreasedPlusX) max) element
         )
 minDown lengthMinimumLower =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.minDown lengthMinimumLower
                 )
 
@@ -757,8 +760,10 @@ maxNo :
     ArraySized (In min maxLength_) element
     -> ArraySized (Min min) element
 maxNo =
-    \arr ->
-        arr |> toArray |> ArraySized (arr |> length |> N.maxNo)
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> ArraySized (arraySized |> length |> N.maxNo)
 
 
 maxUp :
@@ -772,10 +777,11 @@ maxUp :
          -> ArraySized (In min (Up x To maxIncreasedPlusX)) element
         )
 maxUp lengthMaximumIncrement =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.maxUp lengthMaximumIncrement
                 )
 
@@ -787,10 +793,11 @@ max :
          -> ArraySized (In min maxNew) element
         )
 max lengthMaximumNew =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.max lengthMaximumNew
                 )
 
@@ -802,10 +809,11 @@ min :
          -> ArraySized (In minNew max) element
         )
 min lengthMinimumNew =
-    \arr ->
-        (arr |> toArray)
+    \arraySized ->
+        arraySized
+            |> toArray
             |> ArraySized
-                ((arr |> length)
+                ((arraySized |> length)
                     |> N.min lengthMinimumNew
                 )
 
@@ -849,19 +857,19 @@ has :
                 )
         )
 has lengthToCompareAgainst =
-    \arr ->
-        case arr |> length |> N.is lengthToCompareAgainst of
+    \arraySized ->
+        case arraySized |> length |> N.is lengthToCompareAgainst of
             Err (N.Below less) ->
-                (arr |> toArray |> ArraySized less)
+                (arraySized |> toArray |> ArraySized less)
                     |> N.Below
                     |> Err
 
             Ok equal ->
-                (arr |> toArray |> ArraySized equal)
+                (arraySized |> toArray |> ArraySized equal)
                     |> Ok
 
             Err (N.Above greater) ->
-                (arr |> toArray |> ArraySized greater)
+                (arraySized |> toArray |> ArraySized greater)
                     |> N.Above
                     |> Err
 
@@ -901,21 +909,21 @@ hasIn :
                 (ArraySized (In lowerLimitMin upperLimitMax) element)
         )
 hasIn ( lowerLimit, upperLimit ) =
-    \arr ->
+    \arraySized ->
         case
-            length arr |> N.isIn ( lowerLimit, upperLimit )
+            length arraySized |> N.isIn ( lowerLimit, upperLimit )
         of
             Err (N.Below below) ->
-                (arr |> toArray |> ArraySized below)
+                (arraySized |> toArray |> ArraySized below)
                     |> N.Below
                     |> Err
 
             Ok inRange ->
-                (arr |> toArray |> ArraySized inRange)
+                (arraySized |> toArray |> ArraySized inRange)
                     |> Ok
 
             Err (N.Above above) ->
-                (arr |> toArray |> ArraySized above)
+                (arraySized |> toArray |> ArraySized above)
                     |> N.Above
                     |> Err
 
@@ -937,14 +945,14 @@ hasAtLeast :
                 (ArraySized (In lowerLimitMin max) element)
         )
 hasAtLeast lowerLimit =
-    \arr ->
-        case arr |> length |> N.isAtLeast lowerLimit of
+    \arraySized ->
+        case arraySized |> length |> N.isAtLeast lowerLimit of
             Err below ->
-                (arr |> toArray |> ArraySized below)
+                (arraySized |> toArray |> ArraySized below)
                     |> Err
 
             Ok atLeast ->
-                (arr |> toArray |> ArraySized atLeast)
+                (arraySized |> toArray |> ArraySized atLeast)
                     |> Ok
 
 
@@ -961,12 +969,12 @@ hasAtMost :
                 (ArraySized (In min upperLimitMax) element)
         )
 hasAtMost upperLimit =
-    \arr ->
-        case arr |> length |> N.isAtMost upperLimit of
+    \arraySized ->
+        case arraySized |> length |> N.isAtMost upperLimit of
             Ok atMost ->
-                (arr |> toArray |> ArraySized atMost)
+                (arraySized |> toArray |> ArraySized atMost)
                     |> Ok
 
             Err above ->
-                (arr |> toArray |> ArraySized above)
+                (arraySized |> toArray |> ArraySized above)
                     |> Err
