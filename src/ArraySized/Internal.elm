@@ -519,12 +519,12 @@ padToLength :
                 (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
                 element
         )
-    -> N (In (Fixed min) (Up maxX To maxPlusX))
+    -> N (In (Fixed paddedMin) (Up maxX To paddedMaxPlusX))
     ->
         (ArraySized
-            (In (Down maxPlusX To paddingMaxPlusX) (Down min To paddingMin))
+            (In (Up paddingMaxPlusX To paddedMaxPlusX) (Up paddingMin To paddedMin))
             element
-         -> ArraySized (In (Fixed min) (Up maxX To maxPlusX)) element
+         -> ArraySized (In (Fixed paddedMin) (Up maxX To paddedMaxPlusX)) element
         )
 padToLength paddingDirection paddingForLength paddedLength =
     \arraySized ->
