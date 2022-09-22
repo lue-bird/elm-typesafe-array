@@ -1,6 +1,10 @@
 ## 24.0.0 plans
 
   - `ArraySized.until` name → `ArraySized.upTo`
+  - `ArraySized.min` name → `ArraySized.minTo`
+  - `ArraySized.max` name → `ArraySized.maxTo`
+  - `ArraySized.maxNo` name → `ArraySized.min`
+      - to be consistent with `N.Min`
 
 # change log
 
