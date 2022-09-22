@@ -15,6 +15,7 @@ module ArraySized exposing
     , toChunksOf
     , and
     , glue, minGlue
+    , padToLength
     , interweave, minInterweave
     , hasIn, has, hasAtLeast, hasAtMost
     , map
@@ -116,6 +117,7 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 @docs and
 @docs glue, minGlue
+@docs padToLength
 @docs interweave, minInterweave
 
 
@@ -2270,6 +2272,58 @@ minGlue :
         )
 minGlue direction extension =
     ArraySized.Internal.minGlue direction extension
+
+
+{-| Pad in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+with a given [`ArraySized`](#ArraySized)
+to reach a given length.
+
+    type Bit
+        = I
+        | O
+
+    ArraySized.l3 I O I
+        |> ArraySized.padToLength Down (ArraySized.repeat O) n8
+        --: ArraySized (In (Fixed N8) (Up x To (Add8 x)))
+        |> ArraySized.toList
+    --> [ O, O, O, O, O, I, O, I ]
+
+    ArraySized.l4
+        (ArraySized.l3 I I I)
+        (ArraySized.l8 O I I I O I O O)
+        (ArraySized.l8 O I I I O I O O)
+        (ArraySized.l8 O I I I O I O O)
+        |> ArraySized.map
+            (ArraySized.padToLength Down (ArraySized.repeat O) n8)
+        |> ArraySized.map ArraySized.toList
+        |> ArraySized.toList
+    --> [ [ O, O, O, O, O, I, I, I ]
+    --> , [ O, I, I, I, O, I, O, O ]
+    --> , [ O, I, I, I, O, I, O, O ]
+    --> , [ O, I, I, I, O, I, O, O ]
+    --> ]
+
+-}
+padToLength :
+    DirectionLinear
+    ->
+        (N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
+         ->
+            ArraySized
+                (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
+                element
+        )
+    -> N (In (Fixed min) (Up maxX To maxPlusX))
+    ->
+        (ArraySized
+            (In (Down maxPlusX To paddingMaxPlusX) (Down min To paddingMin))
+            element
+         -> ArraySized (In (Fixed min) (Up maxX To maxPlusX)) element
+        )
+padToLength paddingDirection paddingForLength paddedLength =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.padToLength paddingDirection paddingForLength paddedLength
 
 
 {-| Kick out the element at a given index

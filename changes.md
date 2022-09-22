@@ -4,6 +4,10 @@
 
 # change log
 
+### 23.3.0
+
+  - `padToLength` add
+
 ### 23.2.0
 
   - `dropOverMin` add

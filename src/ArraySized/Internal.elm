@@ -10,6 +10,7 @@ module ArraySized.Internal exposing
     , fills, allFill
     , and
     , glue, minGlue
+    , padToLength
     , interweave, minInterweave
     , take
     , drop, minDrop, dropOverMin
@@ -61,6 +62,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 @docs and
 @docs glue, minGlue
+@docs padToLength
 @docs interweave, minInterweave
 
 
@@ -506,6 +508,35 @@ minGlue direction extension =
                 (extension |> toArray)
             |> ArraySized
                 ((arr |> length) |> N.minAdd (extension |> length))
+
+
+padToLength :
+    DirectionLinear
+    ->
+        (N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
+         ->
+            ArraySized
+                (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
+                element
+        )
+    -> N (In (Fixed min) (Up maxX To maxPlusX))
+    ->
+        (ArraySized
+            (In (Down maxPlusX To paddingMaxPlusX) (Down min To paddingMin))
+            element
+         -> ArraySized (In (Fixed min) (Up maxX To maxPlusX)) element
+        )
+padToLength paddingDirection paddingForLength paddedLength =
+    \arraySized ->
+        let
+            paddingLength =
+                paddedLength |> N.sub (arraySized |> length)
+        in
+        arraySized
+            |> toArray
+            |> Array.Linear.glue paddingDirection
+                (paddingLength |> paddingForLength |> toArray)
+            |> ArraySized paddedLength
 
 
 
