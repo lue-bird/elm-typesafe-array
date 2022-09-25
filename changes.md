@@ -9,7 +9,7 @@
 ### TODO
 
   - `ArraySized.until` name → `ArraySized.upTo`
-  - `ArraySized.min`, `max`, `maxNo` name → `minTo`, `maxTo`, `maxToInfinity`
+  - `ArraySized.min`, `max`, `maxNo`, `min<action>` name → `minTo`, `maxTo`, `maxToInfinity`, `<action>Min`
       - to be consistent with `N`
 
 ### 23.3.0
