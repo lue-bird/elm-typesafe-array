@@ -1347,7 +1347,7 @@ allFill =
 
 
 {-| A given number of elements
-to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
 An `atLeast` argument is sadly required to proof the taken minimum
 isn't above the [`ArraySized`](#ArraySized)'s length minimum
