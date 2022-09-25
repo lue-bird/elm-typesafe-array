@@ -153,18 +153,15 @@ nType n =
 inType : Int -> Gen.TypeAnnotation
 inType n =
     typed "In"
-        [ upType n "minX"
-        , upType n "maxX"
+        [ upNType n "minX_"
+        , upNType n "maxX_"
         ]
 
 
-upType : Int -> String -> Gen.TypeAnnotation
-upType n var =
-    typed "Up"
-        [ typeVar var
-        , toType
-        , addXType n (typeVar var)
-        ]
+upNType : Int -> String -> Gen.TypeAnnotation
+upNType n var =
+    typed ([ "Up", n |> String.fromInt ] |> String.concat)
+        [ typeVar var ]
 
 
 toType : Gen.TypeAnnotation
@@ -224,19 +221,7 @@ lAndTo16 =
         let
             lX x implementation =
                 packageExposedFunDecl FromXTag
-                    [ markdown
-                        (case x of
-                            1 ->
-                                "Create an `ArraySized` with exactly 1 element"
-
-                            x2AtLeast ->
-                                [ "Create an `ArraySized` with exactly "
-                                , x2AtLeast |> String.fromInt
-                                , " elements in this order"
-                                ]
-                                    |> String.concat
-                        )
-                    ]
+                    (x |> fromNDoc)
                     (funAnn
                         (List.repeat x (typeVar "element"))
                         (typed "ArraySized"
@@ -328,9 +313,26 @@ lAndTo16 =
     }
 
 
+fromNDoc : Int -> Comment Gen.DocComment
+fromNDoc n =
+    [ markdown
+        (case n of
+            1 ->
+                "Create with only 1 single given element"
+
+            nAtLeast2 ->
+                [ "Create with "
+                , nAtLeast2 |> String.fromInt
+                , " given elements in the order they are supplied"
+                ]
+                    |> String.concat
+        )
+    ]
+
+
 l : Int -> Module FromAndToXTag
 l x =
-    { name = [ "ArraySized", "Big" ]
+    { name = [ "ArraySized", "Local" ]
     , roleInPackage = PackageInternalModule
     , imports =
         [ Gen.importStmt [ "ArraySized" ]
@@ -361,14 +363,7 @@ l x =
                 x |> remainderBy 16
         in
         [ packageExposedFunDecl FromXTag
-            [ markdown
-                ([ "Create an `ArraySized` with exactly "
-                 , x |> String.fromInt
-                 , " elements in this order"
-                 ]
-                    |> String.concat
-                )
-            ]
+            (x |> fromNDoc)
             (funAnn
                 (List.repeat x (typeVar "element"))
                 (typed "ArraySized"

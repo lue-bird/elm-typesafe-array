@@ -86,7 +86,7 @@ import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
 import Linear
-import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, n0, n1)
+import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, Up0, n0, n1)
 import Random
 import Stack exposing (Stacked)
 
@@ -188,7 +188,7 @@ fills :
     ArraySized
         (In (Fixed min_) max)
         (Emptiable value possiblyOrNever_)
-    -> ArraySized (In (Up minX To minX) max) value
+    -> ArraySized (In (Up0 minX_) max) value
 fills =
     \arraySizedOfEmptiable ->
         let
@@ -221,7 +221,7 @@ allFill =
 -- ## create
 
 
-empty : ArraySized (In (Up minX To minX) (Up maxX To maxX)) element_
+empty : ArraySized (In (Up0 minX_) (Up0 maxX_)) element_
 empty =
     Array.empty |> ArraySized n0
 
@@ -235,7 +235,7 @@ repeat elementToRepeat howOftenToRepeat =
         |> ArraySized howOftenToRepeat
 
 
-fromArray : Array element -> ArraySized (Min (Up x To x)) element
+fromArray : Array element -> ArraySized (Min (Up0 x_)) element
 fromArray =
     -- could be implemented safely using fold
     -- ↓ is for performance reasons
@@ -249,7 +249,7 @@ upTo :
     ->
         ArraySized
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
-            (N (In (Up minX To minX) (Up maxX To maxPlusX)))
+            (N (In (Up0 minX_) (Up maxX To maxPlusX)))
 upTo last =
     stackUpTo last
         |> Stack.toList
@@ -704,7 +704,7 @@ toChunksOf :
          ->
             { chunks :
                 ArraySized
-                    (In (Up minX To minX) max)
+                    (In (Up0 minX_) max)
                     (ArraySized
                         (In
                             (Fixed (Add1 chunkMinMinus1))

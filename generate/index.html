@@ -2632,16 +2632,33 @@ var _VirtualDom_attributeNS = F3(function(namespace, key, value)
 
 
 // XSS ATTACK VECTOR CHECKS
+//
+// For some reason, tabs can appear in href protocols and it still works.
+// So '\tjava\tSCRIPT:alert("!!!")' and 'javascript:alert("!!!")' are the same
+// in practice. That is why _VirtualDom_RE_js and _VirtualDom_RE_js_html look
+// so freaky.
+//
+// Pulling the regular expressions out to the top level gives a slight speed
+// boost in small benchmarks (4-10%) but hoisting values to reduce allocation
+// can be unpredictable in large programs where JIT may have a harder time with
+// functions are not fully self-contained. The benefit is more that the js and
+// js_html ones are so weird that I prefer to see them near each other.
+
+
+var _VirtualDom_RE_script = /^script$/i;
+var _VirtualDom_RE_on_formAction = /^(on|formAction$)/i;
+var _VirtualDom_RE_js = /^\s*j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/i;
+var _VirtualDom_RE_js_html = /^\s*(j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:|d\s*a\s*t\s*a\s*:\s*t\s*e\s*x\s*t\s*\/\s*h\s*t\s*m\s*l\s*(,|;))/i;
 
 
 function _VirtualDom_noScript(tag)
 {
-	return tag == 'script' ? 'p' : tag;
+	return _VirtualDom_RE_script.test(tag) ? 'p' : tag;
 }
 
 function _VirtualDom_noOnOrFormAction(key)
 {
-	return /^(on|formAction$)/i.test(key) ? 'data-' + key : key;
+	return _VirtualDom_RE_on_formAction.test(key) ? 'data-' + key : key;
 }
 
 function _VirtualDom_noInnerHtmlOrFormAction(key)
@@ -2649,28 +2666,26 @@ function _VirtualDom_noInnerHtmlOrFormAction(key)
 	return key == 'innerHTML' || key == 'formAction' ? 'data-' + key : key;
 }
 
-function _VirtualDom_noJavaScriptUri_UNUSED(value)
-{
-	return /^javascript:/i.test(value.replace(/\s/g,'')) ? '' : value;
-}
-
 function _VirtualDom_noJavaScriptUri(value)
 {
-	return /^javascript:/i.test(value.replace(/\s/g,''))
-		? 'javascript:alert("This is an XSS vector. Please use ports or web components instead.")'
+	return _VirtualDom_RE_js.test(value)
+		? /**_UNUSED/''//*//**/'javascript:alert("This is an XSS vector. Please use ports or web components instead.")'//*/
 		: value;
-}
-
-function _VirtualDom_noJavaScriptOrHtmlUri_UNUSED(value)
-{
-	return /^\s*(javascript:|data:text\/html)/i.test(value) ? '' : value;
 }
 
 function _VirtualDom_noJavaScriptOrHtmlUri(value)
 {
-	return /^\s*(javascript:|data:text\/html)/i.test(value)
-		? 'javascript:alert("This is an XSS vector. Please use ports or web components instead.")'
+	return _VirtualDom_RE_js_html.test(value)
+		? /**_UNUSED/''//*//**/'javascript:alert("This is an XSS vector. Please use ports or web components instead.")'//*/
 		: value;
+}
+
+function _VirtualDom_noJavaScriptOrHtmlJson(value)
+{
+	return (typeof _Json_unwrap(value) === 'string' && _VirtualDom_RE_js_html.test(_Json_unwrap(value)))
+		? _Json_wrap(
+			/**_UNUSED/''//*//**/'javascript:alert("This is an XSS vector. Please use ports or web components instead.")'//*/
+		) : value;
 }
 
 
@@ -5771,12 +5786,9 @@ var $elm$time$Time$customZone = $elm$time$Time$Zone;
 var $elm$time$Time$here = _Time_here(_Utils_Tuple0);
 var $author$project$ArraySized$Generate$FromXTag = {$: 'FromXTag'};
 var $author$project$Extra$GenerateElm$PackageInternalModule = {$: 'PackageInternalModule'};
-var $elm$core$String$concat = function (strings) {
-	return A2($elm$core$String$join, '', strings);
-};
-var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed = F2(
-	function (a, b) {
-		return {$: 'Typed', a: a, b: b};
+var $stil4m$elm_syntax$Elm$Syntax$Expression$OperatorApplication = F4(
+	function (a, b, c, d) {
+		return {$: 'OperatorApplication', a: a, b: b, c: c, d: d};
 	});
 var $stil4m$elm_syntax$Elm$Syntax$Node$Node = F2(
 	function (a, b) {
@@ -5789,46 +5801,105 @@ var $stil4m$elm_syntax$Elm$Syntax$Range$emptyRange = {
 var $the_sett$elm_syntax_dsl$Util$nodify = function (exp) {
 	return A2($stil4m$elm_syntax$Elm$Syntax$Node$Node, $stil4m$elm_syntax$Elm$Syntax$Range$emptyRange, exp);
 };
-var $the_sett$elm_syntax_dsl$Util$nodifyAll = $elm$core$List$map($the_sett$elm_syntax_dsl$Util$nodify);
-var $the_sett$elm_syntax_dsl$Elm$CodeGen$typed = F2(
-	function (name, args) {
-		return A2(
-			$stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed,
-			$the_sett$elm_syntax_dsl$Util$nodify(
-				_Utils_Tuple2(_List_Nil, name)),
-			$the_sett$elm_syntax_dsl$Util$nodifyAll(args));
-	});
-var $author$project$ArraySized$Generate$addXType = F2(
-	function (x, more) {
-		if (!x) {
-			return more;
-		} else {
-			return A2(
-				$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-				$elm$core$String$concat(
-					_List_fromArray(
-						[
-							'Add',
-							$elm$core$String$fromInt(x)
-						])),
-				_List_fromArray(
-					[more]));
+var $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression = function (a) {
+	return {$: 'ParenthesizedExpression', a: a};
+};
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $the_sett$elm_syntax_dsl$Util$symbolToPrecedence = function (symbol) {
+	switch (symbol) {
+		case '>>':
+			return 9;
+		case '<<':
+			return 9;
+		case '^':
+			return 8;
+		case '*':
+			return 7;
+		case '/':
+			return 7;
+		case '//':
+			return 7;
+		case '%':
+			return 7;
+		case 'rem':
+			return 7;
+		case '+':
+			return 6;
+		case '-':
+			return 6;
+		case '++':
+			return 5;
+		case '::':
+			return 5;
+		case '==':
+			return 4;
+		case '/=':
+			return 4;
+		case '<':
+			return 4;
+		case '>':
+			return 4;
+		case '<=':
+			return 4;
+		case '>=':
+			return 4;
+		case '&&':
+			return 3;
+		case '||':
+			return 2;
+		case '|>':
+			return 0;
+		case '<|':
+			return 0;
+		default:
+			return -1;
+	}
+};
+var $the_sett$elm_syntax_dsl$Util$parentify = F3(
+	function (precedence, associativity, expr) {
+		switch (expr.$) {
+			case 'Application':
+				var apps = expr.a;
+				return ($elm$core$List$length(apps) === 1) ? expr : ((precedence === 10) ? $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
+					$the_sett$elm_syntax_dsl$Util$nodify(expr)) : expr);
+			case 'OperatorApplication':
+				var symbol = expr.a;
+				var opAssociativity = expr.b;
+				return ((_Utils_cmp(
+					precedence,
+					$the_sett$elm_syntax_dsl$Util$symbolToPrecedence(symbol)) > 0) || (_Utils_eq(
+					precedence,
+					$the_sett$elm_syntax_dsl$Util$symbolToPrecedence(symbol)) && (!_Utils_eq(associativity, opAssociativity)))) ? $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
+					$the_sett$elm_syntax_dsl$Util$nodify(expr)) : expr;
+			case 'IfBlock':
+				return $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
+					$the_sett$elm_syntax_dsl$Util$nodify(expr));
+			case 'LetExpression':
+				return $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
+					$the_sett$elm_syntax_dsl$Util$nodify(expr));
+			case 'CaseExpression':
+				return $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
+					$the_sett$elm_syntax_dsl$Util$nodify(expr));
+			default:
+				return expr;
 		}
-	});
-var $stil4m$elm_syntax$Elm$Syntax$Expression$OperatorApplication = F4(
-	function (a, b, c, d) {
-		return {$: 'OperatorApplication', a: a, b: b, c: c, d: d};
 	});
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$applyBinOp = F3(
 	function (exprl, _v0, exprr) {
 		var symbol = _v0.a;
 		var dir = _v0.b;
+		var precedence = _v0.c;
 		return A4(
 			$stil4m$elm_syntax$Elm$Syntax$Expression$OperatorApplication,
 			symbol,
 			dir,
-			$the_sett$elm_syntax_dsl$Util$nodify(exprl),
-			$the_sett$elm_syntax_dsl$Util$nodify(exprr));
+			$the_sett$elm_syntax_dsl$Util$nodify(
+				A3($the_sett$elm_syntax_dsl$Util$parentify, precedence, dir, exprl)),
+			$the_sett$elm_syntax_dsl$Util$nodify(
+				A3($the_sett$elm_syntax_dsl$Util$parentify, precedence, dir, exprr)));
 	});
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$binOpChain = F3(
 	function (head, binop, expressions) {
@@ -5860,12 +5931,29 @@ var $elm$core$List$append = F2(
 var $elm$core$List$concat = function (lists) {
 	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
 };
+var $elm$core$String$concat = function (strings) {
+	return A2($elm$core$String$join, '', strings);
+};
 var $stil4m$elm_syntax$Elm$Syntax$Expression$Application = function (a) {
 	return {$: 'Application', a: a};
 };
+var $stil4m$elm_syntax$Elm$Syntax$Infix$Left = {$: 'Left'};
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
+var $the_sett$elm_syntax_dsl$Util$nodifyAndParentifyAll = F2(
+	function (precedence, associativity) {
+		return $elm$core$List$map(
+			A2(
+				$elm$core$Basics$composeR,
+				A2($the_sett$elm_syntax_dsl$Util$parentify, precedence, associativity),
+				$the_sett$elm_syntax_dsl$Util$nodify));
+	});
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$apply = function (exprs) {
 	return $stil4m$elm_syntax$Elm$Syntax$Expression$Application(
-		$the_sett$elm_syntax_dsl$Util$nodifyAll(exprs));
+		A3($the_sett$elm_syntax_dsl$Util$nodifyAndParentifyAll, 10, $stil4m$elm_syntax$Elm$Syntax$Infix$Left, exprs));
 };
 var $stil4m$elm_syntax$Elm$Syntax$Expression$FunctionOrValue = F2(
 	function (a, b) {
@@ -5889,9 +5977,49 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$construct = F2(
 var $stil4m$elm_syntax$Elm$Syntax$Exposing$Explicit = function (a) {
 	return {$: 'Explicit', a: a};
 };
+var $the_sett$elm_syntax_dsl$Util$nodifyAll = $elm$core$List$map($the_sett$elm_syntax_dsl$Util$nodify);
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$exposeExplicit = function (topLevelExposes) {
 	return $stil4m$elm_syntax$Elm$Syntax$Exposing$Explicit(
 		$the_sett$elm_syntax_dsl$Util$nodifyAll(topLevelExposes));
+};
+var $the_sett$elm_syntax_dsl$Elm$Comments$Markdown = function (a) {
+	return {$: 'Markdown', a: a};
+};
+var $the_sett$elm_syntax_dsl$Elm$Comments$Comment = function (a) {
+	return {$: 'Comment', a: a};
+};
+var $the_sett$elm_syntax_dsl$Elm$Comments$addPart = F2(
+	function (_v0, part) {
+		var parts = _v0.a;
+		return $the_sett$elm_syntax_dsl$Elm$Comments$Comment(
+			A2($elm$core$List$cons, part, parts));
+	});
+var $the_sett$elm_syntax_dsl$Elm$CodeGen$markdown = F2(
+	function (mdown, comment) {
+		return A2(
+			$the_sett$elm_syntax_dsl$Elm$Comments$addPart,
+			comment,
+			$the_sett$elm_syntax_dsl$Elm$Comments$Markdown(mdown));
+	});
+var $author$project$ArraySized$Generate$fromNDoc = function (n) {
+	return _List_fromArray(
+		[
+			$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown(
+			function () {
+				if (n === 1) {
+					return 'Create with only 1 single given element';
+				} else {
+					var nAtLeast2 = n;
+					return $elm$core$String$concat(
+						_List_fromArray(
+							[
+								'Create with ',
+								$elm$core$String$fromInt(nAtLeast2),
+								' given elements in the order they are supplied'
+							]));
+				}
+			}())
+		]);
 };
 var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$FunctionTypeAnnotation = F2(
 	function (a, b) {
@@ -5933,35 +6061,48 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$importStmt = F3(
 			moduleName: $the_sett$elm_syntax_dsl$Util$nodify(modName)
 		};
 	});
-var $the_sett$elm_syntax_dsl$Elm$Comments$Markdown = function (a) {
-	return {$: 'Markdown', a: a};
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$Comment = function (a) {
-	return {$: 'Comment', a: a};
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$addPart = F2(
-	function (_v0, part) {
-		var parts = _v0.a;
-		return $the_sett$elm_syntax_dsl$Elm$Comments$Comment(
-			A2($elm$core$List$cons, part, parts));
+var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed = F2(
+	function (a, b) {
+		return {$: 'Typed', a: a, b: b};
 	});
-var $the_sett$elm_syntax_dsl$Elm$CodeGen$markdown = F2(
-	function (mdown, comment) {
+var $the_sett$elm_syntax_dsl$Elm$CodeGen$typed = F2(
+	function (name, args) {
 		return A2(
-			$the_sett$elm_syntax_dsl$Elm$Comments$addPart,
-			comment,
-			$the_sett$elm_syntax_dsl$Elm$Comments$Markdown(mdown));
+			$stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed,
+			$the_sett$elm_syntax_dsl$Util$nodify(
+				_Utils_Tuple2(_List_Nil, name)),
+			$the_sett$elm_syntax_dsl$Util$nodifyAll(args));
 	});
-var $author$project$ArraySized$Generate$nXType = function (x) {
-	return A2(
-		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-		$elm$core$String$concat(
+var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType = function (a) {
+	return {$: 'GenericType', a: a};
+};
+var $the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar = function (name) {
+	return $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType(name);
+};
+var $author$project$ArraySized$Generate$upNType = F2(
+	function (n, _var) {
+		return A2(
+			$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+			$elm$core$String$concat(
+				_List_fromArray(
+					[
+						'Up',
+						$elm$core$String$fromInt(n)
+					])),
 			_List_fromArray(
 				[
-					'N',
-					$elm$core$String$fromInt(x)
-				])),
-		_List_Nil);
+					$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar(_var)
+				]));
+	});
+var $author$project$ArraySized$Generate$inType = function (n) {
+	return A2(
+		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+		'In',
+		_List_fromArray(
+			[
+				A2($author$project$ArraySized$Generate$upNType, n, 'minX_'),
+				A2($author$project$ArraySized$Generate$upNType, n, 'maxX_')
+			]));
 };
 var $author$project$Extra$GenerateElm$Exposed = function (a) {
 	return {$: 'Exposed', a: a};
@@ -6081,9 +6222,6 @@ var $author$project$Extra$GenerateElm$packageExposedFunDecl = F6(
 			A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$CodeGen$varPattern, argumentNames),
 			expression);
 	});
-var $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression = function (a) {
-	return {$: 'ParenthesizedExpression', a: a};
-};
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$parens = function (expr) {
 	return $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression(
 		$the_sett$elm_syntax_dsl$Util$nodify(expr));
@@ -6092,7 +6230,6 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$BinOp = F3(
 	function (a, b, c) {
 		return {$: 'BinOp', a: a, b: b, c: c};
 	});
-var $stil4m$elm_syntax$Elm$Syntax$Infix$Left = {$: 'Left'};
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$infixLeft = $stil4m$elm_syntax$Elm$Syntax$Infix$Left;
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$piper = A3($the_sett$elm_syntax_dsl$Elm$CodeGen$BinOp, '|>', $the_sett$elm_syntax_dsl$Elm$CodeGen$infixLeft, 0);
 var $elm$core$List$repeatHelp = F3(
@@ -6122,12 +6259,6 @@ var $stil4m$elm_syntax$Elm$Syntax$Exposing$TypeOrAliasExpose = function (a) {
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$typeOrAliasExpose = function (name) {
 	return $stil4m$elm_syntax$Elm$Syntax$Exposing$TypeOrAliasExpose(name);
 };
-var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType = function (a) {
-	return {$: 'GenericType', a: a};
-};
-var $the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar = function (name) {
-	return $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType(name);
-};
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$fqVal = F2(
 	function (moduleName, name) {
 		return A2($stil4m$elm_syntax$Elm$Syntax$Expression$FunctionOrValue, moduleName, name);
@@ -6145,17 +6276,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 					A6(
 					$author$project$Extra$GenerateElm$packageExposedFunDecl,
 					$author$project$ArraySized$Generate$FromXTag,
-					_List_fromArray(
-						[
-							$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown(
-							$elm$core$String$concat(
-								_List_fromArray(
-									[
-										'Create an `ArraySized` with exactly ',
-										$elm$core$String$fromInt(x),
-										' elements in this order'
-									])))
-						]),
+					$author$project$ArraySized$Generate$fromNDoc(x),
 					A2(
 						$author$project$Extra$GenerateElm$funAnn,
 						A2(
@@ -6167,17 +6288,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 							'ArraySized',
 							_List_fromArray(
 								[
-									A2(
-									$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-									'In',
-									_List_fromArray(
-										[
-											$author$project$ArraySized$Generate$nXType(x),
-											A2(
-											$author$project$ArraySized$Generate$addXType,
-											x,
-											$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('a_'))
-										])),
+									$author$project$ArraySized$Generate$inType(x),
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')
 								]))),
 					$elm$core$String$concat(
@@ -6231,7 +6342,6 @@ var $author$project$ArraySized$Generate$l = function (x) {
 									_List_fromArray(
 										[
 											$the_sett$elm_syntax_dsl$Elm$CodeGen$val('Up'),
-											$the_sett$elm_syntax_dsl$Elm$CodeGen$val('n16'),
 											$the_sett$elm_syntax_dsl$Elm$CodeGen$parens(
 											A2(
 												$the_sett$elm_syntax_dsl$Elm$CodeGen$construct,
@@ -6293,7 +6403,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 								])))))
 			]),
 		name: _List_fromArray(
-			['ArraySized', 'Big']),
+			['ArraySized', 'Local']),
 		roleInPackage: $author$project$Extra$GenerateElm$PackageInternalModule
 	};
 };
@@ -6343,6 +6453,17 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$lambda = F2(
 				expression: $the_sett$elm_syntax_dsl$Util$nodify(expr)
 			});
 	});
+var $author$project$ArraySized$Generate$nXType = function (x) {
+	return A2(
+		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+		$elm$core$String$concat(
+			_List_fromArray(
+				[
+					'N',
+					$elm$core$String$fromInt(x)
+				])),
+		_List_Nil);
+};
 var $stil4m$elm_syntax$Elm$Syntax$Expression$TupledExpression = function (a) {
 	return {$: 'TupledExpression', a: a};
 };
@@ -6357,24 +6478,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 				return A6(
 					$author$project$Extra$GenerateElm$packageExposedFunDecl,
 					$author$project$ArraySized$Generate$FromXTag,
-					_List_fromArray(
-						[
-							$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown(
-							function () {
-								if (x === 1) {
-									return 'Create an `ArraySized` with exactly 1 element';
-								} else {
-									var x2AtLeast = x;
-									return $elm$core$String$concat(
-										_List_fromArray(
-											[
-												'Create an `ArraySized` with exactly ',
-												$elm$core$String$fromInt(x2AtLeast),
-												' elements in this order'
-											]));
-								}
-							}())
-						]),
+					$author$project$ArraySized$Generate$fromNDoc(x),
 					A2(
 						$author$project$Extra$GenerateElm$funAnn,
 						A2(
@@ -6386,17 +6490,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 							'ArraySized',
 							_List_fromArray(
 								[
-									A2(
-									$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-									'In',
-									_List_fromArray(
-										[
-											$author$project$ArraySized$Generate$nXType(x),
-											A2(
-											$author$project$ArraySized$Generate$addXType,
-											x,
-											$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('a_'))
-										])),
+									$author$project$ArraySized$Generate$inType(x),
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')
 								]))),
 					$elm$core$String$concat(
@@ -6561,7 +6655,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 		['ArraySized']),
 	roleInPackage: $author$project$Extra$GenerateElm$PackageExposedModule(
 		{
-			moduleComment: function (_v2) {
+			moduleComment: function (_v1) {
 				return _List_fromArray(
 					[
 						$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown('`l<x>`, `to<x>` declarations exposed from inside `module ArraySized`.')
@@ -7020,8 +7114,8 @@ var $agu_z$elm_zip$Internal$Encode$writeArchive = function (entries) {
 			}));
 };
 var $agu_z$elm_zip$Zip$toBytes = function (_v0) {
-	var entries = _v0.a;
-	return $agu_z$elm_zip$Internal$Encode$writeArchive(entries);
+	var allEntries = _v0.a;
+	return $agu_z$elm_zip$Internal$Encode$writeArchive(allEntries);
 };
 var $agu_z$elm_zip$Internal$Format$Entry = F2(
 	function (a, b) {
@@ -7213,8 +7307,8 @@ var $folkertdev$elm_flate$Checksum$Crc32$crc32 = $folkertdev$elm_flate$Checksum$
 var $folkertdev$elm_flate$Flate$crc32 = $folkertdev$elm_flate$Checksum$Crc32$crc32;
 var $agu_z$elm_zip$Internal$Encode$noBytes = $elm$bytes$Bytes$Encode$encode(
 	$elm$bytes$Bytes$Encode$sequence(_List_Nil));
-var $justinmimbs$date$Date$monthToNumber = function (m) {
-	switch (m.$) {
+var $agu_z$elm_zip$Zip$Entry$monthToNumber = function (month) {
+	switch (month.$) {
 		case 'Jan':
 			return 1;
 		case 'Feb':
@@ -7287,9 +7381,6 @@ var $elm$time$Time$toAdjustedMinutes = F2(
 				60000),
 			eras);
 	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $elm$time$Time$toCivil = function (minutes) {
 	var rawDay = A2($elm$time$Time$flooredDiv, minutes, 60 * 24) + 719468;
 	var era = (((rawDay >= 0) ? rawDay : (rawDay - 146096)) / 146097) | 0;
@@ -7391,7 +7482,7 @@ var $agu_z$elm_zip$Zip$Entry$posixToDos = function (_v0) {
 	var time = _v0.b;
 	var year = (A2($elm$time$Time$toYear, zone, time) - 1980) << 25;
 	var second = (A2($elm$time$Time$toSecond, zone, time) / 2) | 0;
-	var month = $justinmimbs$date$Date$monthToNumber(
+	var month = $agu_z$elm_zip$Zip$Entry$monthToNumber(
 		A2($elm$time$Time$toMonth, zone, time)) << 21;
 	var minute = A2($elm$time$Time$toMinute, zone, time) << 5;
 	var hour = A2($elm$time$Time$toHour, zone, time) << 11;
@@ -7491,14 +7582,14 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$normalModule = F2(
 				name,
 				$the_sett$elm_syntax_dsl$Elm$CodeGen$exposing_(exposes)));
 	});
-var $the_sett$elm_pretty_printer$Pretty$Concatenate = F2(
+var $the_sett$elm_pretty_printer$Internals$Concatenate = F2(
 	function (a, b) {
 		return {$: 'Concatenate', a: a, b: b};
 	});
 var $the_sett$elm_pretty_printer$Pretty$append = F2(
 	function (doc1, doc2) {
 		return A2(
-			$the_sett$elm_pretty_printer$Pretty$Concatenate,
+			$the_sett$elm_pretty_printer$Internals$Concatenate,
 			function (_v0) {
 				return doc1;
 			},
@@ -7517,13 +7608,13 @@ var $stil4m$elm_syntax$Elm$Syntax$Node$value = function (_v0) {
 };
 var $the_sett$elm_syntax_dsl$Util$denode = $stil4m$elm_syntax$Elm$Syntax$Node$value;
 var $the_sett$elm_syntax_dsl$Util$denodeAll = $elm$core$List$map($the_sett$elm_syntax_dsl$Util$denode);
-var $the_sett$elm_pretty_printer$Pretty$Line = F2(
+var $the_sett$elm_pretty_printer$Internals$Line = F2(
 	function (a, b) {
 		return {$: 'Line', a: a, b: b};
 	});
-var $the_sett$elm_pretty_printer$Pretty$line = A2($the_sett$elm_pretty_printer$Pretty$Line, ' ', '');
-var $the_sett$elm_pretty_printer$Pretty$Empty = {$: 'Empty'};
-var $the_sett$elm_pretty_printer$Pretty$empty = $the_sett$elm_pretty_printer$Pretty$Empty;
+var $the_sett$elm_pretty_printer$Pretty$line = A2($the_sett$elm_pretty_printer$Internals$Line, ' ', '');
+var $the_sett$elm_pretty_printer$Internals$Empty = {$: 'Empty'};
+var $the_sett$elm_pretty_printer$Pretty$empty = $the_sett$elm_pretty_printer$Internals$Empty;
 var $the_sett$elm_pretty_printer$Pretty$join = F2(
 	function (sep, docs) {
 		join:
@@ -7562,16 +7653,32 @@ var $the_sett$elm_pretty_printer$Pretty$join = F2(
 	});
 var $the_sett$elm_pretty_printer$Pretty$lines = $the_sett$elm_pretty_printer$Pretty$join($the_sett$elm_pretty_printer$Pretty$line);
 var $the_sett$elm_syntax_dsl$Util$denodeMaybe = $elm$core$Maybe$map($the_sett$elm_syntax_dsl$Util$denode);
-var $the_sett$elm_pretty_printer$Pretty$Text = function (a) {
-	return {$: 'Text', a: a};
-};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$KeywordTag = {$: 'KeywordTag'};
+var $the_sett$elm_pretty_printer$Internals$Text = F2(
+	function (a, b) {
+		return {$: 'Text', a: a, b: b};
+	});
+var $the_sett$elm_pretty_printer$Pretty$taggedString = F2(
+	function (val, tag) {
+		return A2(
+			$the_sett$elm_pretty_printer$Internals$Text,
+			val,
+			$elm$core$Maybe$Just(tag));
+	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$toToken = F2(
+	function (t, str) {
+		return A2($the_sett$elm_pretty_printer$Pretty$taggedString, str, t);
+	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$keyword = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$KeywordTag);
 var $elm$core$String$cons = _String_cons;
 var $elm$core$String$fromChar = function (_char) {
 	return A2($elm$core$String$cons, _char, '');
 };
 var $the_sett$elm_pretty_printer$Pretty$char = function (c) {
-	return $the_sett$elm_pretty_printer$Pretty$Text(
-		$elm$core$String$fromChar(c));
+	return A2(
+		$the_sett$elm_pretty_printer$Internals$Text,
+		$elm$core$String$fromChar(c),
+		$elm$core$Maybe$Nothing);
 };
 var $the_sett$elm_pretty_printer$Pretty$surround = F3(
 	function (left, right, doc) {
@@ -7589,29 +7696,37 @@ var $the_sett$elm_pretty_printer$Pretty$parens = function (doc) {
 			_Utils_chr(')')),
 		doc);
 };
-var $the_sett$elm_pretty_printer$Pretty$string = $the_sett$elm_pretty_printer$Pretty$Text;
+var $the_sett$elm_syntax_dsl$Elm$Pretty$SignatureTag = {$: 'SignatureTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$signature = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$SignatureTag);
+var $the_sett$elm_syntax_dsl$Elm$Pretty$StatementTag = {$: 'StatementTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$statement = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$StatementTag);
+var $the_sett$elm_pretty_printer$Pretty$string = function (val) {
+	return A2($the_sett$elm_pretty_printer$Internals$Text, val, $elm$core$Maybe$Nothing);
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$TypeTag = {$: 'TypeTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$type_ = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$TypeTag);
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTopLevelExpose = function (tlExpose) {
 	switch (tlExpose.$) {
 		case 'InfixExpose':
 			var val = tlExpose.a;
 			return $the_sett$elm_pretty_printer$Pretty$parens(
-				$the_sett$elm_pretty_printer$Pretty$string(val));
+				$the_sett$elm_syntax_dsl$Elm$Pretty$statement(val));
 		case 'FunctionExpose':
 			var val = tlExpose.a;
-			return $the_sett$elm_pretty_printer$Pretty$string(val);
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$signature(val);
 		case 'TypeOrAliasExpose':
 			var val = tlExpose.a;
-			return $the_sett$elm_pretty_printer$Pretty$string(val);
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$type_(val);
 		default:
 			var exposedType = tlExpose.a;
 			var _v1 = exposedType.open;
 			if (_v1.$ === 'Nothing') {
-				return $the_sett$elm_pretty_printer$Pretty$string(exposedType.name);
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$type_(exposedType.name);
 			} else {
 				return A2(
 					$the_sett$elm_pretty_printer$Pretty$a,
 					$the_sett$elm_pretty_printer$Pretty$string('(..)'),
-					$the_sett$elm_pretty_printer$Pretty$string(exposedType.name));
+					$the_sett$elm_syntax_dsl$Elm$Pretty$type_(exposedType.name));
 			}
 	}
 };
@@ -7753,8 +7868,7 @@ var $the_sett$elm_pretty_printer$Pretty$space = $the_sett$elm_pretty_printer$Pre
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExposing = function (exposing_) {
 	var exposings = function () {
 		if (exposing_.$ === 'All') {
-			return $the_sett$elm_pretty_printer$Pretty$parens(
-				$the_sett$elm_pretty_printer$Pretty$string('..'));
+			return $the_sett$elm_pretty_printer$Pretty$string('(..)');
 		} else {
 			var tll = exposing_.a;
 			return $the_sett$elm_pretty_printer$Pretty$parens(
@@ -7769,7 +7883,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExposing = function (exposing_) {
 		A2(
 			$the_sett$elm_pretty_printer$Pretty$a,
 			$the_sett$elm_pretty_printer$Pretty$space,
-			$the_sett$elm_pretty_printer$Pretty$string('exposing')));
+			$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('exposing')));
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyMaybe = F2(
 	function (prettyFn, maybeVal) {
@@ -7783,7 +7897,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleName = function (name) {
 	return A2(
 		$the_sett$elm_pretty_printer$Pretty$join,
 		$the_sett$elm_syntax_dsl$Elm$Pretty$dot,
-		A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, name));
+		A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Pretty$type_, name));
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameAlias = function (name) {
 	if (!name.b) {
@@ -7794,8 +7908,8 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameAlias = function (name) 
 			A2(
 				$the_sett$elm_pretty_printer$Pretty$join,
 				$the_sett$elm_syntax_dsl$Elm$Pretty$dot,
-				A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, name)),
-			$the_sett$elm_pretty_printer$Pretty$string('as '));
+				A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Pretty$type_, name)),
+			$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('as '));
 	}
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyImport = function (import_) {
@@ -7804,7 +7918,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyImport = function (import_) {
 		$the_sett$elm_pretty_printer$Pretty$space,
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('import'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('import'),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleName(
 				$the_sett$elm_syntax_dsl$Util$denode(import_.moduleName)),
 				A2(
@@ -7817,11 +7931,6 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyImport = function (import_) {
 				$the_sett$elm_syntax_dsl$Util$denodeMaybe(import_.exposingList))
 			]));
 };
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
 var $the_sett$elm_syntax_dsl$ImportsAndExposing$denode = $stil4m$elm_syntax$Elm$Syntax$Node$value;
 var $the_sett$elm_syntax_dsl$ImportsAndExposing$denodeMaybe = $elm$core$Maybe$map($the_sett$elm_syntax_dsl$ImportsAndExposing$denode);
 var $the_sett$elm_syntax_dsl$ImportsAndExposing$denodeAll = $elm$core$List$map($the_sett$elm_syntax_dsl$ImportsAndExposing$denode);
@@ -8012,6 +8121,531 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$importsPretty = function (file) {
 						$the_sett$elm_syntax_dsl$Util$denodeAll(file.imports)))));
 	}
 };
+var $the_sett$elm_syntax_dsl$Elm$Pretty$delimiters = function (doc) {
+	return A2(
+		$the_sett$elm_pretty_printer$Pretty$a,
+		$the_sett$elm_pretty_printer$Pretty$string('-}'),
+		A2(
+			$the_sett$elm_pretty_printer$Pretty$a,
+			$the_sett$elm_pretty_printer$Pretty$line,
+			A2(
+				$the_sett$elm_pretty_printer$Pretty$a,
+				doc,
+				$the_sett$elm_pretty_printer$Pretty$string('{-| '))));
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$getParts = function (_v0) {
+	var parts = _v0.a;
+	return $elm$core$List$reverse(parts);
+};
+var $the_sett$elm_syntax_dsl$Elm$Comments$DocTags = function (a) {
+	return {$: 'DocTags', a: a};
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$fitAndSplit = F2(
+	function (width, tags) {
+		if (!tags.b) {
+			return _List_Nil;
+		} else {
+			var t = tags.a;
+			var ts = tags.b;
+			var _v1 = A3(
+				$elm$core$List$foldl,
+				F2(
+					function (tag, _v2) {
+						var allSplits = _v2.a;
+						var curSplit = _v2.b;
+						var remaining = _v2.c;
+						return (_Utils_cmp(
+							$elm$core$String$length(tag),
+							remaining) < 1) ? _Utils_Tuple3(
+							allSplits,
+							A2($elm$core$List$cons, tag, curSplit),
+							remaining - $elm$core$String$length(tag)) : _Utils_Tuple3(
+							_Utils_ap(
+								allSplits,
+								_List_fromArray(
+									[
+										$elm$core$List$reverse(curSplit)
+									])),
+							_List_fromArray(
+								[tag]),
+							width - $elm$core$String$length(tag));
+					}),
+				_Utils_Tuple3(
+					_List_Nil,
+					_List_fromArray(
+						[t]),
+					width - $elm$core$String$length(t)),
+				ts);
+			var splitsExceptLast = _v1.a;
+			var lastSplit = _v1.b;
+			return _Utils_ap(
+				splitsExceptLast,
+				_List_fromArray(
+					[
+						$elm$core$List$reverse(lastSplit)
+					]));
+		}
+	});
+var $elm$core$List$sort = function (xs) {
+	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$mergeDocTags = function (innerParts) {
+	var _v0 = A3(
+		$elm$core$List$foldr,
+		F2(
+			function (part, _v1) {
+				var accum = _v1.a;
+				var context = _v1.b;
+				if (context.$ === 'Nothing') {
+					if (part.$ === 'DocTags') {
+						var tags = part.a;
+						return _Utils_Tuple2(
+							accum,
+							$elm$core$Maybe$Just(tags));
+					} else {
+						var otherPart = part;
+						return _Utils_Tuple2(
+							A2($elm$core$List$cons, otherPart, accum),
+							$elm$core$Maybe$Nothing);
+					}
+				} else {
+					var contextTags = context.a;
+					if (part.$ === 'DocTags') {
+						var tags = part.a;
+						return _Utils_Tuple2(
+							accum,
+							$elm$core$Maybe$Just(
+								_Utils_ap(contextTags, tags)));
+					} else {
+						var otherPart = part;
+						return _Utils_Tuple2(
+							A2(
+								$elm$core$List$cons,
+								otherPart,
+								A2(
+									$elm$core$List$cons,
+									$the_sett$elm_syntax_dsl$Elm$Comments$DocTags(
+										$elm$core$List$sort(contextTags)),
+									accum)),
+							$elm$core$Maybe$Nothing);
+					}
+				}
+			}),
+		_Utils_Tuple2(_List_Nil, $elm$core$Maybe$Nothing),
+		innerParts);
+	var partsExceptMaybeFirst = _v0.a;
+	var maybeFirstPart = _v0.b;
+	if (maybeFirstPart.$ === 'Nothing') {
+		return partsExceptMaybeFirst;
+	} else {
+		var tags = maybeFirstPart.a;
+		return A2(
+			$elm$core$List$cons,
+			$the_sett$elm_syntax_dsl$Elm$Comments$DocTags(
+				$elm$core$List$sort(tags)),
+			partsExceptMaybeFirst);
+	}
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$layoutTags = F2(
+	function (width, parts) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (part, _v0) {
+					var accumParts = _v0.a;
+					var accumDocTags = _v0.b;
+					if (part.$ === 'DocTags') {
+						var tags = part.a;
+						var splits = A2($the_sett$elm_syntax_dsl$Elm$Pretty$fitAndSplit, width, tags);
+						return _Utils_Tuple2(
+							_Utils_ap(
+								A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Comments$DocTags, splits),
+								accumParts),
+							_Utils_ap(accumDocTags, splits));
+					} else {
+						var otherPart = part;
+						return _Utils_Tuple2(
+							A2($elm$core$List$cons, otherPart, accumParts),
+							accumDocTags);
+					}
+				}),
+			_Utils_Tuple2(_List_Nil, _List_Nil),
+			$the_sett$elm_syntax_dsl$Elm$Pretty$mergeDocTags(parts));
+	});
+var $the_sett$elm_pretty_printer$Internals$NLine = F3(
+	function (a, b, c) {
+		return {$: 'NLine', a: a, b: b, c: c};
+	});
+var $the_sett$elm_pretty_printer$Internals$NNil = {$: 'NNil'};
+var $the_sett$elm_pretty_printer$Internals$NText = F3(
+	function (a, b, c) {
+		return {$: 'NText', a: a, b: b, c: c};
+	});
+var $the_sett$elm_pretty_printer$Internals$fits = F2(
+	function (w, normal) {
+		fits:
+		while (true) {
+			if (w < 0) {
+				return false;
+			} else {
+				switch (normal.$) {
+					case 'NNil':
+						return true;
+					case 'NText':
+						var text = normal.a;
+						var innerNormal = normal.b;
+						var $temp$w = w - $elm$core$String$length(text),
+							$temp$normal = innerNormal(_Utils_Tuple0);
+						w = $temp$w;
+						normal = $temp$normal;
+						continue fits;
+					default:
+						return true;
+				}
+			}
+		}
+	});
+var $the_sett$elm_pretty_printer$Internals$better = F4(
+	function (w, k, doc, doc2Fn) {
+		return A2($the_sett$elm_pretty_printer$Internals$fits, w - k, doc) ? doc : doc2Fn(_Utils_Tuple0);
+	});
+var $the_sett$elm_pretty_printer$Internals$best = F3(
+	function (width, startCol, x) {
+		var be = F3(
+			function (w, k, docs) {
+				be:
+				while (true) {
+					if (!docs.b) {
+						return $the_sett$elm_pretty_printer$Internals$NNil;
+					} else {
+						switch (docs.a.b.$) {
+							case 'Empty':
+								var _v1 = docs.a;
+								var i = _v1.a;
+								var _v2 = _v1.b;
+								var ds = docs.b;
+								var $temp$w = w,
+									$temp$k = k,
+									$temp$docs = ds;
+								w = $temp$w;
+								k = $temp$k;
+								docs = $temp$docs;
+								continue be;
+							case 'Concatenate':
+								var _v3 = docs.a;
+								var i = _v3.a;
+								var _v4 = _v3.b;
+								var doc = _v4.a;
+								var doc2 = _v4.b;
+								var ds = docs.b;
+								var $temp$w = w,
+									$temp$k = k,
+									$temp$docs = A2(
+									$elm$core$List$cons,
+									_Utils_Tuple2(
+										i,
+										doc(_Utils_Tuple0)),
+									A2(
+										$elm$core$List$cons,
+										_Utils_Tuple2(
+											i,
+											doc2(_Utils_Tuple0)),
+										ds));
+								w = $temp$w;
+								k = $temp$k;
+								docs = $temp$docs;
+								continue be;
+							case 'Nest':
+								var _v5 = docs.a;
+								var i = _v5.a;
+								var _v6 = _v5.b;
+								var j = _v6.a;
+								var doc = _v6.b;
+								var ds = docs.b;
+								var $temp$w = w,
+									$temp$k = k,
+									$temp$docs = A2(
+									$elm$core$List$cons,
+									_Utils_Tuple2(
+										i + j,
+										doc(_Utils_Tuple0)),
+									ds);
+								w = $temp$w;
+								k = $temp$k;
+								docs = $temp$docs;
+								continue be;
+							case 'Text':
+								var _v7 = docs.a;
+								var i = _v7.a;
+								var _v8 = _v7.b;
+								var text = _v8.a;
+								var maybeTag = _v8.b;
+								var ds = docs.b;
+								return A3(
+									$the_sett$elm_pretty_printer$Internals$NText,
+									text,
+									function (_v9) {
+										return A3(
+											be,
+											w,
+											k + $elm$core$String$length(text),
+											ds);
+									},
+									maybeTag);
+							case 'Line':
+								var _v10 = docs.a;
+								var i = _v10.a;
+								var _v11 = _v10.b;
+								var vsep = _v11.b;
+								var ds = docs.b;
+								return A3(
+									$the_sett$elm_pretty_printer$Internals$NLine,
+									i,
+									vsep,
+									function (_v12) {
+										return A3(
+											be,
+											w,
+											i + $elm$core$String$length(vsep),
+											ds);
+									});
+							case 'Union':
+								var _v13 = docs.a;
+								var i = _v13.a;
+								var _v14 = _v13.b;
+								var doc = _v14.a;
+								var doc2 = _v14.b;
+								var ds = docs.b;
+								return A4(
+									$the_sett$elm_pretty_printer$Internals$better,
+									w,
+									k,
+									A3(
+										be,
+										w,
+										k,
+										A2(
+											$elm$core$List$cons,
+											_Utils_Tuple2(i, doc),
+											ds)),
+									function (_v15) {
+										return A3(
+											be,
+											w,
+											k,
+											A2(
+												$elm$core$List$cons,
+												_Utils_Tuple2(i, doc2),
+												ds));
+									});
+							case 'Nesting':
+								var _v16 = docs.a;
+								var i = _v16.a;
+								var fn = _v16.b.a;
+								var ds = docs.b;
+								var $temp$w = w,
+									$temp$k = k,
+									$temp$docs = A2(
+									$elm$core$List$cons,
+									_Utils_Tuple2(
+										i,
+										fn(i)),
+									ds);
+								w = $temp$w;
+								k = $temp$k;
+								docs = $temp$docs;
+								continue be;
+							default:
+								var _v17 = docs.a;
+								var i = _v17.a;
+								var fn = _v17.b.a;
+								var ds = docs.b;
+								var $temp$w = w,
+									$temp$k = k,
+									$temp$docs = A2(
+									$elm$core$List$cons,
+									_Utils_Tuple2(
+										i,
+										fn(k)),
+									ds);
+								w = $temp$w;
+								k = $temp$k;
+								docs = $temp$docs;
+								continue be;
+						}
+					}
+				}
+			});
+		return A3(
+			be,
+			width,
+			startCol,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(0, x)
+				]));
+	});
+var $the_sett$elm_pretty_printer$Internals$copy = F2(
+	function (i, s) {
+		return (!i) ? '' : _Utils_ap(
+			s,
+			A2($the_sett$elm_pretty_printer$Internals$copy, i - 1, s));
+	});
+var $the_sett$elm_pretty_printer$Internals$layout = function (normal) {
+	var layoutInner = F2(
+		function (normal2, acc) {
+			layoutInner:
+			while (true) {
+				switch (normal2.$) {
+					case 'NNil':
+						return acc;
+					case 'NText':
+						var text = normal2.a;
+						var innerNormal = normal2.b;
+						var maybeTag = normal2.c;
+						var $temp$normal2 = innerNormal(_Utils_Tuple0),
+							$temp$acc = A2($elm$core$List$cons, text, acc);
+						normal2 = $temp$normal2;
+						acc = $temp$acc;
+						continue layoutInner;
+					default:
+						var i = normal2.a;
+						var sep = normal2.b;
+						var innerNormal = normal2.c;
+						var norm = innerNormal(_Utils_Tuple0);
+						if (norm.$ === 'NLine') {
+							var $temp$normal2 = innerNormal(_Utils_Tuple0),
+								$temp$acc = A2($elm$core$List$cons, '\n' + sep, acc);
+							normal2 = $temp$normal2;
+							acc = $temp$acc;
+							continue layoutInner;
+						} else {
+							var $temp$normal2 = innerNormal(_Utils_Tuple0),
+								$temp$acc = A2(
+								$elm$core$List$cons,
+								'\n' + (A2($the_sett$elm_pretty_printer$Internals$copy, i, ' ') + sep),
+								acc);
+							normal2 = $temp$normal2;
+							acc = $temp$acc;
+							continue layoutInner;
+						}
+				}
+			}
+		});
+	return $elm$core$String$concat(
+		$elm$core$List$reverse(
+			A2(layoutInner, normal, _List_Nil)));
+};
+var $the_sett$elm_pretty_printer$Pretty$pretty = F2(
+	function (w, doc) {
+		return $the_sett$elm_pretty_printer$Internals$layout(
+			A3($the_sett$elm_pretty_printer$Internals$best, w, 0, doc));
+	});
+var $the_sett$elm_pretty_printer$Internals$Column = function (a) {
+	return {$: 'Column', a: a};
+};
+var $the_sett$elm_pretty_printer$Pretty$column = $the_sett$elm_pretty_printer$Internals$Column;
+var $the_sett$elm_pretty_printer$Internals$Nest = F2(
+	function (a, b) {
+		return {$: 'Nest', a: a, b: b};
+	});
+var $the_sett$elm_pretty_printer$Pretty$nest = F2(
+	function (depth, doc) {
+		return A2(
+			$the_sett$elm_pretty_printer$Internals$Nest,
+			depth,
+			function (_v0) {
+				return doc;
+			});
+	});
+var $the_sett$elm_pretty_printer$Internals$Nesting = function (a) {
+	return {$: 'Nesting', a: a};
+};
+var $the_sett$elm_pretty_printer$Pretty$nesting = $the_sett$elm_pretty_printer$Internals$Nesting;
+var $the_sett$elm_pretty_printer$Pretty$align = function (doc) {
+	return $the_sett$elm_pretty_printer$Pretty$column(
+		function (currentColumn) {
+			return $the_sett$elm_pretty_printer$Pretty$nesting(
+				function (indentLvl) {
+					return A2($the_sett$elm_pretty_printer$Pretty$nest, currentColumn - indentLvl, doc);
+				});
+		});
+};
+var $the_sett$elm_pretty_printer$Pretty$hang = F2(
+	function (spaces, doc) {
+		return $the_sett$elm_pretty_printer$Pretty$align(
+			A2($the_sett$elm_pretty_printer$Pretty$nest, spaces, doc));
+	});
+var $the_sett$elm_pretty_printer$Pretty$indent = F2(
+	function (spaces, doc) {
+		return A2(
+			$the_sett$elm_pretty_printer$Pretty$hang,
+			spaces,
+			A2(
+				$the_sett$elm_pretty_printer$Pretty$append,
+				$the_sett$elm_pretty_printer$Pretty$string(
+					A2($the_sett$elm_pretty_printer$Internals$copy, spaces, ' ')),
+				doc));
+	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCode = function (val) {
+	return A2(
+		$the_sett$elm_pretty_printer$Pretty$indent,
+		4,
+		$the_sett$elm_pretty_printer$Pretty$string(val));
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyMarkdown = function (val) {
+	return A2(
+		$the_sett$elm_pretty_printer$Pretty$a,
+		$the_sett$elm_pretty_printer$Pretty$line,
+		$the_sett$elm_pretty_printer$Pretty$string(val));
+};
+var $the_sett$elm_pretty_printer$Pretty$words = $the_sett$elm_pretty_printer$Pretty$join($the_sett$elm_pretty_printer$Pretty$space);
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTags = function (tags) {
+	return A2(
+		$the_sett$elm_pretty_printer$Pretty$a,
+		$the_sett$elm_pretty_printer$Pretty$line,
+		$the_sett$elm_pretty_printer$Pretty$words(
+			_List_fromArray(
+				[
+					$the_sett$elm_pretty_printer$Pretty$string('@docs'),
+					A2(
+					$the_sett$elm_pretty_printer$Pretty$join,
+					$the_sett$elm_pretty_printer$Pretty$string(', '),
+					A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, tags))
+				])));
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCommentPart = function (part) {
+	switch (part.$) {
+		case 'Markdown':
+			var val = part.a;
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyMarkdown(val);
+		case 'Code':
+			var val = part.a;
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCode(val);
+		default:
+			var tags = part.a;
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTags(tags);
+	}
+};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$layoutFileComment = F2(
+	function (width, fileComment) {
+		var _v0 = A2(
+			$the_sett$elm_syntax_dsl$Elm$Pretty$layoutTags,
+			width,
+			$the_sett$elm_syntax_dsl$Elm$Pretty$getParts(fileComment));
+		var parts = _v0.a;
+		var splits = _v0.b;
+		return _Utils_Tuple2(
+			A2(
+				$the_sett$elm_pretty_printer$Pretty$pretty,
+				width,
+				$the_sett$elm_syntax_dsl$Elm$Pretty$delimiters(
+					$the_sett$elm_pretty_printer$Pretty$lines(
+						A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCommentPart, parts)))),
+			splits);
+	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$CommentTag = {$: 'CommentTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$comment = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$CommentTag);
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyComments = function (comments) {
 	if (!comments.b) {
 		return $the_sett$elm_pretty_printer$Pretty$empty;
@@ -8023,32 +8657,31 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyComments = function (comments) {
 				$the_sett$elm_pretty_printer$Pretty$a,
 				$the_sett$elm_pretty_printer$Pretty$line,
 				$the_sett$elm_pretty_printer$Pretty$lines(
-					A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, comments))));
+					A2(
+						$elm$core$List$map,
+						$the_sett$elm_syntax_dsl$Elm$Pretty$comment,
+						A3(
+							$elm$core$List$foldl,
+							F2(
+								function (line, lines) {
+									return _Utils_ap(
+										A2($elm$core$String$split, '\n', line),
+										lines);
+								}),
+							_List_Nil,
+							comments)))));
 	}
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$doubleLines = $the_sett$elm_pretty_printer$Pretty$join(
 	A2($the_sett$elm_pretty_printer$Pretty$a, $the_sett$elm_pretty_printer$Pretty$line, $the_sett$elm_pretty_printer$Pretty$line));
-var $the_sett$elm_pretty_printer$Pretty$Nest = F2(
-	function (a, b) {
-		return {$: 'Nest', a: a, b: b};
-	});
-var $the_sett$elm_pretty_printer$Pretty$nest = F2(
-	function (depth, doc) {
-		return A2(
-			$the_sett$elm_pretty_printer$Pretty$Nest,
-			depth,
-			function (_v0) {
-				return doc;
-			});
-	});
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyDocumentation = function (docs) {
-	return $the_sett$elm_pretty_printer$Pretty$string(docs);
+	return $the_sett$elm_syntax_dsl$Elm$Pretty$comment(docs);
 };
-var $the_sett$elm_pretty_printer$Pretty$Union = F2(
+var $the_sett$elm_pretty_printer$Internals$Union = F2(
 	function (a, b) {
 		return {$: 'Union', a: a, b: b};
 	});
-var $the_sett$elm_pretty_printer$Pretty$flatten = function (doc) {
+var $the_sett$elm_pretty_printer$Internals$flatten = function (doc) {
 	flatten:
 	while (true) {
 		switch (doc.$) {
@@ -8056,23 +8689,23 @@ var $the_sett$elm_pretty_printer$Pretty$flatten = function (doc) {
 				var doc1 = doc.a;
 				var doc2 = doc.b;
 				return A2(
-					$the_sett$elm_pretty_printer$Pretty$Concatenate,
+					$the_sett$elm_pretty_printer$Internals$Concatenate,
 					function (_v1) {
-						return $the_sett$elm_pretty_printer$Pretty$flatten(
+						return $the_sett$elm_pretty_printer$Internals$flatten(
 							doc1(_Utils_Tuple0));
 					},
 					function (_v2) {
-						return $the_sett$elm_pretty_printer$Pretty$flatten(
+						return $the_sett$elm_pretty_printer$Internals$flatten(
 							doc2(_Utils_Tuple0));
 					});
 			case 'Nest':
 				var i = doc.a;
 				var doc1 = doc.b;
 				return A2(
-					$the_sett$elm_pretty_printer$Pretty$Nest,
+					$the_sett$elm_pretty_printer$Internals$Nest,
 					i,
 					function (_v3) {
-						return $the_sett$elm_pretty_printer$Pretty$flatten(
+						return $the_sett$elm_pretty_printer$Internals$flatten(
 							doc1(_Utils_Tuple0));
 					});
 			case 'Union':
@@ -8083,7 +8716,7 @@ var $the_sett$elm_pretty_printer$Pretty$flatten = function (doc) {
 				continue flatten;
 			case 'Line':
 				var hsep = doc.a;
-				return $the_sett$elm_pretty_printer$Pretty$Text(hsep);
+				return A2($the_sett$elm_pretty_printer$Internals$Text, hsep, $elm$core$Maybe$Nothing);
 			case 'Nesting':
 				var fn = doc.a;
 				var $temp$doc = fn(0);
@@ -8102,8 +8735,8 @@ var $the_sett$elm_pretty_printer$Pretty$flatten = function (doc) {
 };
 var $the_sett$elm_pretty_printer$Pretty$group = function (doc) {
 	return A2(
-		$the_sett$elm_pretty_printer$Pretty$Union,
-		$the_sett$elm_pretty_printer$Pretty$flatten(doc),
+		$the_sett$elm_pretty_printer$Internals$Union,
+		$the_sett$elm_pretty_printer$Internals$flatten(doc),
 		doc);
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$isNakedCompound = function (typeAnn) {
@@ -8139,14 +8772,13 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameDot = function (name) {
 			A2(
 				$the_sett$elm_pretty_printer$Pretty$join,
 				$the_sett$elm_syntax_dsl$Elm$Pretty$dot,
-				A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, name)));
+				A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Pretty$type_, name)));
 	}
 };
 var $the_sett$elm_pretty_printer$Pretty$separators = function (sep) {
 	return $the_sett$elm_pretty_printer$Pretty$join(
-		A2($the_sett$elm_pretty_printer$Pretty$Line, sep, sep));
+		A2($the_sett$elm_pretty_printer$Internals$Line, sep, sep));
 };
-var $the_sett$elm_pretty_printer$Pretty$words = $the_sett$elm_pretty_printer$Pretty$join($the_sett$elm_pretty_printer$Pretty$space);
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyFieldTypeAnn = function (_v8) {
 	var name = _v8.a;
 	var ann = _v8.b;
@@ -8160,7 +8792,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyFieldTypeAnn = function (_v8) {
 						$the_sett$elm_pretty_printer$Pretty$words(
 						_List_fromArray(
 							[
-								$the_sett$elm_pretty_printer$Pretty$string(name),
+								$the_sett$elm_syntax_dsl$Elm$Pretty$statement(name),
 								$the_sett$elm_pretty_printer$Pretty$string(':')
 							])),
 						$the_sett$elm_syntax_dsl$Elm$Pretty$prettyTypeAnnotation(ann)
@@ -8224,7 +8856,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyGenericRecord = F2(
 				_List_fromArray(
 					[
 						$the_sett$elm_pretty_printer$Pretty$string('{'),
-						$the_sett$elm_pretty_printer$Pretty$string(paramName)
+						$the_sett$elm_syntax_dsl$Elm$Pretty$statement(paramName)
 					])));
 		var close = A2(
 			$the_sett$elm_pretty_printer$Pretty$a,
@@ -8321,13 +8953,13 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTypeAnnotation = function (typeAnn
 	switch (typeAnn.$) {
 		case 'GenericType':
 			var val = typeAnn.a;
-			return $the_sett$elm_pretty_printer$Pretty$string(val);
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$statement(val);
 		case 'Typed':
 			var fqName = typeAnn.a;
 			var anns = typeAnn.b;
 			return A2($the_sett$elm_syntax_dsl$Elm$Pretty$prettyTyped, fqName, anns);
 		case 'Unit':
-			return $the_sett$elm_pretty_printer$Pretty$string('()');
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$statement('()');
 		case 'Tupled':
 			var anns = typeAnn.a;
 			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTupled(anns);
@@ -8365,7 +8997,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTyped = F2(
 		var typeName = _v0.b;
 		var typeDoc = A2(
 			$the_sett$elm_pretty_printer$Pretty$a,
-			$the_sett$elm_pretty_printer$Pretty$string(typeName),
+			$the_sett$elm_syntax_dsl$Elm$Pretty$type_(typeName),
 			$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameDot(moduleName));
 		return $the_sett$elm_pretty_printer$Pretty$words(
 			_List_fromArray(
@@ -8379,7 +9011,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyValueConstructor = function (cons)
 			$the_sett$elm_pretty_printer$Pretty$lines(
 				_List_fromArray(
 					[
-						$the_sett$elm_pretty_printer$Pretty$string(
+						$the_sett$elm_syntax_dsl$Elm$Pretty$type_(
 						$the_sett$elm_syntax_dsl$Util$denode(cons.name)),
 						$the_sett$elm_pretty_printer$Pretty$lines(
 						A2(
@@ -8397,14 +9029,14 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyValueConstructors = function (cons
 			$the_sett$elm_pretty_printer$Pretty$line),
 		A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Pretty$prettyValueConstructor, constructors));
 };
-var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType = function (type_) {
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType = function (elmType) {
 	var customTypePretty = A2(
 		$the_sett$elm_pretty_printer$Pretty$nest,
 		4,
 		A2(
 			$the_sett$elm_pretty_printer$Pretty$a,
 			$the_sett$elm_syntax_dsl$Elm$Pretty$prettyValueConstructors(
-				$the_sett$elm_syntax_dsl$Util$denodeAll(type_.constructors)),
+				$the_sett$elm_syntax_dsl$Util$denodeAll(elmType.constructors)),
 			A2(
 				$the_sett$elm_pretty_printer$Pretty$a,
 				$the_sett$elm_pretty_printer$Pretty$string('= '),
@@ -8414,14 +9046,14 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType = function (type_) {
 					$the_sett$elm_pretty_printer$Pretty$words(
 						_List_fromArray(
 							[
-								$the_sett$elm_pretty_printer$Pretty$string('type'),
-								$the_sett$elm_pretty_printer$Pretty$string(
-								$the_sett$elm_syntax_dsl$Util$denode(type_.name)),
+								$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('type'),
+								$the_sett$elm_syntax_dsl$Elm$Pretty$type_(
+								$the_sett$elm_syntax_dsl$Util$denode(elmType.name)),
 								$the_sett$elm_pretty_printer$Pretty$words(
 								A2(
 									$elm$core$List$map,
-									$the_sett$elm_pretty_printer$Pretty$string,
-									$the_sett$elm_syntax_dsl$Util$denodeAll(type_.generics)))
+									$the_sett$elm_syntax_dsl$Elm$Pretty$statement,
+									$the_sett$elm_syntax_dsl$Util$denodeAll(elmType.generics)))
 							]))))));
 	return $the_sett$elm_pretty_printer$Pretty$lines(
 		_List_fromArray(
@@ -8429,7 +9061,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType = function (type_) {
 				A2(
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyMaybe,
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyDocumentation,
-				$the_sett$elm_syntax_dsl$Util$denodeMaybe(type_.documentation)),
+				$the_sett$elm_syntax_dsl$Util$denodeMaybe(elmType.documentation)),
 				customTypePretty
 			]));
 };
@@ -8582,23 +9214,6 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$adjustExpressionParentheses = F2(
 		return addParens(
 			removeParens(expression));
 	});
-var $the_sett$elm_pretty_printer$Pretty$Column = function (a) {
-	return {$: 'Column', a: a};
-};
-var $the_sett$elm_pretty_printer$Pretty$column = $the_sett$elm_pretty_printer$Pretty$Column;
-var $the_sett$elm_pretty_printer$Pretty$Nesting = function (a) {
-	return {$: 'Nesting', a: a};
-};
-var $the_sett$elm_pretty_printer$Pretty$nesting = $the_sett$elm_pretty_printer$Pretty$Nesting;
-var $the_sett$elm_pretty_printer$Pretty$align = function (doc) {
-	return $the_sett$elm_pretty_printer$Pretty$column(
-		function (currentColumn) {
-			return $the_sett$elm_pretty_printer$Pretty$nesting(
-				function (indentLvl) {
-					return A2($the_sett$elm_pretty_printer$Pretty$nest, currentColumn - indentLvl, doc);
-				});
-		});
-};
 var $elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -8642,28 +9257,8 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$escapeChar = function (val) {
 	}
 };
 var $elm$core$String$fromFloat = _String_fromNumber;
-var $the_sett$elm_pretty_printer$Pretty$copy = F2(
-	function (i, s) {
-		return (!i) ? '' : _Utils_ap(
-			s,
-			A2($the_sett$elm_pretty_printer$Pretty$copy, i - 1, s));
-	});
-var $the_sett$elm_pretty_printer$Pretty$hang = F2(
-	function (spaces, doc) {
-		return $the_sett$elm_pretty_printer$Pretty$align(
-			A2($the_sett$elm_pretty_printer$Pretty$nest, spaces, doc));
-	});
-var $the_sett$elm_pretty_printer$Pretty$indent = F2(
-	function (spaces, doc) {
-		return A2(
-			$the_sett$elm_pretty_printer$Pretty$hang,
-			spaces,
-			A2(
-				$the_sett$elm_pretty_printer$Pretty$append,
-				$the_sett$elm_pretty_printer$Pretty$string(
-					A2($the_sett$elm_pretty_printer$Pretty$copy, spaces, ' ')),
-				doc));
-	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$LiteralTag = {$: 'LiteralTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$literal = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$LiteralTag);
 var $elm$core$Tuple$mapSecond = F2(
 	function (func, _v0) {
 		var x = _v0.a;
@@ -8672,6 +9267,10 @@ var $elm$core$Tuple$mapSecond = F2(
 			x,
 			func(y));
 	});
+var $the_sett$elm_syntax_dsl$Elm$Pretty$NumberTag = {$: 'NumberTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$number = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$NumberTag);
+var $the_sett$elm_syntax_dsl$Elm$Pretty$OperatorTag = {$: 'OperatorTag'};
+var $the_sett$elm_syntax_dsl$Elm$Pretty$operator = $the_sett$elm_syntax_dsl$Elm$Pretty$toToken($the_sett$elm_syntax_dsl$Elm$Pretty$OperatorTag);
 var $the_sett$elm_syntax_dsl$Elm$Pretty$optionalGroup = F2(
 	function (flag, doc) {
 		return flag ? doc : $the_sett$elm_pretty_printer$Pretty$group(doc);
@@ -8805,19 +9404,15 @@ var $the_sett$elm_pretty_printer$Pretty$braces = function (doc) {
 var $the_sett$elm_syntax_dsl$Elm$Pretty$quotes = function (doc) {
 	return A3(
 		$the_sett$elm_pretty_printer$Pretty$surround,
-		$the_sett$elm_pretty_printer$Pretty$char(
-			_Utils_chr('\"')),
-		$the_sett$elm_pretty_printer$Pretty$char(
-			_Utils_chr('\"')),
+		$the_sett$elm_syntax_dsl$Elm$Pretty$literal('\"'),
+		$the_sett$elm_syntax_dsl$Elm$Pretty$literal('\"'),
 		doc);
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$singleQuotes = function (doc) {
 	return A3(
 		$the_sett$elm_pretty_printer$Pretty$surround,
-		$the_sett$elm_pretty_printer$Pretty$char(
-			_Utils_chr('\'')),
-		$the_sett$elm_pretty_printer$Pretty$char(
-			_Utils_chr('\'')),
+		$the_sett$elm_syntax_dsl$Elm$Pretty$literal('\''),
+		$the_sett$elm_syntax_dsl$Elm$Pretty$literal('\''),
 		doc);
 };
 var $elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
@@ -8942,29 +9537,29 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 		var _v0 = A2($the_sett$elm_syntax_dsl$Elm$Pretty$adjustPatternParentheses, isTop, pattern);
 		switch (_v0.$) {
 			case 'AllPattern':
-				return $the_sett$elm_pretty_printer$Pretty$string('_');
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$statement('_');
 			case 'UnitPattern':
-				return $the_sett$elm_pretty_printer$Pretty$string('()');
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$statement('()');
 			case 'CharPattern':
 				var val = _v0.a;
 				return $the_sett$elm_syntax_dsl$Elm$Pretty$singleQuotes(
-					$the_sett$elm_pretty_printer$Pretty$string(
+					$the_sett$elm_syntax_dsl$Elm$Pretty$literal(
 						$the_sett$elm_syntax_dsl$Elm$Pretty$escapeChar(val)));
 			case 'StringPattern':
 				var val = _v0.a;
 				return $the_sett$elm_syntax_dsl$Elm$Pretty$quotes(
-					$the_sett$elm_pretty_printer$Pretty$string(val));
+					$the_sett$elm_syntax_dsl$Elm$Pretty$literal(val));
 			case 'IntPattern':
 				var val = _v0.a;
-				return $the_sett$elm_pretty_printer$Pretty$string(
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$number(
 					$elm$core$String$fromInt(val));
 			case 'HexPattern':
 				var val = _v0.a;
-				return $the_sett$elm_pretty_printer$Pretty$string(
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$number(
 					$the_sett$elm_syntax_dsl$Elm$Pretty$toHexString(val));
 			case 'FloatPattern':
 				var val = _v0.a;
-				return $the_sett$elm_pretty_printer$Pretty$string(
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$number(
 					$elm$core$String$fromFloat(val));
 			case 'TuplePattern':
 				var vals = _v0.a;
@@ -8994,7 +9589,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 							$the_sett$elm_pretty_printer$Pretty$string(', '),
 							A2(
 								$elm$core$List$map,
-								$the_sett$elm_pretty_printer$Pretty$string,
+								$the_sett$elm_syntax_dsl$Elm$Pretty$statement,
 								$the_sett$elm_syntax_dsl$Util$denodeAll(fields)))));
 			case 'UnConsPattern':
 				var hdPat = _v0.a;
@@ -9006,7 +9601,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner,
 							false,
 							$the_sett$elm_syntax_dsl$Util$denode(hdPat)),
-							$the_sett$elm_pretty_printer$Pretty$string('::'),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$operator('::'),
 							A2(
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner,
 							false,
@@ -9039,7 +9634,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 				}
 			case 'VarPattern':
 				var _var = _v0.a;
-				return $the_sett$elm_pretty_printer$Pretty$string(_var);
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$statement(_var);
 			case 'NamedPattern':
 				var qnRef = _v0.a;
 				var listPats = _v0.b;
@@ -9048,7 +9643,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 						$elm$core$List$cons,
 						A2(
 							$the_sett$elm_pretty_printer$Pretty$a,
-							$the_sett$elm_pretty_printer$Pretty$string(qnRef.name),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$type_(qnRef.name),
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameDot(qnRef.moduleName)),
 						A2(
 							$elm$core$List$map,
@@ -9064,8 +9659,8 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner = F2(
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner,
 							false,
 							$the_sett$elm_syntax_dsl$Util$denode(pat)),
-							$the_sett$elm_pretty_printer$Pretty$string('as'),
-							$the_sett$elm_pretty_printer$Pretty$string(
+							$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('as'),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 							$the_sett$elm_syntax_dsl$Util$denode(name))
 						]));
 			default:
@@ -9084,6 +9679,25 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyArgs = function (args) {
 			$the_sett$elm_syntax_dsl$Elm$Pretty$prettyPatternInner(false),
 			args));
 };
+var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyFunctionOrValue = F2(
+	function (modl, val) {
+		var token = function () {
+			var _v0 = $elm$core$String$uncons(val);
+			if (_v0.$ === 'Just') {
+				var _v1 = _v0.a;
+				var c = _v1.a;
+				return $elm$core$Char$isUpper(c) ? $the_sett$elm_syntax_dsl$Elm$Pretty$type_(val) : $the_sett$elm_syntax_dsl$Elm$Pretty$statement(val);
+			} else {
+				return $the_sett$elm_syntax_dsl$Elm$Pretty$statement(val);
+			}
+		}();
+		return _Utils_Tuple2(
+			A2(
+				$the_sett$elm_pretty_printer$Pretty$a,
+				token,
+				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameDot(modl)),
+			false);
+	});
 var $elm$core$String$replace = F3(
 	function (before, after, string) {
 		return A2(
@@ -9108,7 +9722,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$escape = function (val) {
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyLiteral = function (val) {
 	return $the_sett$elm_syntax_dsl$Elm$Pretty$quotes(
-		$the_sett$elm_pretty_printer$Pretty$string(
+		$the_sett$elm_syntax_dsl$Elm$Pretty$literal(
 			$the_sett$elm_syntax_dsl$Elm$Pretty$escape(val)));
 };
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPattern = function (pattern) {
@@ -9125,7 +9739,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettySignature = function (sig) {
 						$the_sett$elm_pretty_printer$Pretty$words(
 						_List_fromArray(
 							[
-								$the_sett$elm_pretty_printer$Pretty$string(
+								$the_sett$elm_syntax_dsl$Elm$Pretty$signature(
 								$the_sett$elm_syntax_dsl$Util$denode(sig.name)),
 								$the_sett$elm_pretty_printer$Pretty$string(':')
 							])),
@@ -9133,7 +9747,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettySignature = function (sig) {
 						$the_sett$elm_syntax_dsl$Util$denode(sig.typeAnnotation))
 					]))));
 };
-var $the_sett$elm_pretty_printer$Pretty$tightline = A2($the_sett$elm_pretty_printer$Pretty$Line, '', '');
+var $the_sett$elm_pretty_printer$Pretty$tightline = A2($the_sett$elm_pretty_printer$Internals$Line, '', '');
 var $the_sett$elm_syntax_dsl$Elm$Pretty$topContext = {isLeftPipe: false, isTop: true, precedence: 11};
 var $elm$core$List$unzip = function (pairs) {
 	var step = F2(
@@ -9230,10 +9844,10 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCaseBlock = F2(
 								$the_sett$elm_pretty_printer$Pretty$lines(
 									_List_fromArray(
 										[
-											$the_sett$elm_pretty_printer$Pretty$string('case'),
+											$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('case'),
 											caseExpression
 										])))),
-							$the_sett$elm_pretty_printer$Pretty$string('of')
+							$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('of')
 						])));
 		}();
 		return _Utils_Tuple2(
@@ -9252,7 +9866,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 		switch (_v26.$) {
 			case 'UnitExpr':
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string('()'),
+					$the_sett$elm_syntax_dsl$Elm$Pretty$statement('()'),
 					false);
 			case 'Application':
 				var exprs = _v26.a;
@@ -9266,12 +9880,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 			case 'FunctionOrValue':
 				var modl = _v26.a;
 				var val = _v26.b;
-				return _Utils_Tuple2(
-					A2(
-						$the_sett$elm_pretty_printer$Pretty$a,
-						$the_sett$elm_pretty_printer$Pretty$string(val),
-						$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleNameDot(modl)),
-					false);
+				return A2($the_sett$elm_syntax_dsl$Elm$Pretty$prettyFunctionOrValue, modl, val);
 			case 'IfBlock':
 				var exprBool = _v26.a;
 				var exprTrue = _v26.b;
@@ -9281,29 +9890,29 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 				var symbol = _v26.a;
 				return _Utils_Tuple2(
 					$the_sett$elm_pretty_printer$Pretty$parens(
-						$the_sett$elm_pretty_printer$Pretty$string(symbol)),
+						$the_sett$elm_syntax_dsl$Elm$Pretty$statement(symbol)),
 					false);
 			case 'Operator':
 				var symbol = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string(symbol),
+					$the_sett$elm_syntax_dsl$Elm$Pretty$operator(symbol),
 					false);
 			case 'Integer':
 				var val = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string(
+					$the_sett$elm_syntax_dsl$Elm$Pretty$number(
 						$elm$core$String$fromInt(val)),
 					false);
 			case 'Hex':
 				var val = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string(
+					$the_sett$elm_syntax_dsl$Elm$Pretty$number(
 						$the_sett$elm_syntax_dsl$Elm$Pretty$toHexString(val)),
 					false);
 			case 'Floatable':
 				var val = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string(
+					$the_sett$elm_syntax_dsl$Elm$Pretty$number(
 						$elm$core$String$fromFloat(val)),
 					false);
 			case 'Negation':
@@ -9319,7 +9928,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 					A2(
 						$the_sett$elm_pretty_printer$Pretty$a,
 						prettyExpr,
-						$the_sett$elm_pretty_printer$Pretty$string('-')),
+						$the_sett$elm_syntax_dsl$Elm$Pretty$statement('-')),
 					alwaysBreak);
 			case 'Literal':
 				var val = _v26.a;
@@ -9330,7 +9939,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 				var val = _v26.a;
 				return _Utils_Tuple2(
 					$the_sett$elm_syntax_dsl$Elm$Pretty$singleQuotes(
-						$the_sett$elm_pretty_printer$Pretty$string(
+						$the_sett$elm_syntax_dsl$Elm$Pretty$literal(
 							$the_sett$elm_syntax_dsl$Elm$Pretty$escapeChar(val))),
 					false);
 			case 'TupledExpression':
@@ -9361,7 +9970,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 			case 'RecordAccessFunction':
 				var field = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string(field),
+					$the_sett$elm_syntax_dsl$Elm$Pretty$statement(field),
 					false);
 			case 'RecordUpdateExpression':
 				var _var = _v26.a;
@@ -9370,7 +9979,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner = F3(
 			default:
 				var val = _v26.a;
 				return _Utils_Tuple2(
-					$the_sett$elm_pretty_printer$Pretty$string('glsl'),
+					$the_sett$elm_syntax_dsl$Elm$Pretty$statement('glsl'),
 					true);
 		}
 	});
@@ -9404,7 +10013,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyFunctionImplementation = function 
 				$the_sett$elm_pretty_printer$Pretty$words(
 					_List_fromArray(
 						[
-							$the_sett$elm_pretty_printer$Pretty$string(
+							$the_sett$elm_syntax_dsl$Elm$Pretty$signature(
 							$the_sett$elm_syntax_dsl$Util$denode(impl.name)),
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyArgs(
 							$the_sett$elm_syntax_dsl$Util$denodeAll(impl._arguments)),
@@ -9446,14 +10055,14 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyIfBlock = F4(
 										$the_sett$elm_pretty_printer$Pretty$lines(
 											_List_fromArray(
 												[
-													$the_sett$elm_pretty_printer$Pretty$string('if'),
+													$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('if'),
 													A3(
 													$the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner,
 													$the_sett$elm_syntax_dsl$Elm$Pretty$topContext,
 													4,
 													$the_sett$elm_syntax_dsl$Util$denode(innerExprBool)).a
 												])))),
-									$the_sett$elm_pretty_printer$Pretty$string('then')
+									$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('then')
 								])));
 				}();
 				var falsePart = function () {
@@ -9479,7 +10088,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyIfBlock = F4(
 				}();
 				var elsePart = A2(
 					$the_sett$elm_pretty_printer$Pretty$a,
-					$the_sett$elm_pretty_printer$Pretty$string('else'),
+					$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('else'),
 					$the_sett$elm_pretty_printer$Pretty$line);
 				var context = $the_sett$elm_syntax_dsl$Elm$Pretty$topContext;
 				if (!falsePart.b) {
@@ -9554,7 +10163,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyLetBlock = F2(
 				$the_sett$elm_pretty_printer$Pretty$lines(
 					_List_fromArray(
 						[
-							$the_sett$elm_pretty_printer$Pretty$string('let'),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('let'),
 							A2(
 							$the_sett$elm_pretty_printer$Pretty$indent,
 							indent,
@@ -9563,7 +10172,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyLetBlock = F2(
 									$elm$core$List$map,
 									$the_sett$elm_syntax_dsl$Elm$Pretty$prettyLetDeclaration(indent),
 									$the_sett$elm_syntax_dsl$Util$denodeAll(letBlock.declarations)))),
-							$the_sett$elm_pretty_printer$Pretty$string('in'),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('in'),
 							A3(
 							$the_sett$elm_syntax_dsl$Elm$Pretty$prettyExpressionInner,
 							$the_sett$elm_syntax_dsl$Elm$Pretty$topContext,
@@ -9685,7 +10294,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyOperatorApplicationLeft = F5(
 								_List_fromArray(
 									[
 										prettyExpressionLeft,
-										$the_sett$elm_pretty_printer$Pretty$string(symbol)
+										$the_sett$elm_syntax_dsl$Elm$Pretty$operator(symbol)
 									])),
 								prettyExpressionRight
 							])))),
@@ -9745,7 +10354,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyOperatorApplicationRight = F5(
 									A2(
 										$the_sett$elm_pretty_printer$Pretty$a,
 										$the_sett$elm_pretty_printer$Pretty$space,
-										$the_sett$elm_pretty_printer$Pretty$string(sym))),
+										$the_sett$elm_syntax_dsl$Elm$Pretty$operator(sym))),
 								hdBreak),
 							tl));
 				} else {
@@ -9808,7 +10417,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyRecordAccess = F2(
 		return _Utils_Tuple2(
 			A2(
 				$the_sett$elm_pretty_printer$Pretty$a,
-				$the_sett$elm_pretty_printer$Pretty$string(
+				$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 					$the_sett$elm_syntax_dsl$Util$denode(field)),
 				A2($the_sett$elm_pretty_printer$Pretty$a, $the_sett$elm_syntax_dsl$Elm$Pretty$dot, prettyExpr)),
 			alwaysBreak);
@@ -9859,7 +10468,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyRecordUpdateExpression = F3(
 				_List_fromArray(
 					[
 						$the_sett$elm_pretty_printer$Pretty$string('{'),
-						$the_sett$elm_pretty_printer$Pretty$string(
+						$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 						$the_sett$elm_syntax_dsl$Util$denode(_var))
 					])));
 		var close = A2(
@@ -9941,7 +10550,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettySetter = function (_v2) {
 							$the_sett$elm_pretty_printer$Pretty$words(
 							_List_fromArray(
 								[
-									$the_sett$elm_pretty_printer$Pretty$string(
+									$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 									$the_sett$elm_syntax_dsl$Util$denode(fld)),
 									$the_sett$elm_pretty_printer$Pretty$string('=')
 								])),
@@ -10021,18 +10630,18 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyInfix = function (infix_) {
 	return $the_sett$elm_pretty_printer$Pretty$words(
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('infix'),
-				$the_sett$elm_pretty_printer$Pretty$string(
+				$the_sett$elm_syntax_dsl$Elm$Pretty$signature('infix'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 				dirToString(
 					$the_sett$elm_syntax_dsl$Util$denode(infix_.direction))),
-				$the_sett$elm_pretty_printer$Pretty$string(
+				$the_sett$elm_syntax_dsl$Elm$Pretty$number(
 				$elm$core$String$fromInt(
 					$the_sett$elm_syntax_dsl$Util$denode(infix_.precedence))),
 				$the_sett$elm_pretty_printer$Pretty$parens(
-				$the_sett$elm_pretty_printer$Pretty$string(
+				$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 					$the_sett$elm_syntax_dsl$Util$denode(infix_.operator))),
 				$the_sett$elm_pretty_printer$Pretty$string('='),
-				$the_sett$elm_pretty_printer$Pretty$string(
+				$the_sett$elm_syntax_dsl$Elm$Pretty$statement(
 				$the_sett$elm_syntax_dsl$Util$denode(infix_._function))
 			]));
 };
@@ -10040,7 +10649,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPortDeclaration = function (sig) {
 	return $the_sett$elm_pretty_printer$Pretty$words(
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('port'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('port'),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettySignature(sig)
 			]));
 };
@@ -10058,13 +10667,13 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTypeAlias = function (tAlias) {
 				$the_sett$elm_pretty_printer$Pretty$words(
 					_List_fromArray(
 						[
-							$the_sett$elm_pretty_printer$Pretty$string('type alias'),
-							$the_sett$elm_pretty_printer$Pretty$string(
+							$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('type alias'),
+							$the_sett$elm_syntax_dsl$Elm$Pretty$type_(
 							$the_sett$elm_syntax_dsl$Util$denode(tAlias.name)),
 							$the_sett$elm_pretty_printer$Pretty$words(
 							A2(
 								$elm$core$List$map,
-								$the_sett$elm_pretty_printer$Pretty$string,
+								$the_sett$elm_syntax_dsl$Elm$Pretty$statement,
 								$the_sett$elm_syntax_dsl$Util$denodeAll(tAlias.generics))),
 							$the_sett$elm_pretty_printer$Pretty$string('=')
 						])))));
@@ -10087,8 +10696,8 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyElmSyntaxDeclaration = function (d
 			var tAlias = decl.a;
 			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyTypeAlias(tAlias);
 		case 'CustomTypeDeclaration':
-			var type_ = decl.a;
-			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType(type_);
+			var elmType = decl.a;
+			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyCustomType(elmType);
 		case 'PortDeclaration':
 			var sig = decl.a;
 			return $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPortDeclaration(sig);
@@ -10116,501 +10725,35 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyDeclarations = function (decls) {
 			},
 			decls));
 };
-var $the_sett$elm_syntax_dsl$Elm$Comments$delimeters = function (doc) {
-	return A2(
-		$the_sett$elm_pretty_printer$Pretty$a,
-		$the_sett$elm_pretty_printer$Pretty$string('-}'),
-		A2(
-			$the_sett$elm_pretty_printer$Pretty$a,
-			$the_sett$elm_pretty_printer$Pretty$line,
-			A2(
-				$the_sett$elm_pretty_printer$Pretty$a,
-				doc,
-				$the_sett$elm_pretty_printer$Pretty$string('{-| '))));
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$getParts = function (_v0) {
-	var parts = _v0.a;
-	return $elm$core$List$reverse(parts);
-};
-var $the_sett$elm_pretty_printer$Pretty$NLine = F3(
-	function (a, b, c) {
-		return {$: 'NLine', a: a, b: b, c: c};
-	});
-var $the_sett$elm_pretty_printer$Pretty$NNil = {$: 'NNil'};
-var $the_sett$elm_pretty_printer$Pretty$NText = F2(
-	function (a, b) {
-		return {$: 'NText', a: a, b: b};
-	});
-var $the_sett$elm_pretty_printer$Pretty$fits = F2(
-	function (w, normal) {
-		fits:
-		while (true) {
-			if (w < 0) {
-				return false;
-			} else {
-				switch (normal.$) {
-					case 'NNil':
-						return true;
-					case 'NText':
-						var text = normal.a;
-						var innerNormal = normal.b;
-						var $temp$w = w - $elm$core$String$length(text),
-							$temp$normal = innerNormal(_Utils_Tuple0);
-						w = $temp$w;
-						normal = $temp$normal;
-						continue fits;
-					default:
-						return true;
-				}
-			}
-		}
-	});
-var $the_sett$elm_pretty_printer$Pretty$better = F4(
-	function (w, k, doc, doc2Fn) {
-		return A2($the_sett$elm_pretty_printer$Pretty$fits, w - k, doc) ? doc : doc2Fn(_Utils_Tuple0);
-	});
-var $the_sett$elm_pretty_printer$Pretty$best = F3(
-	function (width, startCol, x) {
-		var be = F3(
-			function (w, k, docs) {
-				be:
-				while (true) {
-					if (!docs.b) {
-						return $the_sett$elm_pretty_printer$Pretty$NNil;
-					} else {
-						switch (docs.a.b.$) {
-							case 'Empty':
-								var _v1 = docs.a;
-								var i = _v1.a;
-								var _v2 = _v1.b;
-								var ds = docs.b;
-								var $temp$w = w,
-									$temp$k = k,
-									$temp$docs = ds;
-								w = $temp$w;
-								k = $temp$k;
-								docs = $temp$docs;
-								continue be;
-							case 'Concatenate':
-								var _v3 = docs.a;
-								var i = _v3.a;
-								var _v4 = _v3.b;
-								var doc = _v4.a;
-								var doc2 = _v4.b;
-								var ds = docs.b;
-								var $temp$w = w,
-									$temp$k = k,
-									$temp$docs = A2(
-									$elm$core$List$cons,
-									_Utils_Tuple2(
-										i,
-										doc(_Utils_Tuple0)),
-									A2(
-										$elm$core$List$cons,
-										_Utils_Tuple2(
-											i,
-											doc2(_Utils_Tuple0)),
-										ds));
-								w = $temp$w;
-								k = $temp$k;
-								docs = $temp$docs;
-								continue be;
-							case 'Nest':
-								var _v5 = docs.a;
-								var i = _v5.a;
-								var _v6 = _v5.b;
-								var j = _v6.a;
-								var doc = _v6.b;
-								var ds = docs.b;
-								var $temp$w = w,
-									$temp$k = k,
-									$temp$docs = A2(
-									$elm$core$List$cons,
-									_Utils_Tuple2(
-										i + j,
-										doc(_Utils_Tuple0)),
-									ds);
-								w = $temp$w;
-								k = $temp$k;
-								docs = $temp$docs;
-								continue be;
-							case 'Text':
-								var _v7 = docs.a;
-								var i = _v7.a;
-								var text = _v7.b.a;
-								var ds = docs.b;
-								return A2(
-									$the_sett$elm_pretty_printer$Pretty$NText,
-									text,
-									function (_v8) {
-										return A3(
-											be,
-											w,
-											k + $elm$core$String$length(text),
-											ds);
-									});
-							case 'Line':
-								var _v9 = docs.a;
-								var i = _v9.a;
-								var _v10 = _v9.b;
-								var vsep = _v10.b;
-								var ds = docs.b;
-								return A3(
-									$the_sett$elm_pretty_printer$Pretty$NLine,
-									i,
-									vsep,
-									function (_v11) {
-										return A3(
-											be,
-											w,
-											i + $elm$core$String$length(vsep),
-											ds);
-									});
-							case 'Union':
-								var _v12 = docs.a;
-								var i = _v12.a;
-								var _v13 = _v12.b;
-								var doc = _v13.a;
-								var doc2 = _v13.b;
-								var ds = docs.b;
-								return A4(
-									$the_sett$elm_pretty_printer$Pretty$better,
-									w,
-									k,
-									A3(
-										be,
-										w,
-										k,
-										A2(
-											$elm$core$List$cons,
-											_Utils_Tuple2(i, doc),
-											ds)),
-									function (_v14) {
-										return A3(
-											be,
-											w,
-											k,
-											A2(
-												$elm$core$List$cons,
-												_Utils_Tuple2(i, doc2),
-												ds));
-									});
-							case 'Nesting':
-								var _v15 = docs.a;
-								var i = _v15.a;
-								var fn = _v15.b.a;
-								var ds = docs.b;
-								var $temp$w = w,
-									$temp$k = k,
-									$temp$docs = A2(
-									$elm$core$List$cons,
-									_Utils_Tuple2(
-										i,
-										fn(i)),
-									ds);
-								w = $temp$w;
-								k = $temp$k;
-								docs = $temp$docs;
-								continue be;
-							default:
-								var _v16 = docs.a;
-								var i = _v16.a;
-								var fn = _v16.b.a;
-								var ds = docs.b;
-								var $temp$w = w,
-									$temp$k = k,
-									$temp$docs = A2(
-									$elm$core$List$cons,
-									_Utils_Tuple2(
-										i,
-										fn(k)),
-									ds);
-								w = $temp$w;
-								k = $temp$k;
-								docs = $temp$docs;
-								continue be;
-						}
-					}
-				}
-			});
-		return A3(
-			be,
-			width,
-			startCol,
-			_List_fromArray(
-				[
-					_Utils_Tuple2(0, x)
-				]));
-	});
-var $the_sett$elm_pretty_printer$Pretty$layout = function (normal) {
-	var layoutInner = F2(
-		function (normal2, acc) {
-			layoutInner:
-			while (true) {
-				switch (normal2.$) {
-					case 'NNil':
-						return acc;
-					case 'NText':
-						var text = normal2.a;
-						var innerNormal = normal2.b;
-						var $temp$normal2 = innerNormal(_Utils_Tuple0),
-							$temp$acc = A2($elm$core$List$cons, text, acc);
-						normal2 = $temp$normal2;
-						acc = $temp$acc;
-						continue layoutInner;
-					default:
-						var i = normal2.a;
-						var sep = normal2.b;
-						var innerNormal = normal2.c;
-						var norm = innerNormal(_Utils_Tuple0);
-						if (norm.$ === 'NLine') {
-							var $temp$normal2 = innerNormal(_Utils_Tuple0),
-								$temp$acc = A2($elm$core$List$cons, '\n' + sep, acc);
-							normal2 = $temp$normal2;
-							acc = $temp$acc;
-							continue layoutInner;
-						} else {
-							var $temp$normal2 = innerNormal(_Utils_Tuple0),
-								$temp$acc = A2(
-								$elm$core$List$cons,
-								'\n' + (A2($the_sett$elm_pretty_printer$Pretty$copy, i, ' ') + sep),
-								acc);
-							normal2 = $temp$normal2;
-							acc = $temp$acc;
-							continue layoutInner;
-						}
-				}
-			}
-		});
-	return $elm$core$String$concat(
-		$elm$core$List$reverse(
-			A2(layoutInner, normal, _List_Nil)));
-};
-var $the_sett$elm_pretty_printer$Pretty$pretty = F2(
-	function (w, doc) {
-		return $the_sett$elm_pretty_printer$Pretty$layout(
-			A3($the_sett$elm_pretty_printer$Pretty$best, w, 0, doc));
-	});
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyCode = function (val) {
-	return A2(
-		$the_sett$elm_pretty_printer$Pretty$indent,
-		4,
-		$the_sett$elm_pretty_printer$Pretty$string(val));
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyMarkdown = function (val) {
-	return A2(
-		$the_sett$elm_pretty_printer$Pretty$a,
-		$the_sett$elm_pretty_printer$Pretty$line,
-		A2(
-			$the_sett$elm_pretty_printer$Pretty$a,
-			$the_sett$elm_pretty_printer$Pretty$line,
-			$the_sett$elm_pretty_printer$Pretty$string(val)));
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyTags = function (tags) {
-	return $the_sett$elm_pretty_printer$Pretty$words(
-		_List_fromArray(
-			[
-				$the_sett$elm_pretty_printer$Pretty$string('@docs'),
-				A2(
-				$the_sett$elm_pretty_printer$Pretty$join,
-				$the_sett$elm_pretty_printer$Pretty$string(', '),
-				A2($elm$core$List$map, $the_sett$elm_pretty_printer$Pretty$string, tags))
-			]));
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyCommentPart = function (part) {
-	switch (part.$) {
-		case 'Markdown':
-			var val = part.a;
-			return $the_sett$elm_syntax_dsl$Elm$Comments$prettyMarkdown(val);
-		case 'Code':
-			var val = part.a;
-			return $the_sett$elm_syntax_dsl$Elm$Comments$prettyCode(val);
-		default:
-			var tags = part.a;
-			return $the_sett$elm_syntax_dsl$Elm$Comments$prettyTags(tags);
-	}
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyDocComment = F2(
-	function (width, comment) {
+var $the_sett$elm_syntax_dsl$Elm$Pretty$layoutDocComment = F2(
+	function (width, docComment) {
 		return A2(
 			$the_sett$elm_pretty_printer$Pretty$pretty,
 			width,
-			$the_sett$elm_syntax_dsl$Elm$Comments$delimeters(
+			$the_sett$elm_syntax_dsl$Elm$Pretty$delimiters(
 				$the_sett$elm_pretty_printer$Pretty$lines(
 					A2(
 						$elm$core$List$map,
-						$the_sett$elm_syntax_dsl$Elm$Comments$prettyCommentPart,
-						$the_sett$elm_syntax_dsl$Elm$Comments$getParts(comment)))));
+						$the_sett$elm_syntax_dsl$Elm$Pretty$prettyCommentPart,
+						$the_sett$elm_syntax_dsl$Elm$Pretty$getParts(docComment)))));
 	});
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyDocComment = F2(
 	function (width, decl) {
 		if (decl.$ === 'DeclWithComment') {
-			var comment = decl.a;
+			var declComment = decl.a;
 			var declFn = decl.b;
 			return declFn(
-				A2($the_sett$elm_syntax_dsl$Elm$Comments$prettyDocComment, width, comment));
+				A2($the_sett$elm_syntax_dsl$Elm$Pretty$layoutDocComment, width, declComment));
 		} else {
 			var declNoComment = decl.a;
 			return declNoComment;
 		}
 	});
-var $the_sett$elm_syntax_dsl$Elm$Comments$DocTags = function (a) {
-	return {$: 'DocTags', a: a};
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$fitAndSplit = F2(
-	function (width, tags) {
-		if (!tags.b) {
-			return _List_Nil;
-		} else {
-			var t = tags.a;
-			var ts = tags.b;
-			var _v1 = A3(
-				$elm$core$List$foldl,
-				F2(
-					function (tag, _v2) {
-						var allSplits = _v2.a;
-						var curSplit = _v2.b;
-						var remaining = _v2.c;
-						return (_Utils_cmp(
-							$elm$core$String$length(tag),
-							remaining) < 1) ? _Utils_Tuple3(
-							allSplits,
-							A2($elm$core$List$cons, tag, curSplit),
-							remaining - $elm$core$String$length(tag)) : _Utils_Tuple3(
-							_Utils_ap(
-								allSplits,
-								_List_fromArray(
-									[
-										$elm$core$List$reverse(curSplit)
-									])),
-							_List_fromArray(
-								[tag]),
-							width - $elm$core$String$length(tag));
-					}),
-				_Utils_Tuple3(
-					_List_Nil,
-					_List_fromArray(
-						[t]),
-					width - $elm$core$String$length(t)),
-				ts);
-			var splitsExceptLast = _v1.a;
-			var lastSplit = _v1.b;
-			return _Utils_ap(
-				splitsExceptLast,
-				_List_fromArray(
-					[
-						$elm$core$List$reverse(lastSplit)
-					]));
-		}
-	});
-var $elm$core$List$sort = function (xs) {
-	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$mergeDocTags = function (innerParts) {
-	var _v0 = A3(
-		$elm$core$List$foldr,
-		F2(
-			function (part, _v1) {
-				var accum = _v1.a;
-				var context = _v1.b;
-				if (context.$ === 'Nothing') {
-					if (part.$ === 'DocTags') {
-						var tags = part.a;
-						return _Utils_Tuple2(
-							accum,
-							$elm$core$Maybe$Just(tags));
-					} else {
-						var otherPart = part;
-						return _Utils_Tuple2(
-							A2($elm$core$List$cons, otherPart, accum),
-							$elm$core$Maybe$Nothing);
-					}
-				} else {
-					var contextTags = context.a;
-					if (part.$ === 'DocTags') {
-						var tags = part.a;
-						return _Utils_Tuple2(
-							accum,
-							$elm$core$Maybe$Just(
-								_Utils_ap(contextTags, tags)));
-					} else {
-						var otherPart = part;
-						return _Utils_Tuple2(
-							A2(
-								$elm$core$List$cons,
-								otherPart,
-								A2(
-									$elm$core$List$cons,
-									$the_sett$elm_syntax_dsl$Elm$Comments$DocTags(
-										$elm$core$List$sort(contextTags)),
-									accum)),
-							$elm$core$Maybe$Nothing);
-					}
-				}
-			}),
-		_Utils_Tuple2(_List_Nil, $elm$core$Maybe$Nothing),
-		innerParts);
-	var partsExceptMaybeFirst = _v0.a;
-	var maybeFirstPart = _v0.b;
-	if (maybeFirstPart.$ === 'Nothing') {
-		return partsExceptMaybeFirst;
-	} else {
-		var tags = maybeFirstPart.a;
-		return A2(
-			$elm$core$List$cons,
-			$the_sett$elm_syntax_dsl$Elm$Comments$DocTags(
-				$elm$core$List$sort(tags)),
-			partsExceptMaybeFirst);
-	}
-};
-var $the_sett$elm_syntax_dsl$Elm$Comments$layoutTags = F2(
-	function (width, parts) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (part, _v0) {
-					var accumParts = _v0.a;
-					var accumDocTags = _v0.b;
-					if (part.$ === 'DocTags') {
-						var tags = part.a;
-						var splits = A2($the_sett$elm_syntax_dsl$Elm$Comments$fitAndSplit, width, tags);
-						return _Utils_Tuple2(
-							_Utils_ap(
-								A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Comments$DocTags, splits),
-								accumParts),
-							_Utils_ap(accumDocTags, splits));
-					} else {
-						var otherPart = part;
-						return _Utils_Tuple2(
-							A2($elm$core$List$cons, otherPart, accumParts),
-							accumDocTags);
-					}
-				}),
-			_Utils_Tuple2(_List_Nil, _List_Nil),
-			$the_sett$elm_syntax_dsl$Elm$Comments$mergeDocTags(parts));
-	});
-var $the_sett$elm_syntax_dsl$Elm$Comments$prettyFileComment = F2(
-	function (width, comment) {
-		var _v0 = A2(
-			$the_sett$elm_syntax_dsl$Elm$Comments$layoutTags,
-			width,
-			$the_sett$elm_syntax_dsl$Elm$Comments$getParts(comment));
-		var parts = _v0.a;
-		var splits = _v0.b;
-		return _Utils_Tuple2(
-			A2(
-				$the_sett$elm_pretty_printer$Pretty$pretty,
-				width,
-				$the_sett$elm_syntax_dsl$Elm$Comments$delimeters(
-					$the_sett$elm_pretty_printer$Pretty$lines(
-						A2($elm$core$List$map, $the_sett$elm_syntax_dsl$Elm$Comments$prettyCommentPart, parts)))),
-			splits);
-	});
 var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyDefaultModuleData = function (moduleData) {
 	return $the_sett$elm_pretty_printer$Pretty$words(
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('module'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('module'),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleName(
 				$the_sett$elm_syntax_dsl$Util$denode(moduleData.moduleName)),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyExposing(
@@ -10670,7 +10813,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyEffectModuleData = function (modul
 	return $the_sett$elm_pretty_printer$Pretty$words(
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('effect module'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('effect module'),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleName(
 				$the_sett$elm_syntax_dsl$Util$denode(moduleData.moduleName)),
 				A2(
@@ -10688,7 +10831,7 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prettyPortModuleData = function (moduleD
 	return $the_sett$elm_pretty_printer$Pretty$words(
 		_List_fromArray(
 			[
-				$the_sett$elm_pretty_printer$Pretty$string('port module'),
+				$the_sett$elm_syntax_dsl$Elm$Pretty$keyword('port module'),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyModuleName(
 				$the_sett$elm_syntax_dsl$Util$denode(moduleData.moduleName)),
 				$the_sett$elm_syntax_dsl$Elm$Pretty$prettyExposing(
@@ -10719,8 +10862,8 @@ var $the_sett$elm_syntax_dsl$Elm$Pretty$prepareLayout = F2(
 		var _v0 = function () {
 			var _v1 = file.comments;
 			if (_v1.$ === 'Just') {
-				var comment = _v1.a;
-				var _v2 = A2($the_sett$elm_syntax_dsl$Elm$Comments$prettyFileComment, width, comment);
+				var fileComment = _v1.a;
+				var _v2 = A2($the_sett$elm_syntax_dsl$Elm$Pretty$layoutFileComment, width, fileComment);
 				var fileCommentStr = _v2.a;
 				var innerTags = _v2.b;
 				return _Utils_Tuple2(
@@ -11573,7 +11716,7 @@ var $elm$virtual_dom$VirtualDom$property = F2(
 		return A2(
 			_VirtualDom_property,
 			_VirtualDom_noInnerHtmlOrFormAction(key),
-			_VirtualDom_noJavaScriptOrHtmlUri(value));
+			_VirtualDom_noJavaScriptOrHtmlJson(value));
 	});
 var $mdgriffith$elm_ui$Internal$Style$AllChildren = F2(
 	function (a, b) {
@@ -14414,7 +14557,6 @@ var $elm$core$List$minimum = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $mdgriffith$elm_ui$Internal$Model$convertAdjustment = function (adjustment) {
 	var lines = _List_fromArray(
 		[adjustment.capital, adjustment.baseline, adjustment.descender, adjustment.lowercase]);
