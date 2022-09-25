@@ -2001,7 +2001,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
     ArraySized.l3 'a' 'c' 'd'
         |> ArraySized.insert ( Up, n1 ) 'b'
         --: ArraySized
-        --:     (In (Fixed N4) (Up maxX To (Add4 maxX)))
+        --:     (In (Fixed N4) (Up4 maxX_))
         --:     Char
         |> ArraySized.toList
     --> [ 'a', 'b', 'c', 'd' ]
