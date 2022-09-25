@@ -7,9 +7,6 @@
   - `emptiness-typed` version → 7.0.0
   - `anyIs`, `allAre` name → `any`, `all`
   - `ArraySized.until` name → `upTo`
-
-### TODO
-
   - `ArraySized.min`, `max`, `maxNo`, `min<action>` name → `minTo`, `maxTo`, `maxToInfinity`, `<action>Min`
       - to be consistent with `N`
 

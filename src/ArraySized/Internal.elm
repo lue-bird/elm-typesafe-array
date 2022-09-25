@@ -9,11 +9,11 @@ module ArraySized.Internal exposing
     , map
     , fills, allFill
     , and
-    , glue, minGlue
+    , glue, glueMin
     , padToLength
-    , interweave, minInterweave
+    , interweave, interweaveMin
     , take
-    , drop, minDrop, dropOverMin
+    , drop, dropMin, dropOverMin
     , toChunksOf
     , minDown, maxNo, maxUp
     , min, max
@@ -61,15 +61,15 @@ Ideally, this module should be as small as possible and contain as little `Array
 ## combine
 
 @docs and
-@docs glue, minGlue
+@docs glue, glueMin
 @docs padToLength
-@docs interweave, minInterweave
+@docs interweave, interweaveMin
 
 
 ## part
 
 @docs take
-@docs drop, minDrop, dropOverMin
+@docs drop, dropMin, dropOverMin
 @docs toChunksOf
 
 
@@ -498,7 +498,7 @@ interweave separatorsToPlaceBetweenTheElements =
                 )
 
 
-minInterweave :
+interweaveMin :
     ArraySized
         (In
             (Up minPlusX To minSumPlusX)
@@ -512,7 +512,7 @@ minInterweave :
                 (Min (Up x To minSumPlusX))
                 element
         )
-minInterweave separatorsToPlaceBetweenTheElements =
+interweaveMin separatorsToPlaceBetweenTheElements =
     \arraySized ->
         arraySized
             |> toArray
@@ -523,7 +523,7 @@ minInterweave separatorsToPlaceBetweenTheElements =
                 )
 
 
-minGlue :
+glueMin :
     Linear.Direction
     ->
         ArraySized
@@ -536,7 +536,7 @@ minGlue :
         (ArraySized (In (Up x To minPlusX) max_) element
          -> ArraySized (Min (Up x To minSumPlusX)) element
         )
-minGlue direction extension =
+glueMin direction extension =
     \arraySized ->
         arraySized
             |> toArray
@@ -645,7 +645,7 @@ dropOverMin ( direction, lengthToDrop ) =
                 )
 
 
-minDrop :
+dropMin :
     ( Linear.Direction
     , N
         (In
@@ -662,7 +662,7 @@ minDrop :
                 (In (Fixed takenMin) max)
                 element
         )
-minDrop ( direction, droppedAmount ) =
+dropMin ( direction, droppedAmount ) =
     \arraySized ->
         arraySized
             |> toArray

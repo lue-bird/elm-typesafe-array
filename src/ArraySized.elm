@@ -8,15 +8,15 @@ module ArraySized exposing
     , element, elementTry, to1
     , all, any
     , elementReplace, elementAlter, reverse
-    , push, minPush, insert, minInsert
-    , elementRemove, minElementRemove
+    , push, pushMin, insert, insertMin
+    , elementRemove, elementRemoveMin
     , fills, allFill
-    , take, drop, minDrop, dropOverMin
+    , take, drop, dropMin, dropOverMin
     , toChunksOf
     , and
-    , glue, minGlue
+    , glue, glueMin
     , padToLength
-    , interweave, minInterweave
+    , interweave, interweaveMin
     , hasIn, has, hasAtLeast, hasAtMost
     , map
     , foldFrom, fold
@@ -24,8 +24,8 @@ module ArraySized exposing
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , toValue, fromValue
-    , min, minDown
-    , max, maxUp, maxNo
+    , minTo, minDown
+    , maxTo, maxToInfinity, maxUp
     )
 
 {-| An `Array` that knows more about the amount of elements it holds
@@ -98,8 +98,8 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 # alter
 
 @docs elementReplace, elementAlter, reverse
-@docs push, minPush, insert, minInsert
-@docs elementRemove, minElementRemove
+@docs push, pushMin, insert, insertMin
+@docs elementRemove, elementRemoveMin
 
 
 ## filter
@@ -109,16 +109,16 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 ## part
 
-@docs take, drop, minDrop, dropOverMin
+@docs take, drop, dropMin, dropOverMin
 @docs toChunksOf
 
 
 ## combine
 
 @docs and
-@docs glue, minGlue
+@docs glue, glueMin
 @docs padToLength
-@docs interweave, minInterweave
+@docs interweave, interweaveMin
 
 
 # length compare
@@ -149,10 +149,10 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 @docs toValue, fromValue
 
 
-## type information
+## type-level
 
-@docs min, minDown
-@docs max, maxUp, maxNo
+@docs minTo, minDown
+@docs maxTo, maxToInfinity, maxUp
 
 -}
 
@@ -265,7 +265,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
 
     import N exposing (n4)
 
-    ArraySized.upTo
+    ArraySized.upTo n4
         |> ArraySized.map N.toInt
         |> ArraySized.toList
     --> [ 0, 1, 2, 3, 4 ]
@@ -492,7 +492,7 @@ fromStackFilled :
 fromStackFilled =
     \stack ->
         l1 (stack |> Stack.top)
-            |> minGlue Up
+            |> glueMin Up
                 (stack |> Stack.topRemove |> fromStackEmptiable)
 
 
@@ -1782,7 +1782,7 @@ minDown lengthMinimumDecrease =
 
 {-| Convert the `ArraySized (In min ...)` to a `ArraySized (Min min)`
 
-    between4And10Elements |> ArraySized.toMin
+    between4And10Elements |> ArraySized.maxToInfinity
     --: ArraySized (Min N4) ...
 
 There is only 1 situation you should use this.
@@ -1797,12 +1797,12 @@ Elm complains:
 > `ArraySized (Min N1) ...`
 
     [ atLeast1Element
-    , between1And10Elements |> ArraySized.toMin
+    , between1And10Elements |> ArraySized.maxToInfinity
     ]
 
 -}
-maxNo : ArraySized (In min max_) element -> ArraySized (Min min) element
-maxNo =
+maxToInfinity : ArraySized (In min max_) element -> ArraySized (Min min) element
+maxToInfinity =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.maxNo
@@ -1832,8 +1832,8 @@ Only `Up x To (Add<n> x)` can do that:
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up
                 (rowFromModelOrSomeStorage
-                    |> ArraySized.min n18
-                    |> ArraySized.max n18
+                    |> ArraySized.minTo n18
+                    |> ArraySized.maxTo n18
                 )
 
 Another example: re-enabling an argument's maximum difference
@@ -1844,20 +1844,20 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements` for exa
 
     atMost19Elements theArgument -- error
 
-    atMost19Elements (theArgument |> ArraySized.max n19)
+    atMost19Elements (theArgument |> ArraySized.maxTo n19)
 
 [`maxUp n1`](#maxUp) is also possible,
 but unless you want to preserve the `maxTo18_` type variable,
 there's no need to not use this absolute operation
 
 -}
-max :
+maxTo :
     N (In (Fixed maxNewMin) maxNew)
     ->
         (ArraySized (In min (Up maxToMaxNewMin_ To maxNewMin)) element
          -> ArraySized (In min maxNew) element
         )
-max lengthMaximumNew =
+maxTo lengthMaximumNew =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.max lengthMaximumNew
@@ -1887,18 +1887,18 @@ Only `Up x To (Add<n> x)` can do that:
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up
                 (rowFromModelOrSomeStorage
-                    |> ArraySized.min n18
-                    |> ArraySized.max n18
+                    |> ArraySized.minTo n18
+                    |> ArraySized.maxTo n18
                 )
 
 -}
-min :
+minTo :
     N (In minNew (Up minNewMaxToMin_ To min))
     ->
         (ArraySized (In (Fixed min) max) element
          -> ArraySized (In minNew max) element
         )
-min lengthMinimumNew =
+minTo lengthMinimumNew =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.min lengthMinimumNew
@@ -1944,7 +1944,7 @@ maxUp lengthMaximumIncrease =
     --:     (In (Up6 minX_) (Up11 maxX_))
     --:     String
 
-[`minPush`](#minPush) if you don't know the length maximum
+[`pushMin`](#pushMin) if you don't know the length maximum
 
 -}
 push :
@@ -1968,13 +1968,13 @@ push elementToPutToEndUp =
 {-| Put a new element after all the others
 
     atLeast5Elements
-        |> ArraySized.minPush "becomes the last"
+        |> ArraySized.pushMin "becomes the last"
     --: ArraySized (Min (Up6 minX_)) String
 
 [`push`](#push) if you know the length maximum
 
 -}
-minPush :
+pushMin :
     element
     ->
         (ArraySized
@@ -1985,11 +1985,11 @@ minPush :
             element
          -> ArraySized (Min (Up minX To (Add1 minPlusX))) element
         )
-minPush newLastElement =
+pushMin newLastElement =
     \arraySized ->
         arraySized
             |> push newLastElement
-            |> maxNo
+            |> maxToInfinity
 
 
 {-| Put an element in the `ArraySized` at a given index
@@ -2011,7 +2011,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
         |> ArraySized.toList
     --> [ 'a', 'b', 'c', 'd' ]
 
-[`minInsert`](#minInsert) if you don't know the length maximum
+[`insertMin`](#insertMin) if you don't know the length maximum
 
 Need the length minimum to not become `Fixed`
 (for results etc.) → [`|> min`](#min)
@@ -2049,7 +2049,7 @@ insert ( direction, index ) elementToInsert =
     import N exposing (n0, n1)
 
     atLeast5Elements
-        |> ArraySized.minInsert ( Down, n1 ) "before last"
+        |> ArraySized.insertMin ( Down, n1 ) "before last"
         --: ArraySized (Min (Fixed N6)) String
 
     minCons :
@@ -2057,7 +2057,7 @@ insert ( direction, index ) elementToInsert =
         -> ArraySized (In (Fixed min) max_) element
         -> ArraySized (Min (Fixed (Add1 min))) element
     minCons =
-        ArraySized.minInsert ( Up, n0 )
+        ArraySized.insertMin ( Up, n0 )
 
 [`insert`](#insert) if you know the length maximum
 
@@ -2065,7 +2065,7 @@ Need the length minimum to not become `Fixed`
 (for results etc.) → [`|> min`](#min)
 
 -}
-minInsert :
+insertMin :
     ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMin_ To min))
     )
@@ -2079,11 +2079,11 @@ minInsert :
             element
          -> ArraySized (Min (Fixed (Add1 min))) element
         )
-minInsert ( direction, index ) toInsert =
+insertMin ( direction, index ) toInsert =
     \arraySized ->
         arraySized
             |> insert ( direction, index ) toInsert
-            |> maxNo
+            |> maxToInfinity
 
 
 {-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple.
@@ -2149,7 +2149,7 @@ without separating elements from the other [`ArraySized`](#ArraySized)
     --:     (In (Up5 minX_) (Up13 maxX_))
     --:     String
 
-Don't know both maxima → [`minInterweave`](#minInterweave)
+Don't know both maxima → [`interweaveMin`](#interweaveMin)
 
 -}
 interweave :
@@ -2183,13 +2183,13 @@ without separating elements from the other [`ArraySized`](#ArraySized)
     import N exposing (n2)
 
     ArraySized.l3 "turtles" "turtles" "turtles"
-        |> ArraySized.minInterweave (ArraySized.repeat "on" atLeast2)
+        |> ArraySized.interweaveMin (ArraySized.repeat "on" atLeast2)
         --: ArraySized (Min (Up5 minX_)) String
 
 Know both maxima → [`interweave`](#interweave)
 
 -}
-minInterweave :
+interweaveMin :
     ArraySized
         (In
             (Up minPlusX To minSumPlusX)
@@ -2203,10 +2203,10 @@ minInterweave :
                 (Min (Up x To minSumPlusX))
                 element
         )
-minInterweave separatorsToPlaceBetweenTheElements =
+interweaveMin separatorsToPlaceBetweenTheElements =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.minInterweave separatorsToPlaceBetweenTheElements
+            |> ArraySized.Internal.interweaveMin separatorsToPlaceBetweenTheElements
 
 
 {-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -2226,7 +2226,7 @@ minInterweave separatorsToPlaceBetweenTheElements =
         |> ArraySized.toList
     --> [ 4, 5, 6, 1, 2, 3 ]
 
-Don't know both length maxima? → [`minGlue`](#minGlue)
+Don't know both length maxima? → [`glueMin`](#glueMin)
 
 -}
 glue :
@@ -2263,17 +2263,17 @@ glue direction extension =
 to the end in a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     ArraySized.l3 1 2 3
-        |> ArraySized.minGlue Up atLeast3Elements
+        |> ArraySized.glueMin Up atLeast3Elements
     --: ArraySized (Min (Up6 x_)) ...
 
     ArraySized.l3 1 2 3
-        |> ArraySized.minGlue Down atLeast3Elements
+        |> ArraySized.glueMin Down atLeast3Elements
     --: ArraySized (Min (Up6 x_)) ...
 
 Know both length maxima? → [`glue`](#glue)
 
 -}
-minGlue :
+glueMin :
     Linear.Direction
     ->
         ArraySized
@@ -2286,10 +2286,10 @@ minGlue :
         (ArraySized (In (Up x To minPlusX) max_) element
          -> ArraySized (Min (Up x To minSumPlusX)) element
         )
-minGlue direction extension =
+glueMin direction extension =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.minGlue direction extension
+            |> ArraySized.Internal.glueMin direction extension
 
 
 {-| Pad in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -2310,7 +2310,7 @@ to reach a given length
     --> [ O, O, O, O, O, I, O, I ]
 
     ArraySized.l4
-        (ArraySized.l3 I I I |> ArraySized.max n8)
+        (ArraySized.l3 I I I |> ArraySized.maxTo n8)
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
@@ -2357,7 +2357,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
         between1And10Elements
             |> ArraySized.elementRemove ( Down, n0 )
 
-Don't know the length maximum? → [`minElementRemove`](#minElementRemove)
+Don't know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
 
 -}
 elementRemove :
@@ -2388,12 +2388,12 @@ elementRemove ( direction, index ) =
 {-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     removeLast =
-        TypeSized.minElementRemove ( Down, n0 )
+        TypeSized.elementRemoveMin ( Down, n0 )
 
-Know the length maximum? → [`minElementRemove`](#minElementRemove)
+Know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
 
 -}
-minElementRemove :
+elementRemoveMin :
     ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
@@ -2411,7 +2411,7 @@ minElementRemove :
                 (Up x To maxPlusX)
             )
             element
-minElementRemove ( direction, index ) =
+elementRemoveMin ( direction, index ) =
     \arraySized ->
         arraySized
             |> maxUp n1
@@ -2437,7 +2437,7 @@ minElementRemove ( direction, index ) =
         --:     (In (Up3 minX_) (Up8 maxX_))
         --:     number_
 
-  - Don't know its length maximum? → [`minDrop`](#minDrop)
+  - Don't know its length maximum? → [`dropMin`](#dropMin)
   - Can the dropped length's maximum be greater than its length's minimum? → [`dropOverMin`](#dropOverMin)
 
 -}
@@ -2476,13 +2476,13 @@ drop ( direction, droppedAmount ) =
     import N exposing (n2)
 
     atLeast6Elements
-        |> ArraySized.minDrop ( Down, n2 )
+        |> ArraySized.dropMin ( Down, n2 )
     --: ArraySized (Min N4) ...
 
 Know its length maximum? → [`drop`](#drop)
 
 -}
-minDrop :
+dropMin :
     ( Linear.Direction
     , N
         (In
@@ -2499,10 +2499,10 @@ minDrop :
                 (In (Fixed takenMin) max)
                 element
         )
-minDrop ( direction, droppedAmount ) =
+dropMin ( direction, droppedAmount ) =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.minDrop ( direction, droppedAmount )
+            |> ArraySized.Internal.dropMin ( direction, droppedAmount )
 
 
 {-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
