@@ -1,6 +1,6 @@
 module ArraySized exposing
     ( ArraySized
-    , repeat, random, until
+    , repeat, random, upTo
     , fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
     , empty, l1
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
@@ -72,7 +72,7 @@ so we can [`fold`](#fold), access, ... without a worry
 
 # create
 
-@docs repeat, random, until
+@docs repeat, random, upTo
 @docs fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
 
 
@@ -248,7 +248,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     import N exposing (n4)
     import Array
 
-    ArraySized.until n4
+    ArraySized.upTo n4
         |> ArraySized.map N.toInt
         |> ArraySized.toArray
     --> Array.fromList [ 0, 1, 2, 3, 4 ]
@@ -265,7 +265,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
 
     import N exposing (n4)
 
-    ArraySized.until n4
+    ArraySized.upTo
         |> ArraySized.map N.toInt
         |> ArraySized.toList
     --> [ 0, 1, 2, 3, 4 ]
@@ -311,7 +311,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     import N exposing (n4)
     import Stack
 
-    ArraySized.until n4
+    ArraySized.upTo n4
         |> ArraySized.map N.toInt
         |> ArraySized.toStackFilled
     --> Stack.topDown 0 [ 1, 2, 3, 4 ]
@@ -397,7 +397,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.until n6 -- big yes
+    ArraySized.upTo n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -422,7 +422,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.until n6 -- big yes
+    ArraySized.upTo n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -449,7 +449,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.until n6 -- big yes
+    ArraySized.upTo n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -479,7 +479,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.until n6 -- big yes
+    ArraySized.upTo n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -1114,7 +1114,7 @@ to16 =
 
     import N exposing (n3)
 
-    ArraySized.until n3
+    ArraySized.upTo n3
     --: ArraySized
     --:     (In (Fixed N4) (Up4 maxX_))
     --:     (N (In (Up0 minX_) (Up3 maxX_)))
@@ -1122,7 +1122,7 @@ to16 =
         |> ArraySized.toList
     --> [ 0, 1, 2, 3 ]
 
-    ArraySized.until between2And9
+    ArraySized.upTo between2And9
         |> ArraySized.map (N.add n3)
     --: ArraySized
     --:    (In (Fixed N3) (Up10 maxX_))
@@ -1133,13 +1133,13 @@ to turn the `Fixed` length minimum into a difference
 if you need that (for results etc.)
 
 -}
-until :
+upTo :
     N (In (Fixed min) (Up maxX To maxPlusX))
     ->
         ArraySized
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
             (N (In (Up0 minX_) (Up maxX To maxPlusX)))
-until last =
+upTo last =
     ArraySized.Internal.upTo last
 
 
@@ -1400,7 +1400,7 @@ take ( direction, toTakeAmount, { atLeast } ) =
 
     aToZ : ArraySized (In N26 (N26Plus a_)) Char
     aToZ =
-        ArraySized.until n25
+        ArraySized.upTo n25
             |> ArraySized.map inABC
 
     inABC index =

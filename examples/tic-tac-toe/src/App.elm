@@ -128,7 +128,7 @@ isGameOver board =
                     Nothing
 
         rowWon =
-            ArraySized.until n2
+            ArraySized.upTo n2
                 |> ArraySized.map
                     (\i ->
                         board
@@ -137,7 +137,7 @@ isGameOver board =
                     )
 
         columnWon =
-            ArraySized.until n2
+            ArraySized.upTo n2
                 |> ArraySized.map
                     (\i ->
                         board
@@ -146,7 +146,7 @@ isGameOver board =
                     )
 
         diagonal xDirection =
-            ArraySized.until n2
+            ArraySized.upTo n2
                 |> ArraySized.map
                     (\i ->
                         board
@@ -302,10 +302,10 @@ viewBoard { gameStage } board =
         boardSize =
             fieldSize * 3 + spacing * 2
     in
-    ArraySized.until n2
+    ArraySized.upTo n2
         |> ArraySized.map
             (\x ->
-                ArraySized.until n2
+                ArraySized.upTo n2
                     |> ArraySized.map (\y -> viewField x y)
                     |> ArraySized.toList
                     |> Ui.column
