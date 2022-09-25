@@ -156,7 +156,7 @@ failLoudlyWithStackOverflow messageAndCulprit =
     failLoudlyWithStackOverflowMutuallyRecursive messageAndCulprit
 
 
-length : ArraySized lengthRange element_ -> N lengthRange
+length : ArraySized range element_ -> N range
 length =
     \(ArraySized length_ _) -> length_
 
@@ -171,10 +171,10 @@ toArray =
 
 
 map :
-    (aElement -> bElement)
+    (element -> mappedElement)
     ->
-        (ArraySized lengthRange aElement
-         -> ArraySized lengthRange bElement
+        (ArraySized range element
+         -> ArraySized range mappedElement
         )
 map alter =
     \arraySized ->
@@ -207,8 +207,8 @@ fills =
 
 
 allFill :
-    ArraySized lengthRange (Emptiable value possiblyOrNever)
-    -> Emptiable (ArraySized lengthRange value) possiblyOrNever
+    ArraySized range (Emptiable value possiblyOrNever)
+    -> Emptiable (ArraySized range value) possiblyOrNever
 allFill =
     \arraySized ->
         arraySized
@@ -314,11 +314,11 @@ random elementRandomGenerator amount =
 
 
 elementReplace :
-    ( Linear.Direction, N index_ )
+    ( Linear.Direction, N indexRange_ )
     -> (() -> element)
     ->
-        (ArraySized lengthRange element
-         -> ArraySized lengthRange element
+        (ArraySized range element
+         -> ArraySized range element
         )
 elementReplace ( direction, index ) replacement =
     \arraySized ->

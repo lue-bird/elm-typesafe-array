@@ -1205,11 +1205,11 @@ and no element is replaced
 
 -}
 elementReplace :
-    ( Linear.Direction, N index_ )
+    ( Linear.Direction, N indexRange_ )
     -> (() -> element)
     ->
-        (ArraySized lengthRange element
-         -> ArraySized lengthRange element
+        (ArraySized range element
+         -> ArraySized range element
         )
 elementReplace ( direction, index ) elementReplacement =
     ArraySized.Internal.elementReplace ( direction, index ) elementReplacement
@@ -1245,11 +1245,11 @@ and no element is altered
 
 -}
 elementAlter :
-    ( Linear.Direction, N index_ )
+    ( Linear.Direction, N indexRange_ )
     -> (element -> element)
     ->
-        (ArraySized lengthRange element
-         -> ArraySized lengthRange element
+        (ArraySized range element
+         -> ArraySized range element
         )
 elementAlter ( direction, index ) elementAlter_ =
     \arraySized ->
@@ -1336,8 +1336,8 @@ Funnily, this can sometimes even be nicer than `mapN`/`andMap`
 
 -}
 allFill :
-    ArraySized lengthRange (Emptiable value possiblyOrNever)
-    -> Emptiable (ArraySized lengthRange value) possiblyOrNever
+    ArraySized range (Emptiable value possiblyOrNever)
+    -> Emptiable (ArraySized range value) possiblyOrNever
 allFill =
     ArraySized.Internal.allFill
 
@@ -1414,8 +1414,8 @@ Oh look, more type-safety!
 map :
     (element -> mappedElement)
     ->
-        (ArraySized lengthRange element
-         -> ArraySized lengthRange mappedElement
+        (ArraySized range element
+         -> ArraySized range mappedElement
         )
 map alter =
     \arraySized ->
@@ -1498,7 +1498,7 @@ fold direction reduce =
     --> [ "e", "v", "i", "l" ]
 
 -}
-reverse : ArraySized lengthRange element -> ArraySized lengthRange element
+reverse : ArraySized range element -> ArraySized range element
 reverse =
     ArraySized.Internal.reverse
 
@@ -1524,7 +1524,7 @@ reverse =
     --: N (Min (Up3 minX_))
 
 -}
-length : ArraySized lengthRange element_ -> N lengthRange
+length : ArraySized range element_ -> N range
 length =
     ArraySized.Internal.length
 
