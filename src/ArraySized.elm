@@ -30,7 +30,7 @@ module ArraySized exposing
 
 {-| An `Array` that knows more about the amount of elements it holds.
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n0)
     import Array
 
@@ -160,7 +160,7 @@ import Array exposing (Array)
 import Array.Linear
 import ArraySized.Internal
 import Emptiable exposing (Emptiable)
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, Fixed, In, InFixed, InValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
@@ -1184,7 +1184,7 @@ random elementRandomGenerator length_ =
 {-| Set the element at an index
 in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n1, n2)
 
     ArraySized.l3 "I" "am" "ok"
@@ -1202,7 +1202,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 An index that's too high to point to an existing element is ignored
 and no element is replaced
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n3)
 
     ArraySized.l3 "I" "am" "ok"
@@ -1213,7 +1213,7 @@ and no element is replaced
 
 -}
 elementReplace :
-    ( DirectionLinear, N index_ )
+    ( Linear.Direction, N index_ )
     -> (() -> element)
     ->
         (ArraySized lengthRange element
@@ -1227,7 +1227,7 @@ elementReplace ( direction, index ) elementReplacement =
 in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 based on its previous value
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n0)
 
     ArraySized.l3 1 20 30
@@ -1243,7 +1243,7 @@ based on its previous value
 An index that's too high to point to an existing element is ignored
 and no element is altered
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n3)
 
     ArraySized.l3 1 20 30
@@ -1253,7 +1253,7 @@ and no element is altered
 
 -}
 elementAlter :
-    ( DirectionLinear, N index_ )
+    ( Linear.Direction, N index_ )
     -> (element -> element)
     ->
         (ArraySized lengthRange element
@@ -1360,7 +1360,7 @@ to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear
 An `atLeast` argument is sadly required to proof the taken minimum
 isn't above the [`ArraySized`](#ArraySized)'s length minimum
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n7)
 
     ArraySized.l8 0 1 2 3 4 5 6 7
@@ -1383,7 +1383,7 @@ isn't above the [`ArraySized`](#ArraySized)'s length minimum
 
 -}
 take :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In takenMin takenMax)
     , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
     )
@@ -1433,7 +1433,7 @@ map alter =
 
 {-| Reduce an `ArraySized` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     ArraySized.l4 'l' 'i' 'v' 'e'
         |> ArraySized.foldFrom "" Down String.cons
@@ -1452,7 +1452,7 @@ map alter =
 -}
 foldFrom :
     result
-    -> DirectionLinear
+    -> Linear.Direction
     -> (element -> (result -> result))
     ->
         (ArraySized lengthRange_ element
@@ -1462,13 +1462,13 @@ foldFrom initial direction reduce =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.foldFrom ( initial, direction, reduce )
+            |> Array.Linear.foldFrom initial direction reduce
 
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 where the initial result is the first element in the [`ArraySized`](#ArraySized).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     ArraySized.l3 234 345 543
         |> ArraySized.fold Up Basics.max
@@ -1481,7 +1481,7 @@ where the initial result is the first element in the [`ArraySized`](#ArraySized)
 
 -}
 fold :
-    DirectionLinear
+    Linear.Direction
     -> (element -> (element -> element))
     ->
         (ArraySized (In (Fixed (Add1 minMinus1_)) max_) element
@@ -1493,10 +1493,9 @@ fold direction reduce =
             |> toArray
             |> Array.Linear.elementRemove ( direction, 0 )
             |> Array.Linear.foldFrom
-                ( arraySized |> element ( direction, n0 )
-                , direction
-                , reduce
-                )
+                (arraySized |> element ( direction, n0 ))
+                direction
+                reduce
 
 
 {-| Flip the order of the elements
@@ -1549,7 +1548,7 @@ length =
 {-| Its element at a valid location
 in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n1)
 
     ArraySized.l4 0 1 2 3
@@ -1562,7 +1561,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 
 -}
 element :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
@@ -1580,12 +1579,12 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 Because the index doesn't promise it's `<=` the [`ArraySized`](#ArraySized)'s length minimum,
 `elementTry` gives back a `Result`
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n1, n5)
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.elementTry ( Up, n5 )
-    --> Err (Linear.ExpectedIndexForLength 4)
+    --> Err { indexBeyondElements = () }
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.elementTry ( Down, n1 )
@@ -1593,16 +1592,17 @@ Because the index doesn't promise it's `<=` the [`ArraySized`](#ArraySized)'s le
 
 -}
 elementTry :
-    ( DirectionLinear, N range_ )
+    ( Linear.Direction, N range_ )
     ->
         (ArraySized lengthRange_ element
-         -> Result Linear.ExpectedIndexInRange element
+         -> Result { indexBeyondElements : () } element
         )
 elementTry ( direction, index ) =
     \arraySized ->
         arraySized
             |> toArray
             |> Array.Linear.element ( direction, index |> N.toInt )
+            |> Result.mapError (\_ -> { indexBeyondElements = () })
 
 
 {-| Whether all elements satisfy a given test
@@ -1663,7 +1663,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 
 ↓
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n0, n5)
 
     ArraySized.l7 1 2 3 4 5 6 7
@@ -1699,7 +1699,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 
 -}
 toChunksOf :
-    DirectionLinear
+    Linear.Direction
     ->
         N
             (In
@@ -2023,7 +2023,7 @@ minPush newLastElement =
 {-| Put an element in the `ArraySized` at a given index
 in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n1, n2)
 
     ArraySized.l3 'a' 'c' 'd'
@@ -2046,7 +2046,7 @@ Need the length minimum to not become `Fixed`
 
 -}
 insert :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMin_ To min))
     )
     -> element
@@ -2073,7 +2073,7 @@ insert ( direction, index ) elementToInsert =
 
 {-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n0, n1)
 
     atLeast5Elements
@@ -2094,7 +2094,7 @@ Need the length minimum to not become `Fixed`
 
 -}
 minInsert :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMin_ To min))
     )
     -> element
@@ -2249,7 +2249,7 @@ minInterweave separatorsToPlaceBetweenTheElements =
 
 {-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     ArraySized.l3 1 2 3
         |> ArraySized.glue Up (ArraySized.l3 4 5 6)
@@ -2271,7 +2271,7 @@ Don't know both length maxima? → [`minGlue`](#minGlue)
 
 -}
 glue :
-    DirectionLinear
+    Linear.Direction
     ->
         ArraySized
             (In
@@ -2315,7 +2315,7 @@ Know both length maxima? → [`glue`](#glue)
 
 -}
 minGlue :
-    DirectionLinear
+    Linear.Direction
     ->
         ArraySized
             (In
@@ -2338,7 +2338,7 @@ with a given [`ArraySized`](#ArraySized)
 to reach a given length.
 
     import N exposing (n8)
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
 
     type Bit
         = I
@@ -2367,7 +2367,7 @@ to reach a given length.
 
 -}
 padToLength :
-    DirectionLinear
+    Linear.Direction
     ->
         (N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
          ->
@@ -2391,7 +2391,7 @@ padToLength paddingDirection paddingForLength paddedLength =
 {-| Kick out the element at a given index
 in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n0)
 
     removeLast between1And10Elements =
@@ -2402,7 +2402,7 @@ Don't know the length maximum? → [`minElementRemove`](#minElementRemove)
 
 -}
 elementRemove :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
@@ -2435,7 +2435,7 @@ Know the length maximum? → [`minElementRemove`](#minElementRemove)
 
 -}
 minElementRemove :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
@@ -2461,7 +2461,7 @@ minElementRemove ( direction, index ) =
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n2)
 
     ArraySized.l4 0 1 2 3
@@ -2489,7 +2489,7 @@ minElementRemove ( direction, index ) =
 
 -}
 drop :
-    ( DirectionLinear
+    ( Linear.Direction
     , N
         (In
             (Down maxPlusX To takenMaxPlusX)
@@ -2519,7 +2519,7 @@ drop ( direction, droppedAmount ) =
 
 {-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n2)
 
     atLeast6Elements
@@ -2530,7 +2530,7 @@ Know its length maximum? → [`drop`](#drop)
 
 -}
 minDrop :
-    ( DirectionLinear
+    ( Linear.Direction
     , N
         (In
             dropped_
@@ -2554,7 +2554,7 @@ minDrop ( direction, droppedAmount ) =
 
 {-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
 
-    import Linear exposing (DirectionLinear(..))
+    import Linear exposing (Direction(..))
     import N exposing (n2)
 
     between3And6Elements
@@ -2563,7 +2563,7 @@ minDrop ( direction, droppedAmount ) =
 
 -}
 dropOverMin :
-    ( DirectionLinear, N (In (Down max To takenMax) takenMax_) )
+    ( Linear.Direction, N (In (Down max To takenMax) takenMax_) )
     ->
         (ArraySized (In min_ (Fixed max)) element
          ->

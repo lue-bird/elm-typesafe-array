@@ -85,7 +85,7 @@ import Array.Extra as Array
 import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
-import Linear exposing (DirectionLinear)
+import Linear
 import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, n0, n1)
 import Random
 import Stack exposing (Stacked)
@@ -109,7 +109,7 @@ instead of failing silently like [Orasund's static-array](https://package.elm-la
 
 -}
 element :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
@@ -251,13 +251,13 @@ upTo :
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
             (N (In (Up minX To minX) (Up maxX To maxPlusX)))
 upTo last =
-    N.until last
+    stackUpTo last
         |> Stack.toList
         |> Array.fromList
         |> ArraySized (last |> N.add n1)
 
 
-untilReverse :
+stackDownFrom :
     N (In (Fixed min_) max)
     ->
         Emptiable
@@ -265,60 +265,34 @@ untilReverse :
                 (N (In (Up x0 To x0) max))
             )
             Never
-untilReverse last =
+stackDownFrom last =
     case last |> N.isAtLeast n1 of
         Err _ ->
             n0 |> N.maxTo last |> Stack.only
 
         Ok lastAtLeast1 ->
-            (lastAtLeast1 |> N.minSub n1 |> untilReverseRecursive)
+            (lastAtLeast1 |> N.subtractMin n1 |> downFromRecursive)
                 |> Stack.onTopLay (lastAtLeast1 |> N.minTo n0)
 
 
-{-| [`N`](#N)s increasing from `0` to `n`
-In the end, there are `n` numbers.
-
-    import Stack
-
-    N.until n6
-        |> Stack.map (\_ -> N.add n3)
-        --: Emptiable
-        --:     (Stacked
-        --:         (N
-        --:             (In
-        --:                 (Up minX To (Add3 minX))
-        --:                 (Up maxX To (Add9 maxX))
-        --:             )
-        --:         )
-        --:     )
-        --:     Never
-        |> Stack.map (\_ -> N.toInt)
-    --> Stack.topDown 3 [ 4, 5, 6, 7, 8, 9 ]
-
-    N.until atLeast7 |> Stack.map (\_ -> N.minAdd n3)
-    --: Emptiable
-    --:     (Stacked (N (Min (Up x To (Add10 x)))))
-    --:     Never
-
--}
-until :
+stackUpTo :
     N (In (Fixed min_) max)
     ->
         Emptiable
             (Stacked (N (In (Up x0 To x0) max)))
             Never
-until last =
-    untilReverse last |> Stack.reverse
+stackUpTo last =
+    stackDownFrom last |> Stack.reverse
 
 
-untilReverseRecursive :
+downFromRecursive :
     N (In (Fixed min_) max)
     ->
         Emptiable
             (Stacked (N (In (Up x0 To x0) max)))
             Never
-untilReverseRecursive =
-    untilReverse
+downFromRecursive =
+    stackDownFrom
 
 
 random :
@@ -340,7 +314,7 @@ random elementRandomGenerator amount =
 
 
 elementReplace :
-    ( DirectionLinear, N index_ )
+    ( Linear.Direction, N index_ )
     -> (() -> element)
     ->
         (ArraySized lengthRange element
@@ -351,9 +325,8 @@ elementReplace ( direction, index ) replacement =
         arraySized
             |> toArray
             |> Array.Linear.elementReplace
-                ( ( direction, index |> N.toInt )
-                , replacement
-                )
+                ( direction, index |> N.toInt )
+                replacement
             |> ArraySized (arraySized |> length)
 
 
@@ -378,7 +351,7 @@ push elementToPush =
 
 
 insert :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMin_ To min))
     )
     -> element
@@ -402,14 +375,13 @@ insert ( direction, index ) elementToInsert =
         arraySized
             |> toArray
             |> Array.Linear.insert
-                ( ( direction, index |> N.toInt )
-                , \() -> elementToInsert
-                )
+                ( direction, index |> N.toInt )
+                (\() -> elementToInsert)
             |> ArraySized (arraySized |> length |> N.add n1)
 
 
 elementRemove :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
@@ -433,7 +405,7 @@ elementRemove ( direction, index ) =
             |> toArray
             |> Array.Linear.elementRemove
                 ( direction, index |> N.toInt )
-            |> ArraySized (arraySized |> length |> N.sub n1)
+            |> ArraySized (arraySized |> length |> N.subtract n1)
 
 
 reverse : ArraySized range element -> ArraySized range element
@@ -463,7 +435,7 @@ and nextArraySized =
 
 
 glue :
-    DirectionLinear
+    Linear.Direction
     ->
         ArraySized
             (In
@@ -547,12 +519,12 @@ minInterweave separatorsToPlaceBetweenTheElements =
             |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.minAdd (separatorsToPlaceBetweenTheElements |> length)
+                    |> N.addMin (separatorsToPlaceBetweenTheElements |> length)
                 )
 
 
 minGlue :
-    DirectionLinear
+    Linear.Direction
     ->
         ArraySized
             (In
@@ -571,11 +543,11 @@ minGlue direction extension =
             |> Array.Linear.glue direction
                 (extension |> toArray)
             |> ArraySized
-                ((arraySized |> length) |> N.minAdd (extension |> length))
+                ((arraySized |> length) |> N.addMin (extension |> length))
 
 
 padToLength :
-    DirectionLinear
+    Linear.Direction
     ->
         (N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
          ->
@@ -595,7 +567,7 @@ padToLength =
         let
             paddingLength : N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
             paddingLength =
-                paddedLength |> N.sub (arraySized |> length)
+                paddedLength |> N.subtract (arraySized |> length)
         in
         arraySized
             |> toArray
@@ -609,7 +581,7 @@ padToLength =
 
 
 drop :
-    ( DirectionLinear
+    ( Linear.Direction
     , N
         (In
             (Down maxPlusX To takenMaxPlusX)
@@ -639,12 +611,12 @@ drop ( direction, droppedAmount ) =
                 ( direction, droppedAmount |> N.toInt )
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.sub droppedAmount
+                    |> N.subtract droppedAmount
                 )
 
 
 dropOverMin :
-    ( DirectionLinear, N (In (Down max To takenMax) takenMax_) )
+    ( Linear.Direction, N (In (Down max To takenMax) takenMax_) )
     ->
         (ArraySized (In min_ (Fixed max)) element
          ->
@@ -665,16 +637,16 @@ dropOverMin ( direction, lengthToDrop ) =
                         ( n0
                         , arraySized
                             |> length
-                            |> N.maximumAsDifference
-                            |> N.differenceDown
-                                (lengthToDrop |> N.minimumAsDifference)
-                            |> N.specific
+                            |> N.max
+                            |> N.differenceSubtract
+                                (lengthToDrop |> N.min)
+                            |> N.exactly
                         )
                 )
 
 
 minDrop :
-    ( DirectionLinear
+    ( Linear.Direction
     , N
         (In
             dropped_
@@ -698,12 +670,12 @@ minDrop ( direction, droppedAmount ) =
                 ( direction, droppedAmount |> N.toInt )
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.minSub droppedAmount
+                    |> N.subtractMin droppedAmount
                 )
 
 
 take :
-    ( DirectionLinear
+    ( Linear.Direction
     , N (In takenMin takenMax)
     , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
     )
@@ -720,7 +692,7 @@ take ( direction, toTakeAmount, _ ) =
 
 
 toChunksOf :
-    DirectionLinear
+    Linear.Direction
     ->
         N
             (In
@@ -755,15 +727,13 @@ toChunksOf chunkingDirection chunkLength =
             chunked =
                 arraySized
                     |> toArray
-                    |> Array.Linear.toChunks
-                        { length = chunkLength |> N.toInt
-                        , remainder = chunkingDirection
-                        }
+                    |> Array.Linear.toChunksOf chunkingDirection
+                        (chunkLength |> N.toInt)
         in
         { chunks =
             chunked.chunks
                 |> Array.map (ArraySized chunkLength)
-                |> ArraySized (arraySized |> length |> N.div chunkLength)
+                |> ArraySized (arraySized |> length |> N.divideBy chunkLength)
         , remainder =
             chunked.remainder
                 |> ArraySized
@@ -828,7 +798,7 @@ maxNo =
     \arraySized ->
         arraySized
             |> toArray
-            |> ArraySized (arraySized |> length |> N.maxNo)
+            |> ArraySized (arraySized |> length |> N.maxToInfinity)
 
 
 maxUp :
@@ -863,7 +833,7 @@ max lengthMaximumNew =
             |> toArray
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.max lengthMaximumNew
+                    |> N.maxTo lengthMaximumNew
                 )
 
 
@@ -879,7 +849,7 @@ min lengthMinimumNew =
             |> toArray
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.min lengthMinimumNew
+                    |> N.minTo lengthMinimumNew
                 )
 
 

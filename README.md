@@ -45,12 +45,12 @@ elm install lue-bird/elm-typesafe-array
 ```
 
   - numbers – [`bounded-nat`][bounded-nat]
-      - `n<x>`, `N<x>`, `Add<x>`, `Min`, `In`, `Exactly`, `Up`, `Fixed`
+      - `n<x>`, `N<x>`, `Add<x>`, `Up<x>`, `Fixed`, `Min`, `In`, `Exactly`, `Up`
   - from which side to look – [`linear-direction`][linear-direction]
       - `Up`, `Down`
 
 ```elm
-import Linear exposing (DirectionLinear(..)) -- Up or Down
+import Linear exposing (Direction(..)) -- Up or Down
 import N exposing (N, Exactly, Min, In, Up, To, Fixed)
 import ArraySized exposing (ArraySized)
 ```
@@ -95,7 +95,7 @@ length is `In` a range
 Like in the tic-tac-toe example
 
 ```elm
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import N exposing (n1, n4, n6, n8, N8, Exactly)
 import ArraySized exposing (ArraySized)
 
@@ -143,7 +143,7 @@ initialChessBoard
 ```elm
 -- the max tag count should be 53
 tag : ArraySized (In min_ N53) String -> (a -> Tagged a)
-tag tags toTag =
+tag tags =
     ...
 
 tag (ArraySized.l3 "fun" "easy" "simple") -- valid

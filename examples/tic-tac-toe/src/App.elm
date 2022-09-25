@@ -6,7 +6,7 @@ import Element as Ui
 import Element.Background as Background
 import Element.Font as Font
 import Element.Input as UiInput
-import Linear exposing (DirectionLinear(..))
+import Linear exposing (Direction(..))
 import Maybe.Extra as Maybe
 import N exposing (Exactly, Fixed, In, N, N0, N2, N3, n2, n3)
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
