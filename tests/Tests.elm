@@ -22,24 +22,24 @@ arraySizedTests =
         [ describe "all"
             [ test "True"
                 (\() ->
-                    ArraySized.allAre isEven (ArraySized.l2 2 4)
+                    ArraySized.all isEven (ArraySized.l2 2 4)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    ArraySized.allAre isEven (ArraySized.l2 2 3)
+                    ArraySized.all isEven (ArraySized.l2 2 3)
                         |> Expect.equal False
                 )
             ]
         , describe "any"
             [ test "True"
                 (\() ->
-                    ArraySized.anyIs isEven (ArraySized.l2 1 2)
+                    ArraySized.any isEven (ArraySized.l2 1 2)
                         |> Expect.equal True
                 )
             , test "False"
                 (\() ->
-                    ArraySized.anyIs isEven (ArraySized.l2 1 3)
+                    ArraySized.any isEven (ArraySized.l2 1 3)
                         |> Expect.equal False
                 )
             ]

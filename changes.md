@@ -5,6 +5,7 @@
   - `bounded-nat` version → 26.0.0
   - `linear-direction` version → 7.0.0
   - `emptiness-typed` version → 7.0.0
+  - `anyIs`, `allAre` name → `any`, `all`
 
 ### TODO
 

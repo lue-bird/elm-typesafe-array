@@ -6,7 +6,7 @@ module ArraySized exposing
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
     , element, elementTry, to1
-    , allAre, anyIs
+    , all, any
     , elementReplace, elementAlter, reverse
     , push, minPush, insert, minInsert
     , elementRemove, minElementRemove
@@ -92,7 +92,7 @@ put them in a `module exposing (l<x>)` + `import as ArraySized`
 
 @docs length
 @docs element, elementTry, to1
-@docs allAre, anyIs
+@docs all, any
 
 
 # alter
@@ -1591,20 +1591,20 @@ elementTry ( direction, index ) =
 
 {-| Whether all elements satisfy a given test
 
-    ArraySized.l2 2 3 |> ArraySized.allAre (\n -> n <= 4)
+    ArraySized.l2 2 3 |> ArraySized.all (\n -> n <= 4)
     --> True
 
-    ArraySized.l2 2 7 |> ArraySized.allAre (\n -> n <= 4)
+    ArraySized.l2 2 7 |> ArraySized.all (\n -> n <= 4)
     --> False
 
-    ArraySized.empty |> ArraySized.allAre (\n -> n <= 4)
+    ArraySized.empty |> ArraySized.all (\n -> n <= 4)
     --> True
 
 -}
-allAre :
+all :
     (element -> Bool)
     -> (ArraySized lengthRange_ element -> Bool)
-allAre isOkay =
+all isOkay =
     \arraySized ->
         arraySized
             |> foldFrom True
@@ -1614,20 +1614,20 @@ allAre isOkay =
 
 {-| Whether at least one element satisfies a given test
 
-    ArraySized.l2 300 -5 |> ArraySized.anyIs (\n -> n <= 4)
+    ArraySized.l2 300 -5 |> ArraySized.any (\n -> n <= 4)
     --> True
 
-    ArraySized.l2 5 5 |> ArraySized.anyIs (\n -> n <= 4)
+    ArraySized.l2 5 5 |> ArraySized.any (\n -> n <= 4)
     --> False
 
-    ArraySized.empty |> ArraySized.anyIs (\n -> n <= 4)
+    ArraySized.empty |> ArraySized.any (\n -> n <= 4)
     --> False
 
 -}
-anyIs :
+any :
     (element -> Bool)
     -> (ArraySized lengthRange_ element -> Bool)
-anyIs isOkay =
+any isOkay =
     \arraySized ->
         arraySized
             |> foldFrom False
