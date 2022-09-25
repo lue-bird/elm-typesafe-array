@@ -21,7 +21,7 @@ module ArraySized.Internal exposing
 
 {-| Contains all functions that directly use type-unsafe operations.
 No other module can alter the underlying array or length and decide its length type.
-Ideally, this module should be as small as possible and contain as little `ArraySized` calls as possible.
+Ideally, this module should be as small as possible and contain as little `ArraySized` calls as possible
 
 @docs ArraySized
 
@@ -105,7 +105,7 @@ If it doesn't succeed, `at` crashes with a
 
 > RangeError: Maximum call stack size exceeded
 
-instead of failing silently like [Orasund's static-array](https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/) does.
+instead of failing silently like [Orasund's static-array](https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/) does
 
 -}
 element :
@@ -139,7 +139,7 @@ element ( direction, index ) =
 {-| The [mutual recursion prevents TCO](https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions),
 forcing a stack overflow runtime exception.
 
-The arguments help identify the cause on inspection when debugging.
+The arguments help identify the cause on inspection when debugging
 
 -}
 failLoudlyWithStackOverflow :

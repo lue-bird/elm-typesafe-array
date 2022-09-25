@@ -1,6 +1,6 @@
 module ArraySized.Generate exposing (main)
 
-{-| Helps you generate the source code of `ArraySized.l1` to `from16` & the module `ArgN.Arguments`.
+{-| Helps you generate the source code of `ArraySized.l1` to `from16` & the module `ArgN.Arguments`
 
 Thanks to [`the-sett/elm-syntax-dsl`](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest/)!
 

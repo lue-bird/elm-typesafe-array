@@ -28,7 +28,7 @@ module ArraySized exposing
     , max, maxUp, maxNo
     )
 
-{-| An `Array` that knows more about the amount of elements it holds.
+{-| An `Array` that knows more about the amount of elements it holds
 
     import Linear exposing (Direction(..))
     import N exposing (n0)
@@ -338,7 +338,7 @@ toStackFilled =
 {-| On [`empty`](#empty) `Nothing`, on [`l1`](#l1) `Just` it's only value.
 
 Sadly, they way natural number constraints are defined,
-emptiness type information can't be transferred.
+emptiness type information can't be transferred
 
 -}
 toEmptiable :
@@ -516,7 +516,7 @@ fromStackFilled =
     --> []
 
 Sadly, they way natural number constraints are defined,
-`possiblyOrNever` can't be transferred.
+`possiblyOrNever` can't be transferred
 
 -}
 fromEmptiable :
@@ -1394,7 +1394,7 @@ take ( direction, toTakeAmount, { atLeast } ) =
 -- ## transform
 
 
-{-| Change every element.
+{-| Change all elements based on their current values
 
     import N exposing (n25)
 
@@ -1423,7 +1423,7 @@ map alter =
             |> ArraySized.Internal.map alter
 
 
-{-| Reduce an `ArraySized` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/).
+{-| Reduce an `ArraySized` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
 
@@ -1458,7 +1458,7 @@ foldFrom initial direction reduce =
 
 
 {-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-where the initial result is the first element in the [`ArraySized`](#ArraySized).
+where the initial result is the first element in the [`ArraySized`](#ArraySized)
 
     import Linear exposing (Direction(..))
 
@@ -1507,7 +1507,7 @@ reverse =
 -- ## scan
 
 
-{-| The amount of elements.
+{-| The amount of elements
 
     import N exposing (n3)
 
@@ -1748,7 +1748,7 @@ fromValue =
 -- ## type information
 
 
-{-| Use a lower minimum length in the type.
+{-| Use a lower minimum length in the type
 
     [ atLeast3Elements
     , atLeast4Elements
@@ -1780,14 +1780,14 @@ minDown lengthMinimumDecrease =
             |> ArraySized.Internal.minDown lengthMinimumDecrease
 
 
-{-| Convert the `ArraySized (In min ...)` to a `ArraySized (Min min)`.
+{-| Convert the `ArraySized (In min ...)` to a `ArraySized (Min min)`
 
     between4And10Elements |> ArraySized.toMin
     --: ArraySized (Min N4) ...
 
 There is only 1 situation you should use this.
 
-To make these the same type.
+To make these the same type
 
     [ atLeast1Element, between1And10Elements ]
 
@@ -1808,12 +1808,12 @@ maxNo =
             |> ArraySized.Internal.maxNo
 
 
-{-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length.
+{-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length
 
     type alias Row =
         ArraySized (Exactly N18) Field
 
-`Row`'s length range can't be added to another length.
+`Row`'s length range can't be added to another length
 
     glue2TemporaryFields : Row -> ...
     glue2TemporaryFields rowFromModelOrSomeStorage =
@@ -1848,7 +1848,7 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements` for exa
 
 [`maxUp n1`](#maxUp) is also possible,
 but unless you want to preserve the `maxTo18_` type variable,
-there's no need to not use this absolute operation.
+there's no need to not use this absolute operation
 
 -}
 max :
@@ -1863,12 +1863,12 @@ max lengthMaximumNew =
             |> ArraySized.Internal.max lengthMaximumNew
 
 
-{-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length.
+{-| Make an `ArraySized` with a fixed maximum length fit into functions with require a higher maximum length
 
     type alias Row =
         ArraySized (Exactly N18) Field
 
-`Row`'s length range can't be added to another length.
+`Row`'s length range can't be added to another length
 
     glue2TemporaryFields : Row -> ...
     glue2TemporaryFields rowFromModelOrSomeStorage =
@@ -2043,7 +2043,7 @@ insert ( direction, index ) elementToInsert =
             |> ArraySized.Internal.insert ( direction, index ) elementToInsert
 
 
-{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n0, n1)
@@ -2088,7 +2088,7 @@ minInsert ( direction, index ) toInsert =
 
 {-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple.
 
-Every element beyond the minimum [`length`](#length) of both is't part of the final [`ArraySized`](#ArraySized).
+Every element beyond the minimum [`length`](#length) of both is't part of the final [`ArraySized`](#ArraySized)
 
     import ArraySized
 
@@ -2130,7 +2130,7 @@ and nextArraySized =
 {-| Place all elements of an [`ArraySized`](#ArraySized)
 between all current members.
 Extra elements of either [`ArraySized`](#ArraySized) are glued to the end
-without separating elements from the other [`ArraySized`](#ArraySized).
+without separating elements from the other [`ArraySized`](#ArraySized)
 
     import N exposing (n2)
 
@@ -2178,7 +2178,7 @@ interweave separatorsToPlaceBetweenTheElements =
 {-| Place all elements of an [`ArraySized`](#ArraySized)
 between all current members.
 Extra elements of either [`ArraySized`](#ArraySized) are glued to the end
-without separating elements from the other [`ArraySized`](#ArraySized).
+without separating elements from the other [`ArraySized`](#ArraySized)
 
     import N exposing (n2)
 
@@ -2209,7 +2209,7 @@ minInterweave separatorsToPlaceBetweenTheElements =
             |> ArraySized.Internal.minInterweave separatorsToPlaceBetweenTheElements
 
 
-{-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
 
@@ -2294,7 +2294,7 @@ minGlue direction extension =
 
 {-| Pad in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 with a given [`ArraySized`](#ArraySized)
-to reach a given length.
+to reach a given length
 
     import N exposing (n8)
     import Linear exposing (Direction(..))
@@ -2385,7 +2385,7 @@ elementRemove ( direction, index ) =
             |> ArraySized.Internal.elementRemove ( direction, index )
 
 
-{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     removeLast =
         TypeSized.minElementRemove ( Down, n0 )
@@ -2418,7 +2418,7 @@ minElementRemove ( direction, index ) =
             |> elementRemove ( direction, index )
 
 
-{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n2)
@@ -2470,7 +2470,7 @@ drop ( direction, droppedAmount ) =
             |> ArraySized.Internal.drop ( direction, droppedAmount )
 
 
-{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n2)

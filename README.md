@@ -164,7 +164,7 @@ tag (ArraySized.repeat n100 "into-the-trends") -- type error
 ## [Orasund's `static-array`][static-array] – comparison
 
 `typesafe-array` development started before `static-array` was published
-but the ideas are really similar.
+but the ideas are really similar
 
 ### create
 
@@ -209,7 +209,7 @@ but the ideas are really similar.
     ```
     important note from `static-array`:
 
-    > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually.
+    > Notice that we can NOT do addition in compile time, therefore we need to construct 6+6 manually
 
     → You can easily do
     ```elm
