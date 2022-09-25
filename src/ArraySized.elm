@@ -85,7 +85,7 @@ so we can [`fold`](#fold), access, ... without a worry
 @docs l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
 
 You can [generate `l<x>` with `x >= 17` locally](https://lue-bird.github.io/elm-typesafe-array/generate/),
-put them in a `module exposing (l<x>)` + `import as ArraySized`
+put them in a `module ArraySized.Local exposing (l<x>, ...)` + `import ArraySized.Local as ArraySized`
 
 
 # scan
@@ -171,7 +171,7 @@ import Toop
 {-| An `Array` that knows about the amount of elements it holds
 
 
-## result type
+### result type
 
     -- amount >= 5
     : ArraySized (Min (Up5 x_)) ...
@@ -180,7 +180,7 @@ import Toop
     : ArraySized
     :     (In (Up2 minX_) (Up12 maxX_)) ...
 
-This weird difference type `Up x To (Add<n> x)` just to represent the number `n`
+Representing a result's numbers as this weird `Up<n> x`
 is what allows the little magic tricks in the library:
 [glueing](#combine), [taking, dropping, chunking](#part), [comparing](#length-compare), ...
 
@@ -358,7 +358,7 @@ toEmptiable =
 -- # create
 
 
-{-| Exactly the given amount of same elements
+{-| A given amount of same elements
 
     import N exposing (n4)
 
@@ -1128,7 +1128,7 @@ to16 =
     --:    (In (Fixed N3) (Up10 maxX_))
     --:    (N (In (Up5 minX_) (Up12 maxX_)))
 
-[`min`](#min) is helpful
+[`minTo`](#minTo) is helpful
 to turn the `Fixed` length minimum into a difference
 if you need that (for results etc.)
 
@@ -1143,7 +1143,7 @@ upTo last =
     ArraySized.Internal.upTo last
 
 
-{-| `Random.Generator` for the given amount of random elements
+{-| `Random.Generator` for a given amount of random elements
 
     import N exposing (n5)
 
@@ -1174,7 +1174,7 @@ random elementRandomGenerator length_ =
 
 
 {-| Set the element at an index
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n1, n2)
@@ -1216,7 +1216,7 @@ elementReplace ( direction, index ) elementReplacement =
 
 
 {-| Change the element at an index
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 based on its previous value
 
     import Linear exposing (Direction(..))
@@ -1423,7 +1423,7 @@ map alter =
             |> ArraySized.Internal.map alter
 
 
-{-| Reduce an `ArraySized` in a [direction](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/)
+{-| Reduce an `ArraySized` in a given [`Direction`](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
 
@@ -1457,7 +1457,7 @@ foldFrom initial direction reduce =
             |> Array.Linear.foldFrom initial direction reduce
 
 
-{-| A fold in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| A fold in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 where the initial result is the first element in the [`ArraySized`](#ArraySized)
 
     import Linear exposing (Direction(..))
@@ -1507,7 +1507,7 @@ reverse =
 -- ## scan
 
 
-{-| The amount of elements
+{-| Its amount of elements
 
     import N exposing (n3)
 
@@ -1530,7 +1530,7 @@ length =
 
 
 {-| Its element at a valid location
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n1)
@@ -1559,7 +1559,7 @@ element ( direction, index ) =
 
 
 {-| Its possible element at a location
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 Because the index doesn't promise it's `<=` the [`ArraySized`](#ArraySized)'s length minimum,
 `elementTry` gives back a `Result`
 
@@ -1640,7 +1640,7 @@ any isOkay =
 
 
 {-| Split the `ArraySized` into equal-sized (except `remainder`) slices
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
   - `groups`: the ArraySized divided into equal-sized Arrs
   - `less`: values to one side that don't fill a whole group
@@ -1993,7 +1993,7 @@ pushMin newLastElement =
 
 
 {-| Put an element in the `ArraySized` at a given index
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n1, n2)
@@ -2014,7 +2014,7 @@ in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direc
 [`insertMin`](#insertMin) if you don't know the length maximum
 
 Need the length minimum to not become `Fixed`
-(for results etc.) → [`|> min`](#min)
+(for results etc.) → [`|> minTo`](#minTo)
 
 -}
 insert :
@@ -2043,7 +2043,8 @@ insert ( direction, index ) elementToInsert =
             |> ArraySized.Internal.insert ( direction, index ) elementToInsert
 
 
-{-| Put a new element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Put a new element at an index
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n0, n1)
@@ -2062,7 +2063,7 @@ insert ( direction, index ) elementToInsert =
 [`insert`](#insert) if you know the length maximum
 
 Need the length minimum to not become `Fixed`
-(for results etc.) → [`|> min`](#min)
+(for results etc.) → [`|> minTo`](#minTo)
 
 -}
 insertMin :
@@ -2292,7 +2293,7 @@ glueMin direction extension =
             |> ArraySized.Internal.glueMin direction extension
 
 
-{-| Pad in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Pad in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 with a given [`ArraySized`](#ArraySized)
 to reach a given length
 
@@ -2348,7 +2349,7 @@ padToLength paddingDirection paddingForLength paddedLength =
 
 
 {-| Kick out the element at a given index
-in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n0)
@@ -2385,7 +2386,8 @@ elementRemove ( direction, index ) =
             |> ArraySized.Internal.elementRemove ( direction, index )
 
 
-{-| Kick out the element at an index in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Kick out the element at an index
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     removeLast =
         TypeSized.elementRemoveMin ( Down, n0 )
@@ -2418,7 +2420,8 @@ elementRemoveMin ( direction, index ) =
             |> elementRemove ( direction, index )
 
 
-{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Elements after a certain number of elements
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n2)
@@ -2470,7 +2473,8 @@ drop ( direction, droppedAmount ) =
             |> ArraySized.Internal.drop ( direction, droppedAmount )
 
 
-{-| Elements after a certain number of elements in a [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Elements after a certain number of elements
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
     import N exposing (n2)
