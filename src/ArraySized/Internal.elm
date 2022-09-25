@@ -677,7 +677,7 @@ dropMin ( direction, droppedAmount ) =
 take :
     ( Linear.Direction
     , N (In takenMin takenMax)
-    , { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
+    , { atLeast : N (In takenMin (Up takenMinToMin_ To min)) }
     )
     ->
         (ArraySized (In (Fixed min) max_) element
