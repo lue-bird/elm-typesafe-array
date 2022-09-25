@@ -2400,19 +2400,20 @@ elementRemoveMin :
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
     ->
-        ArraySized
+        (ArraySized
             (In
                 (Fixed (Add1 minMinus1))
                 (Up x To maxPlusX)
             )
             element
-    ->
-        ArraySized
-            (In
-                (Fixed minMinus1)
-                (Up x To maxPlusX)
-            )
-            element
+         ->
+            ArraySized
+                (In
+                    (Fixed minMinus1)
+                    (Up x To maxPlusX)
+                )
+                element
+        )
 elementRemoveMin ( direction, index ) =
     \arraySized ->
         arraySized
