@@ -88,7 +88,7 @@ import Emptiable exposing (Emptiable, fillMap)
 import Linear exposing (DirectionLinear)
 import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, n0, n1)
 import Random
-import Stack
+import Stack exposing (Stacked)
 
 
 type ArraySized lengthRange element
@@ -255,6 +255,70 @@ upTo last =
         |> Stack.toList
         |> Array.fromList
         |> ArraySized (last |> N.add n1)
+
+
+untilReverse :
+    N (In (Fixed min_) max)
+    ->
+        Emptiable
+            (Stacked
+                (N (In (Up x0 To x0) max))
+            )
+            Never
+untilReverse last =
+    case last |> N.isAtLeast n1 of
+        Err _ ->
+            n0 |> N.maxTo last |> Stack.only
+
+        Ok lastAtLeast1 ->
+            (lastAtLeast1 |> N.minSub n1 |> untilReverseRecursive)
+                |> Stack.onTopLay (lastAtLeast1 |> N.minTo n0)
+
+
+{-| [`N`](#N)s increasing from `0` to `n`
+In the end, there are `n` numbers.
+
+    import Stack
+
+    N.until n6
+        |> Stack.map (\_ -> N.add n3)
+        --: Emptiable
+        --:     (Stacked
+        --:         (N
+        --:             (In
+        --:                 (Up minX To (Add3 minX))
+        --:                 (Up maxX To (Add9 maxX))
+        --:             )
+        --:         )
+        --:     )
+        --:     Never
+        |> Stack.map (\_ -> N.toInt)
+    --> Stack.topDown 3 [ 4, 5, 6, 7, 8, 9 ]
+
+    N.until atLeast7 |> Stack.map (\_ -> N.minAdd n3)
+    --: Emptiable
+    --:     (Stacked (N (Min (Up x To (Add10 x)))))
+    --:     Never
+
+-}
+until :
+    N (In (Fixed min_) max)
+    ->
+        Emptiable
+            (Stacked (N (In (Up x0 To x0) max)))
+            Never
+until last =
+    untilReverse last |> Stack.reverse
+
+
+untilReverseRecursive :
+    N (In (Fixed min_) max)
+    ->
+        Emptiable
+            (Stacked (N (In (Up x0 To x0) max)))
+            Never
+untilReverseRecursive =
+    untilReverse
 
 
 random :
@@ -526,9 +590,10 @@ padToLength :
             element
          -> ArraySized (In (Fixed paddedMin) (Up maxX To paddedMaxPlusX)) element
         )
-padToLength paddingDirection paddingForLength paddedLength =
-    \arraySized ->
+padToLength =
+    \paddingDirection paddingForLength paddedLength arraySized ->
         let
+            paddingLength : N (In (Fixed paddingMin) (Up maxX To paddingMaxPlusX))
             paddingLength =
                 paddedLength |> N.sub (arraySized |> length)
         in
