@@ -1908,9 +1908,10 @@ minTo lengthMinimumNew =
 
 Want to increase the upper bound by a fixed amount? ↓
 
-    maxUp4 : ArraySized (In min max) -> ArraySized (In min (Add4 max))
-    maxUp4 =
-        ArraySized.maxUp n4
+    ArraySized.l4 'a' 'b' 'c' 'd'
+        --: ArraySIzed (In (Up4 minX_) (Up4 maxX_))
+        |> ArraySized.maxUp n2
+    --: ArraySIzed (In (Up4 minX_) (Up6 maxX_))
 
 When is this useful? Very rarely, to preserve type variables.
 More in [`N.maxUp`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxUp)
