@@ -24,6 +24,8 @@ module ArraySized exposing
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , toValue, fromValue
+    , minToValue, minFromValue
+    , maxToValue, maxFromValue
     , minTo, minDown
     , maxTo, maxToInfinity, maxUp
     )
@@ -147,6 +149,8 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 ## without internal functions
 
 @docs toValue, fromValue
+@docs minToValue, minFromValue
+@docs maxToValue, maxFromValue
 
 
 ## type-level
@@ -161,7 +165,7 @@ import Array.Linear
 import ArraySized.Internal
 import Emptiable exposing (Emptiable)
 import Linear exposing (Direction(..))
-import N exposing (Add1, Add2, Down, Exactly, Fixed, In, InFixed, InValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
+import N exposing (Add1, Add2, Down, Exactly, Fixed, In, InFixed, InValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, Value, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -1720,7 +1724,8 @@ toChunksOf chunkingDirection chunkLength =
 -- ## without internal functions
 
 
-{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of [`Fixed` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+of [`Fixed` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InFixed)
 → equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
 -}
 toValue :
@@ -1729,11 +1734,13 @@ toValue :
 toValue =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.toValue
+            |> minToValue
+            |> maxToValue
 
 
-{-| [`ArraySized`](#ArraySized) with a [`length`](#length) of equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
-→ [Fixed range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue),
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+of equatable [`Value` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue)
+→ [Fixed range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InFixed),
 allowing it to be [altered](#alter), [compared](#length-compare), ...
 -}
 fromValue :
@@ -1742,7 +1749,62 @@ fromValue :
 fromValue =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.fromValue
+            |> minFromValue
+            |> maxFromValue
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+with a [`Fixed`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Fixed) minimum
+→ equatable [`Value`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Value) minimum
+-}
+minToValue :
+    ArraySized (In (Fixed min) max) element
+    -> ArraySized (In (Value min) max) element
+minToValue =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minToValue
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+with an equatable [`Value`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Value) minimum
+→ [`Fixed`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Fixed) minimum,
+allowing it to be [altered](#alter), [compared](#length-compare), ...
+-}
+minFromValue :
+    ArraySized (In (Value min) max) element
+    -> ArraySized (In (Fixed min) max) element
+minFromValue =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.minFromValue
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+with a [`Fixed`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InValue) maximum
+→ equatable [`Value`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Value) maximum
+-}
+maxToValue :
+    ArraySized (In min (Fixed max)) element
+    -> ArraySized (In min (Value max)) element
+maxToValue =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.maxToValue
+
+
+{-| [`ArraySized`](#ArraySized) with a [`length`](#length)
+with an equatable [`Value`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Value) maximum
+→ [`Fixed`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#Fixed) maximum,
+allowing it to be [altered](#alter), [compared](#length-compare), ...
+-}
+maxFromValue :
+    ArraySized (In min (Value max)) element
+    -> ArraySized (In min (Fixed max)) element
+maxFromValue =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.maxFromValue
 
 
 

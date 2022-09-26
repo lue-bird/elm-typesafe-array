@@ -1,10 +1,11 @@
 module ArraySized.Internal exposing
     ( ArraySized
     , empty, fromArray, repeat, upTo, random
-    , fromValue
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
-    , toArray, toValue
+    , toArray
+    , minToValue, minFromValue
+    , maxToValue, maxFromValue
     , elementReplace, elementRemove, push, insert, reverse
     , map
     , fills, allFill
@@ -29,7 +30,6 @@ Ideally, this module should be as small as possible and contain as little `Array
 # create
 
 @docs empty, fromArray, repeat, upTo, random
-@docs fromValue
 
 
 # scan
@@ -44,7 +44,13 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # transform
 
-@docs toArray, toValue
+@docs toArray
+
+
+# value
+
+@docs minToValue, minFromValue
+@docs maxToValue, maxFromValue
 
 
 # alter
@@ -86,7 +92,7 @@ import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
 import Linear
-import N exposing (Add1, Add2, Down, Fixed, In, InFixed, InValue, Min, N, To, Up, Up0, n0, n1)
+import N exposing (Add1, Add2, Down, Fixed, In, Min, N, To, Up, Up0, Value, n0, n1)
 import Random
 import Stack exposing (Stacked)
 
@@ -747,24 +753,44 @@ toChunksOf chunkingDirection chunkLength =
 -- ## without internal functions
 
 
-toValue :
-    ArraySized (InFixed min max) element
-    -> ArraySized (InValue min max) element
-toValue =
+minToValue :
+    ArraySized (In (Fixed min) max) element
+    -> ArraySized (In (Value min) max) element
+minToValue =
     \arraySized ->
         arraySized
             |> toArray
-            |> ArraySized (arraySized |> length |> N.toValue)
+            |> ArraySized (arraySized |> length |> N.minToValue)
 
 
-fromValue :
-    ArraySized (InValue min max) element
-    -> ArraySized (InFixed min max) element
-fromValue =
+minFromValue :
+    ArraySized (In (Value min) max) element
+    -> ArraySized (In (Fixed min) max) element
+minFromValue =
     \arraySized ->
         arraySized
             |> toArray
-            |> ArraySized (arraySized |> length |> N.fromValue)
+            |> ArraySized (arraySized |> length |> N.minFromValue)
+
+
+maxToValue :
+    ArraySized (In min (Fixed max)) element
+    -> ArraySized (In min (Value max)) element
+maxToValue =
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> ArraySized (arraySized |> length |> N.maxToValue)
+
+
+maxFromValue :
+    ArraySized (In min (Value max)) element
+    -> ArraySized (In min (Fixed max)) element
+maxFromValue =
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> ArraySized (arraySized |> length |> N.maxFromValue)
 
 
 

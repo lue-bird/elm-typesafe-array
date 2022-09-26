@@ -9,6 +9,7 @@
   - `ArraySized.until` name → `upTo`
   - `ArraySized.min`, `max`, `maxNo`, `min<action>` name → `minTo`, `maxTo`, `maxToInfinity`, `<action>Min`
       - to be consistent with `N`
+  - `minFromValue`, `minToValue`, `maxFromValue`, `maxToValue` add
 
 ### 23.3.0
 
