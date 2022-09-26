@@ -1901,7 +1901,7 @@ minTo lengthMinimumNew =
             |> ArraySized.Internal.min lengthMinimumNew
 
 
-{-| Have a specific maximum in mind? → [`maxUp`](#maxUp)
+{-| Have a specific maximum in mind? → [`maxTo`](#maxTo)
 
 Want to increase the upper bound by a fixed amount? ↓
 
