@@ -87,7 +87,7 @@ length is `In` a range
     `1 + ` a variable (`1 + 0` | `1 + 1` | `1 + ...`)
     → `Fixed (Add1 minMinus1_)`
   - any maximum length constraint is allowed
-    (even [none at all](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#MaxNo))
+    (even [no maximum at all](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#Infinity))
     → `max_`
 
 ## an exact length?
