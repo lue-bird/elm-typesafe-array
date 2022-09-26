@@ -2704,20 +2704,16 @@ hasIn ( lowerLimit, upperLimit ) =
             |> ArraySized.Internal.hasIn ( lowerLimit, upperLimit )
 
 
-{-| Is its length below (`Err`) or atLeast (`Ok`) as big as a given `N`?
+{-| Is its length below (`Err`) or at least as big as (`Ok`) a given `N`?
 
     import N exposing (n5)
 
-    first5 :
+    atLeast5 :
         ArraySized (In minLength_ max) element
-        -> Maybe (ArraySized (In N5 max) element)
-    first5 arraySized =
-        case arraySized |> ArraySized.hasAtLeast n5 of
-            N.Below _ ->
-                Nothing
-
-            N.EqualOrGreater atLeast5 ->
-                Just atLeast5
+        -> Maybe (ArraySized (In (Up5 minX_) max) element)
+    atLeast5 =
+        ArraySized.hasAtLeast n5
+            >> Result.toMaybe
 
 -}
 hasAtLeast :
