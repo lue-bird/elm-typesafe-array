@@ -139,15 +139,17 @@ initialChessBoard
 
 
 ## a maximum length?
-  
+
 ```elm
 -- the max tag count should be 53
-tag : ArraySized (In min_ N53) String -> (a -> Tagged a)
+tag :
+    ArraySized (In min_ (Up maxTo53_ To N53)) String
+    -> (Metadata -> MetadataTagged)
 tag tags =
     ...
 
 tag (ArraySized.l3 "fun" "easy" "simple") -- valid
-tag (ArraySized.repeat n100 "into-the-trends") -- type error
+tag (ArraySized.repeat "into-the-trends" n100) -- type error
 ```
 
 ## ready? go!
