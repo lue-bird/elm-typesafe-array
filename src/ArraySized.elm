@@ -1759,6 +1759,30 @@ Want to increase the upper bound by a fixed amount? ↓
     --: ArraySIzed (In (Up2 minX_) (Up4 maxX_))
 
 When is this useful? Very rarely, to preserve type variables.
+
+    emptiablePush :
+        Emptiable element possiblyOrNever_
+        ->
+            (ArraySized
+                (In
+                    (Up minX To minPlusX)
+                    (Up maxX To maxPlusX)
+                )
+                element
+             ->
+                ArraySized
+                    (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
+                    element
+            )
+    emptiablePush emptiableElementToPush =
+        case emptiableElementToPush of
+            Emptiable.Empty _ ->
+                ArraySized.maxUp n1
+
+            Emptiable.Filled elementToPush ->
+                ArraySized.push elementToPush
+                    >> ArraySized.minDown n1
+
 More in [`N.minDown`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#minDown)
 
 -}
@@ -1912,6 +1936,30 @@ Want to increase the upper bound by a fixed amount? ↓
     --: ArraySIzed (In (Up4 minX_) (Up6 maxX_))
 
 When is this useful? Very rarely, to preserve type variables.
+
+    emptiablePush :
+        Emptiable element possiblyOrNever_
+        ->
+            (ArraySized
+                (In
+                    (Up minX To minPlusX)
+                    (Up maxX To maxPlusX)
+                )
+                element
+             ->
+                ArraySized
+                    (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
+                    element
+            )
+    emptiablePush emptiableElementToPush =
+        case emptiableElementToPush of
+            Emptiable.Empty _ ->
+                ArraySized.maxUp n1
+
+            Emptiable.Filled elementToPush ->
+                ArraySized.push elementToPush
+                    >> ArraySized.minDown n1
+
 More in [`N.maxUp`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxUp)
 
 -}
