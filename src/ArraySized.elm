@@ -210,7 +210,7 @@ to allow the broadest range of desired lengths,
 
 in your `Model` for example.
 They look just like [result types](#result-type) but every
-`Up x To (Add<n> x)` becomes `Fixed N<n>`,
+`Up<n> x` becomes `Fixed N<n>`,
 avoiding type variables
 
     -- amount >= 4
@@ -1817,7 +1817,7 @@ maxToInfinity =
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up rowFromModelOrSomeStorage
 
-Only `Up x To (Add<n> x)` can do that:
+Only `Up<n> x` can do that:
 
     glue2TemporaryFields :
         Row
@@ -1872,7 +1872,7 @@ maxTo lengthMaximumNew =
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up rowFromModelOrSomeStorage
 
-Only `Up x To (Add<n> x)` can do that:
+Only `Up<n> x` can do that:
 
     glue2TemporaryFields :
         Row
