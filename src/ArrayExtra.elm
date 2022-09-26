@@ -1,6 +1,6 @@
 module ArrayExtra exposing (allFill)
 
-{-| Should be replaced by Array.Extra functions if they are added there.
+{-| Should be replaced by Array.Extra functions if they are added there
 
 
 # transform

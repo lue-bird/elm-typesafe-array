@@ -339,7 +339,7 @@ toStackFilled =
                 arraySized |> element ( Up, n0 ) |> Stack.only
 
 
-{-| On [`empty`](#empty) `Nothing`, on [`l1`](#l1) `Just` it's only value.
+{-| On [`empty`](#empty) `Nothing`, on [`l1`](#l1) `Just` it's only value
 
 Sadly, they way natural number constraints are defined,
 emptiness type information can't be transferred
@@ -1820,7 +1820,7 @@ Want to increase the upper bound by a fixed amount? ↓
         |> ArraySized.minDown n2
     --: ArraySIzed (In (Up2 minX_) (Up4 maxX_))
 
-When is this useful? Very rarely, to preserve type variables.
+When is this useful? Very rarely, to preserve type variables
 
     emptiablePush :
         Emptiable element possiblyOrNever_
@@ -1869,7 +1869,7 @@ minDown lengthMinimumDecrease =
     between4And10Elements |> ArraySized.maxToInfinity
     --: ArraySized (Min N4) ...
 
-There is only 1 situation you should use this.
+There is only 1 situation you should use this
 
 To make these the same type
 
@@ -1997,7 +1997,7 @@ Want to increase the upper bound by a fixed amount? ↓
         |> ArraySized.maxUp n2
     --: ArraySIzed (In (Up4 minX_) (Up6 maxX_))
 
-When is this useful? Very rarely, to preserve type variables.
+When is this useful? Very rarely, to preserve type variables
 
     emptiablePush :
         Emptiable element possiblyOrNever_
@@ -2196,7 +2196,7 @@ insertMin ( direction, index ) toInsert =
             |> maxToInfinity
 
 
-{-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple.
+{-| Combine each element with an element at the same index from a given [`ArraySized`](#ArraySized) into a tuple
 
 Every element beyond the minimum [`length`](#length) of both is't part of the final [`ArraySized`](#ArraySized)
 

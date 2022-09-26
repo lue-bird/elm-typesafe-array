@@ -105,7 +105,7 @@ type ArraySized lengthRange element
 -- ## scan
 
 
-{-| Succeeds for every correctly typed `ArraySized`.
+{-| Succeeds for every correctly typed `ArraySized`
 
 If it doesn't succeed, `at` crashes with a
 
@@ -143,7 +143,7 @@ element ( direction, index ) =
 
 
 {-| The [mutual recursion prevents TCO](https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions),
-forcing a stack overflow runtime exception.
+forcing a stack overflow runtime exception
 
 The arguments help identify the cause on inspection when debugging
 
