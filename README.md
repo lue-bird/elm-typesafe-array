@@ -76,7 +76,7 @@ first ArraySized.empty -- compile-time error
 greatest ArraySized.empty -- compile-time error
 ```
 
-`ArraySized (In (Fixed (Add1 orMore_)) max_)` means what exactly?
+`ArraySized (In (Fixed (Add1 minMinus1_)) max_)` means what exactly?
 → It constrains the length of possible `ArraySized`s.
 
 The types are explained in more detail in [`bounded-nat`][bounded-nat] (`In`, `Min`, `Exactly`). In this example:
