@@ -1643,8 +1643,8 @@ any isOkay =
 {-| Split the `ArraySized` into equal-sized (except `remainder`) slices
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-  - `groups`: the ArraySized divided into equal-sized Arrs
-  - `less`: values to one side that don't fill a whole group
+  - `chunks`: the ArraySized divided into equal-sized Arrs
+  - `remainder`: values to one side that don't fill a whole group
 
 ↓
 
@@ -1664,7 +1664,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
         --:     ArraySized
         --:         (In
         --:             (Up0 remainderMinX_)
-        --:             (Up5 chunkMaxX)
+        --:             (Up4 chunkMaxX)
         --:         )
         --:         number_
         --: }
@@ -2529,7 +2529,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
     atLeast6Elements
         |> ArraySized.dropMin ( Down, n2 )
-    --: ArraySized (Min N4) ...
+    --: ArraySized (Min (Fixed N4)) ...
 
 Know its length maximum? → [`drop`](#drop)
 
