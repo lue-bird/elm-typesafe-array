@@ -107,13 +107,13 @@ emptiablePush :
     ->
         (ArraySized
             (In
-                (Up minX To minSumPlusX)
+                (Up minX To minPlusX)
                 (Up maxX To maxPlusX)
             )
             element
          ->
             ArraySized
-                (In (Up minX To minSumPlusX) (Up maxX To (Add1 maxPlusX)))
+                (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
                 element
         )
 emptiablePush emptiableElementToPush =
