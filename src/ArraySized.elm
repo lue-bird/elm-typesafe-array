@@ -1748,20 +1748,17 @@ fromValue =
 -- ## type information
 
 
-{-| Use a lower minimum length in the type
+{-| Have a specific minimum in mind? → [`minTo`](#minTo)
 
-    [ atLeast3Elements
-    , atLeast4Elements
-    ]
+Want to increase the upper bound by a fixed amount? ↓
 
-elm complains that
+    ArraySized.l4 'a' 'b' 'c' 'd'
+        --: ArraySIzed (In (Up4 minX_) (Up4 maxX_))
+        |> ArraySized.minDown n2
+    --: ArraySIzed (In (Up2 minX_) (Up4 maxX_))
 
-> all the previous elements in the list are `ArraySized (Min N3) ...`
-
-    [ atLeast3Elements
-    , atLeast4Elements
-        |> ArraySized.minDownLength n3
-    ]
+When is this useful? Very rarely, to preserve type variables.
+More in [`N.minDown`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#minDown)
 
 -}
 minDown :
