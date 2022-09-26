@@ -4,7 +4,7 @@ import ArraySized exposing (ArraySized)
 import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
 import Expect exposing (Expectation)
 import Linear exposing (Direction(..))
-import N exposing (Add1, Exactly, In, N8, To, Up, n2, n4, n8)
+import N exposing (Add1, Exactly, In, N8, To, Up, n1, n2, n4, n8)
 import Test exposing (Test, describe, test)
 
 
@@ -102,7 +102,7 @@ expectEqualArraySized expected actual =
         (actual |> ArraySized.toList)
 
 
-maybePush :
+emptiablePush :
     Emptiable element possiblyOrNever_
     ->
         (ArraySized
@@ -116,11 +116,14 @@ maybePush :
                 (In (Up minX To minSumPlusX) (Up maxX To (Add1 maxPlusX)))
                 element
         )
-maybePush maybePushedElement =
-    ArraySized.glue Up
-        (ArraySized.l1 maybePushedElement
-            |> ArraySized.fills
-        )
+emptiablePush emptiableElementToPush =
+    case emptiableElementToPush of
+        Emptiable.Empty _ ->
+            ArraySized.maxUp n1
+
+        Emptiable.Filled elementToPush ->
+            ArraySized.push elementToPush
+                >> ArraySized.minDown n1
 
 
 startBoard : ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
