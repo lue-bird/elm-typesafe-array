@@ -84,8 +84,8 @@ so we can [`fold`](#fold), access, ... without a worry
 
 @docs l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
 
-You can [generate `l<x>` with `x >= 17` locally](https://lue-bird.github.io/elm-typesafe-array/generate/),
-put them in a `module ArraySized.Local exposing (l<x>, ...)` + `import ArraySized.Local as ArraySized`
+You can [generate `l<n>` with `n >= 17` locally](https://lue-bird.github.io/elm-typesafe-array/generate/),
+put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySized.Local as ArraySized`
 
 
 # scan

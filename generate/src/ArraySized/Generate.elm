@@ -213,7 +213,7 @@ lAndTo16 =
         PackageExposedModule
             { moduleComment =
                 \_ ->
-                    [ markdown "`l<x>`, `to<x>` declarations exposed from inside `module ArraySized`."
+                    [ markdown "`l<n>`, `to<n>` declarations exposed from inside `module ArraySized`"
                     ]
             }
     , imports = []
