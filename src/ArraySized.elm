@@ -472,7 +472,8 @@ As every `Stack` has `>= 0` elements:
 
 Don't use for construction:
 
-    ArraySized.fromStackFilled (Stack.topDown 0 [ 1, 2, 3, 4, 5, 6 ])
+    ArraySized.fromStackFilled
+        (Stack.topDown 0 [ 1, 2, 3, 4, 5, 6 ])
     -- big no!
 
 Make sure the compiler knows as much as you about the amount of elements!
