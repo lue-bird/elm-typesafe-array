@@ -2742,25 +2742,20 @@ hasAtLeast lowerLimit =
 
     -- at least 3 and only up to 50 tags
     tag :
-        ArraySized (In (Add3 orHigherMin_) N50) String
-        -> a
-        -> Tagged a
+        ArraySized (In (Add3 minMinus3_) (Up maxTo50_ To N50)) String
+        -> (Metadata -> MetadataTagged)
 
     tagIfValidTags :
-        ArraySized (In (Add3 orHigherMin_) max)
-        -> a
-        -> Maybe (Tagged a)
-    tagIfValidTags array value =
-        case
-            array
-                |> ArraySized.fromArray
-                |> ArraySized.hasAtMost n50
-        of
-            Ok atMost53 ->
-                tag value atMost53 |> Just
+        ArraySized (In (Add3 minMinus3_) max_)
+        -> Metadata
+        -> Maybe MetadataTagged
+    tagIfValidTags tags =
+        case tags |> ArraySized.hasAtMost n50 of
+            Ok atMost50 ->
+                tag atMost50 >> Just
 
             Err _ ->
-                Nothing
+                \_ -> Nothing
 
 -}
 hasAtMost :
