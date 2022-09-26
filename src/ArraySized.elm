@@ -1913,7 +1913,7 @@ Want to increase the upper bound by a fixed amount? ↓
         ArraySized.maxUp n4
 
 When is this useful? Very rarely, to preserve type variables.
-More in [`N.max`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#max)
+More in [`N.maxUp`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxUp)
 
 -}
 maxUp :
