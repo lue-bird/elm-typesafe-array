@@ -1,7 +1,7 @@
 module ArraySized exposing
     ( ArraySized
     , repeat, random, upTo
-    , fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
+    , fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable, fromString
     , empty, l1
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
@@ -20,7 +20,7 @@ module ArraySized exposing
     , hasIn, has, hasAtLeast, hasAtMost
     , map
     , foldFrom, fold
-    , toArray, toList, toEmptiable, toStackEmptiable, toStackFilled
+    , toArray, toList, toEmptiable, toStackEmptiable, toStackFilled, toString
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , toValue, fromValue
@@ -75,7 +75,7 @@ so we can [`fold`](#fold), access, ... without a worry
 # create
 
 @docs repeat, random, upTo
-@docs fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable
+@docs fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable, fromString
 
 
 ## specific length
@@ -132,7 +132,7 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 
 @docs map
 @docs foldFrom, fold
-@docs toArray, toList, toEmptiable, toStackEmptiable, toStackFilled
+@docs toArray, toList, toEmptiable, toStackEmptiable, toStackFilled, toString
 
 You have a use-case for `mapAccumulate`/`mapAccumulateFrom`? → issue/PR
 
@@ -246,6 +246,7 @@ type alias ArraySized lengthRange element =
 
 
 {-| Convert to an `Array`.
+
 Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -264,6 +265,7 @@ toArray =
 
 
 {-| Convert to a `List`.
+
 Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -283,7 +285,34 @@ toList =
             |> Array.toList
 
 
+{-| Convert to a `String`.
+
+Make these kinds of conversions your final step.
+Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
+
+    import N exposing (n4)
+
+    ArraySized.upTo n4
+        |> ArraySized.map
+            (\n ->
+                ('a' |> Char.toCode)
+                    + (n |> N.toInt)
+                    |> Char.fromCode
+            )
+        |> ArraySized.toString
+    --> "abcde"
+
+-}
+toString : ArraySized lengthRange_ Char -> String
+toString =
+    \arraySized ->
+        arraySized
+            |> toList
+            |> String.fromList
+
+
 {-| Convert to an `Emptiable (Stacked ...) Possibly`.
+
 Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -309,6 +338,7 @@ toStackEmptiable =
 
 
 {-| Convert to an `Emptiable (Stacked ...) never_`.
+
 Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -435,6 +465,24 @@ fromList : List element -> ArraySized (Min (Up0 x_)) element
 fromList =
     \list ->
         list |> Array.fromList |> fromArray
+
+
+{-| Create from a `String`.
+As every `String` has `>= 0` elements:
+
+    stringFromSomeOtherLibrary |> ArraySized.fromString
+    --: ArraySized (Min (Up0 x_)) Char
+
+Try not to use this for construction
+and instead use the safe versions like `l<n>`
+
+-}
+fromString : String -> ArraySized (Min (Up0 minX_)) Char
+fromString =
+    \string ->
+        string
+            |> String.toList
+            |> fromList
 
 
 {-| Create from a `Stack`.

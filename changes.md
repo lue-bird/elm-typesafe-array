@@ -1,5 +1,9 @@
 # change log
 
+### 24.1.0
+
+  - `ArraySized.fromString`, `toString` add
+
 ## 24.0.0
 
   - `bounded-nat` version → 26.0.0
