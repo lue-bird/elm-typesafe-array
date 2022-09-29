@@ -1402,14 +1402,28 @@ allFill =
 {-| A given number of elements
 to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
-An `atLeast` argument is sadly required to proof the taken minimum
-isn't above the [`ArraySized`](#ArraySized)'s length minimum
+It's easy if the minimum to take and the `ArraySized`'s minimum length match
 
     import Linear exposing (Direction(..))
     import N exposing (n7)
 
+    -- its three last elements
+    ArraySized.upTo n3AtLeast
+        |> ArraySized.take ( Down, n3 )
+
+If the amount taken is greater than the `ArraySized`'s length minimum,
+add `|> N.minTo currentLengthMinimum`
+
+    -- its first four elements
+    ArraySized.upTo between3And6
+        |> ArraySized.take ( Down, n4 |> N.minTo n3 )
+
+If the amount taken is less than the `ArraySized`'s length minimum,
+add `|> ArraySized.minTo takenMinimum`
+
     ArraySized.l8 0 1 2 3 4 5 6 7
-        |> ArraySized.take ( Up, n7, { atLeast = n7 } )
+        |> ArraySized.minTo n7
+        |> ArraySized.take ( Up, n7 )
         --: ArraySized
         --:     (In (Up7 minX_) (Up7 maxX_))
         --:     number_
@@ -1417,30 +1431,31 @@ isn't above the [`ArraySized`](#ArraySized)'s length minimum
     --> [ 0, 1, 2, 3, 4, 5, 6 ]
 
     ArraySized.l8 0 1 2 3 4 5 6 7
-        |> ArraySized.take ( Up, n7AtLeast, { atLeast = n7 } )
-        --: ArraySized (Min (Up7 x_)) number_
+        |> ArraySized.minTo n7
+        |> ArraySized.take ( Up, n7AtLeast )
+    --: ArraySized (Min (Up7 x_)) number_
 
     ArraySized.l8 0 1 2 3 4 5 6 7
-        |> ArraySized.take ( Up, between2And7, { atLeast = n2 } )
-        --: ArraySized
-        --:     (In (Up2 minX_) (Up7 maxX_))
-        --:     number_
+        |> ArraySized.minTo n2
+        |> ArraySized.take ( Up, between2And7 )
+    --: ArraySized
+    --:     (In (Up2 minX_) (Up7 maxX_))
+    --:     number_
 
 -}
 take :
     ( Linear.Direction
-    , N (In takenMin takenMax)
-    , { atLeast : N (In takenMin (Up takenMinToMin_ To min)) }
+    , N (In min takenMax)
     )
     ->
-        (ArraySized (In (Fixed min) max_) element
-         -> ArraySized (In takenMin takenMax) element
+        (ArraySized (In min max_) element
+         -> ArraySized (In min takenMax) element
         )
-take ( direction, toTakeAmount, { atLeast } ) =
+take ( direction, toTakeAmount ) =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.take
-                ( direction, toTakeAmount, { atLeast = atLeast } )
+                ( direction, toTakeAmount )
 
 
 

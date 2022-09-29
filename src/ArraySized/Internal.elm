@@ -682,19 +682,23 @@ dropMin ( direction, droppedAmount ) =
 
 take :
     ( Linear.Direction
-    , N (In takenMin takenMax)
-    , { atLeast : N (In takenMin (Up takenMinToMin_ To min)) }
+    , N (In min takenMax)
     )
     ->
-        (ArraySized (In (Fixed min) max_) element
-         -> ArraySized (In takenMin takenMax) element
+        (ArraySized (In min max_) element
+         -> ArraySized (In min takenMax) element
         )
-take ( direction, toTakeAmount, _ ) =
+take ( direction, toTakeAmount ) =
     \arraySized ->
         arraySized
             |> toArray
             |> Array.Linear.take ( direction, toTakeAmount |> N.toInt )
-            |> ArraySized toTakeAmount
+            |> ArraySized
+                (arraySized
+                    |> length
+                    |> N.atMost
+                        toTakeAmount
+                )
 
 
 toChunksOf :

@@ -1,5 +1,31 @@
 # change log
 
+## 25.0.0
+
+  - take
+    ```elm
+    ( Linear.Direction
+    , N (In takenMin takenMax)
+    , { atLeast : N (In takenMin (Up takenMinToMin_ To min)) }
+    )
+    -> (ArraySized (In (Fixed min) max_) element
+        -> ArraySized (In takenMin takenMax) element
+       )
+    ```
+    →
+    ```elm
+    ( Linear.Direction
+    , N (In min takenMax)
+    )
+    -> (ArraySized (In min max_) element
+        -> ArraySized (In min takenMax) element
+       )
+    ```
+      - resulting length `Int` correct by using `N.atMost`
+      - simpler if taken minimum and length minimum match
+      - using `N.minTo` instead looks more familiar, is easier to understand and less scuffed
+  - `bounded-nat` version → 28.0.0
+
 ### 24.1.0
 
   - `ArraySized.fromString`, `toString` add
