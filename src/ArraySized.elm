@@ -1165,7 +1165,7 @@ to16 =
 
 {-| Increasing natural numbers until including a given number
 
-    import N exposing (n3)
+    import N exposing (n3, n0)
 
     ArraySized.upTo n3
     --: ArraySized
@@ -1175,15 +1175,22 @@ to16 =
         |> ArraySized.toList
     --> [ 0, 1, 2, 3 ]
 
+    ArraySized.upTo n0
+    --: ArraySized
+    --:     (In (Fixed N1) (Up1 maxX_))
+    --:     (N (In (Up0 minX_) (Up0 maxX_)))
+        |> ArraySized.map N.toInt
+        |> ArraySized.toList
+    --> [ 0 ]
+
     ArraySized.upTo between2And9
         |> ArraySized.map (N.add n3)
     --: ArraySized
     --:    (In (Fixed N3) (Up10 maxX_))
     --:    (N (In (Up5 minX_) (Up12 maxX_)))
 
-[`minTo`](#minTo) is helpful
-to turn the `Fixed` length minimum into a difference
-if you need that (for results etc.)
+To turn the `Fixed` length minimum into a difference (for results etc.)
+→ [`minTo`](#minTo)
 
 -}
 upTo :
@@ -1191,7 +1198,7 @@ upTo :
     ->
         ArraySized
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
-            (N (In (Up0 minX_) (Up maxX To maxPlusX)))
+            (N (In (Up0 nMinX_) (Up maxX To maxPlusX)))
 upTo last =
     ArraySized.Internal.upTo last
 
@@ -2530,7 +2537,8 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
         between1And10Elements
             |> ArraySized.elementRemove ( Down, n0 )
 
-Don't know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
+  - Don't know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
+  - Want to remove an element beyond the length minimum? → [`elementRemoveMin`](#elementRemoveMin)
 
 -}
 elementRemove :
@@ -2562,35 +2570,30 @@ elementRemove ( direction, index ) =
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     removeLast =
-        TypeSized.elementRemoveMin ( Down, n0 )
+        ArraySized.elementRemoveMin ( Down, n0 )
 
-Know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
+This only works when the [`ArraySized`](#ArraySized)
+has at minimum 1 element.
+To _maybe_ remove an element,
+match on [`ArraySized.hasAtLeast n1`](#hasAtLeast)
+
+  - Know the length maximum? → [`elementRemove`](#elementRemove)
+  - Want to make the length minimum a difference again (not `Fixed`) for results, ...?
+    → [`ArraySized.minTo`](#minTo)
 
 -}
 elementRemoveMin :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
+    , N indexRange_
     )
     ->
-        (ArraySized
-            (In
-                (Fixed (Add1 minMinus1))
-                (Up x To maxPlusX)
-            )
-            element
-         ->
-            ArraySized
-                (In
-                    (Fixed minMinus1)
-                    (Up x To maxPlusX)
-                )
-                element
+        (ArraySized (In (Fixed (Add1 minMinus1)) max) element
+         -> ArraySized (In (Fixed minMinus1) max) element
         )
 elementRemoveMin ( direction, index ) =
     \arraySized ->
         arraySized
-            |> maxUp n1
-            |> elementRemove ( direction, index )
+            |> ArraySized.Internal.elementRemoveMin ( direction, index )
 
 
 {-| Elements after a certain number of elements
@@ -2693,12 +2696,14 @@ dropMin ( direction, droppedAmount ) =
 
 -}
 dropOverMin :
-    ( Linear.Direction, N (In (Down max To takenMax) takenMax_) )
+    ( Linear.Direction
+    , N (In (Down max To takenMax) takenMax_)
+    )
     ->
         (ArraySized (In min_ (Fixed max)) element
          ->
             ArraySized
-                (In (Up resultMinX To resultMinX) (Fixed takenMax))
+                (In (Up0 resultMinX_) (Fixed takenMax))
                 element
         )
 dropOverMin ( direction, lengthToDrop ) =

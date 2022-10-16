@@ -1,5 +1,12 @@
 # change log
 
+## 26.0.0
+
+  - `elementRemoveMin` index constraint remove
+  - `dropOverMin` result minimum use `Up0`
+  - `upTo` performs better
+  - documentation improvements
+
 ## 25.0.0
 
   - take

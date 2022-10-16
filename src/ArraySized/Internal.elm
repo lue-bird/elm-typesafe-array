@@ -6,7 +6,7 @@ module ArraySized.Internal exposing
     , toArray
     , minToValue, minFromValue
     , maxToValue, maxFromValue
-    , elementReplace, elementRemove, push, insert, reverse
+    , elementReplace, elementRemove, elementRemoveMin, push, insert, reverse
     , map
     , fills, allFill
     , and
@@ -55,7 +55,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # alter
 
-@docs elementReplace, elementRemove, push, insert, reverse
+@docs elementReplace, elementRemove, elementRemoveMin, push, insert, reverse
 @docs map
 
 
@@ -93,6 +93,7 @@ import ArrayExtra as Array
 import Emptiable exposing (Emptiable, fillMap)
 import Linear
 import N exposing (Add1, Add2, Down, Fixed, In, Min, N, To, Up, Up0, Value, n0, n1)
+import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
 
@@ -250,55 +251,50 @@ fromArray =
             |> ArraySized (array |> Array.length |> N.intAtLeast n0)
 
 
+stackUpTo :
+    { first : N (In (Up minX To minPlusX) firstMax_)
+    , last : N (In (Up minX To minPlusX) max)
+    }
+    ->
+        Emptiable
+            (Stacked (N (In (Up minX To minPlusX) max)))
+            Possibly
+stackUpTo { first, last } =
+    case first |> N.isAtMost last of
+        Err _ ->
+            Emptiable.empty
+
+        Ok indexAtMostLast ->
+            { first = indexAtMostLast |> N.addMin n1 |> N.minDown n1
+            , last = last
+            }
+                |> stackUpToRecursive
+                |> Stack.onTopLay indexAtMostLast
+
+
 upTo :
     N (In (Fixed min) (Up maxX To maxPlusX))
     ->
         ArraySized
             (In (Fixed (Add1 min)) (Up maxX To (Add1 maxPlusX)))
-            (N (In (Up0 minX_) (Up maxX To maxPlusX)))
+            (N (In (Up0 nMinX_) (Up maxX To maxPlusX)))
 upTo last =
-    stackUpTo last
+    stackUpTo { first = n0, last = last |> N.minTo n0 }
         |> Stack.toList
         |> Array.fromList
         |> ArraySized (last |> N.add n1)
 
 
-stackDownFrom :
-    N (In (Fixed min_) max)
+stackUpToRecursive :
+    { first : N (In (Up minX To minPlusX) firstMax_)
+    , last : N (In (Up minX To minPlusX) max)
+    }
     ->
         Emptiable
-            (Stacked
-                (N (In (Up x0 To x0) max))
-            )
-            Never
-stackDownFrom last =
-    case last |> N.isAtLeast n1 of
-        Err _ ->
-            n0 |> N.maxTo last |> Stack.only
-
-        Ok lastAtLeast1 ->
-            (lastAtLeast1 |> N.subtractMin n1 |> downFromRecursive)
-                |> Stack.onTopLay (lastAtLeast1 |> N.minTo n0)
-
-
-stackUpTo :
-    N (In (Fixed min_) max)
-    ->
-        Emptiable
-            (Stacked (N (In (Up x0 To x0) max)))
-            Never
-stackUpTo last =
-    stackDownFrom last |> Stack.reverse
-
-
-downFromRecursive :
-    N (In (Fixed min_) max)
-    ->
-        Emptiable
-            (Stacked (N (In (Up x0 To x0) max)))
-            Never
-downFromRecursive =
-    stackDownFrom
+            (Stacked (N (In (Up minX To minPlusX) max)))
+            Possibly
+stackUpToRecursive =
+    stackUpTo
 
 
 random :
@@ -412,6 +408,23 @@ elementRemove ( direction, index ) =
             |> Array.Linear.elementRemove
                 ( direction, index |> N.toInt )
             |> ArraySized (arraySized |> length |> N.subtract n1)
+
+
+elementRemoveMin :
+    ( Linear.Direction
+    , N indexRange_
+    )
+    ->
+        (ArraySized (In (Fixed (Add1 minMinus1)) max) element
+         -> ArraySized (In (Fixed minMinus1) max) element
+        )
+elementRemoveMin ( direction, index ) =
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> Array.Linear.elementRemove
+                ( direction, index |> N.toInt )
+            |> ArraySized (arraySized |> length |> N.subtractMin n1)
 
 
 reverse : ArraySized range element -> ArraySized range element
@@ -622,12 +635,14 @@ drop ( direction, droppedAmount ) =
 
 
 dropOverMin :
-    ( Linear.Direction, N (In (Down max To takenMax) takenMax_) )
+    ( Linear.Direction
+    , N (In (Down max To takenMax) takenMax_)
+    )
     ->
         (ArraySized (In min_ (Fixed max)) element
          ->
             ArraySized
-                (In (Up resultMinX To resultMinX) (Fixed takenMax))
+                (In (Up0 resultMinX_) (Fixed takenMax))
                 element
         )
 dropOverMin ( direction, lengthToDrop ) =
