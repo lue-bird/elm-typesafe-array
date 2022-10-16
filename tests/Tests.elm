@@ -48,7 +48,7 @@ arraySizedTests =
 
 isEven : Int -> Bool
 isEven =
-    modBy 2 >> (==) 0
+    \n -> (n |> modBy 2) == 0
 
 
 maximumConstrainedTest : Test
@@ -69,16 +69,21 @@ maximumConstrainedTest =
                         (ArraySized.l6 0 0 0 1 1 1)
             )
         , describe "allFill"
-            [ test "all are Filled"
+            [ test "all Filled → Filled"
                 (\() ->
-                    ArraySized.l3 (filled 1) (filled 2) (filled 3)
-                        |> ArraySized.allFill
-                        |> fillMap
-                            (ArraySized.toList >> Expect.equalLists [ 1, 2, 3 ])
-                        |> fillElseOnEmpty
-                            (\_ -> Expect.fail "was Nothing, expected Just")
+                    case
+                        ArraySized.l3 (filled 1) (filled 2) (filled 3)
+                            |> ArraySized.allFill
+                    of
+                        Emptiable.Filled arraySized ->
+                            arraySized
+                                |> ArraySized.toList
+                                |> Expect.equalLists [ 1, 2, 3 ]
+
+                        Emptiable.Empty _ ->
+                            Expect.fail "Emptiable.Empty, expected Emptiable.Filled"
                 )
-            , test "one is Nothing"
+            , test "one empty → empty"
                 (\() ->
                     ArraySized.l3 (filled 1) Emptiable.empty (filled 3)
                         |> ArraySized.allFill
@@ -119,11 +124,13 @@ emptiablePush :
 emptiablePush emptiableElementToPush =
     case emptiableElementToPush of
         Emptiable.Empty _ ->
-            ArraySized.maxUp n1
+            \arraySized -> arraySized |> ArraySized.maxUp n1
 
         Emptiable.Filled elementToPush ->
-            ArraySized.push elementToPush
-                >> ArraySized.minDown n1
+            \arraySized ->
+                arraySized
+                    |> ArraySized.push elementToPush
+                    |> ArraySized.minDown n1
 
 
 startBoard : ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
