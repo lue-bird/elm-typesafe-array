@@ -189,6 +189,7 @@ config =
     , -- could be included in the above
       NoDebug.Log.rule
     ]
+        |> List.map (Rule.ignoreErrorsForDirectories [ "tests/VerifyExamples/" ])
 
 
 forbiddenFunctionOrValues : List String
