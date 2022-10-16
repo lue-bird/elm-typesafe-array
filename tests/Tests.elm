@@ -1,7 +1,7 @@
 module Tests exposing (suite)
 
 import ArraySized exposing (ArraySized)
-import Emptiable exposing (Emptiable, fillElseOnEmpty, fillMap, filled)
+import Emptiable exposing (Emptiable, filled)
 import Expect exposing (Expectation)
 import Linear exposing (Direction(..))
 import N exposing (Add1, Exactly, In, N8, To, Up, n1, n2, n4, n8)
