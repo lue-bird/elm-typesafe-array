@@ -188,8 +188,8 @@ addXType x more =
 
 
 arraySizedType : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
-arraySizedType length element =
-    typed "ArraySized" [ length, element ]
+arraySizedType  element length =
+    typed "ArraySized" [ element, length ]
 
 
 exactlyType : Gen.TypeAnnotation -> Gen.TypeAnnotation
@@ -224,11 +224,7 @@ lAndTo16 =
                     (x |> fromNDoc)
                     (funAnn
                         (List.repeat x (typeVar "element"))
-                        (typed "ArraySized"
-                            [ inType x
-                            , typeVar "element"
-                            ]
-                        )
+                        (arraySizedType (typeVar "element") (inType x))
                     )
                     ([ "l", x |> String.fromInt ] |> concat)
                     (List.range 0 (x - 1)
@@ -268,16 +264,17 @@ lAndTo16 =
                     in
                     packageExposedFunDecl ToXTag
                         [ markdown
-                            ([ "Transform the `ArraySized` into a `Toop."
+                            ([ "Transform into a `Toop."
                              , t i
-                             , "`. This makes accessing elements and pattern matching easier."
+                             , "` to simplify accessing elements, pattern matching"
                              ]
                                 |> concat
                             )
                         ]
                         (funAnn
-                            [ arraySizedType (exactlyType (nXType i))
+                            [ arraySizedType
                                 (typeVar "element")
+                                (exactlyType (nXType i))
                             ]
                             (fqTyped [ "Toop" ]
                                 (t i)
@@ -366,11 +363,7 @@ l x =
             (x |> fromNDoc)
             (funAnn
                 (List.repeat x (typeVar "element"))
-                (typed "ArraySized"
-                    [ inType x
-                    , typeVar "element"
-                    ]
-                )
+                (arraySizedType (typeVar "element") (inType x))
             )
             ([ "l", x |> String.fromInt ] |> concat)
             (List.range 0 (x - 1)

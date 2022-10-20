@@ -15,7 +15,7 @@ Such a type could be:
 ```elm
 type alias TicTacToeBoard =
     -- 3 by 3
-    ArraySized (Exactly N3) (ArraySized (Exactly N3) Field)
+    ArraySized (ArraySized Field (Exactly N3)) (Exactly N3)
 
 type Field
     = Empty
@@ -61,13 +61,13 @@ Let's define & use operations for `ArraySized`s with a certain amount of element
 
 ```elm
 last :
-    ArraySized (In (Fixed (Add1 minMinus1_)) max_) element
+    ArraySized element (In (Fixed (Add1 minMinus1_)) max_)
     -> element
 last =
     ArraySized.element ( Down, n0 )
 
 greatest :
-    ArraySized (In (Fixed (Add1 minMinus1_)) max_) comparable
+    ArraySized comparable (In (Fixed (Add1 minMinus1_)) max_)
     -> comparable
 greatest =
     ArraySized.fold Up max
@@ -76,7 +76,7 @@ first ArraySized.empty -- compile-time error
 greatest ArraySized.empty -- compile-time error
 ```
 
-`ArraySized (In (Fixed (Add1 minMinus1_)) max_)` means what exactly?
+`ArraySized ... (In (Fixed (Add1 minMinus1_)) max_)` means what exactly?
 → It constrains the length of possible `ArraySized`s
 
 The types are explained in more detail in [`bounded-nat`][bounded-nat] (`In`, `Min`, `Exactly`). In this example:
@@ -101,7 +101,7 @@ import ArraySized exposing (ArraySized)
 
 type alias ChessBoard =
     -- 8 by 8
-    ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
+    ArraySized (ArraySized Field (Exactly N8)) (Exactly N8)
 
 type Field
     = Empty
@@ -143,7 +143,7 @@ initialChessBoard
 ```elm
 -- the max tag count should be 53
 tag :
-    ArraySized (In min_ (Up maxTo53_ To N53)) String
+    ArraySized String (In min_ (Up maxTo53_ To N53))
     -> (Metadata -> MetadataTagged)
 tag tags =
     ...
@@ -230,10 +230,10 @@ but the ideas are really similar
   - `typesafe-array`
     ```elm
     arr1, arr2 :
-        ArraySized (In (Up6 minX_) (Up6 maxX_)) ...
+        ArraySized ... (In (Up6 minX_) (Up6 maxX_))
 
     arr1 |> ArraySized.glue Up arr2
-    --: ArraySized (In (Up12 minX_) (Up12 maxX_)) ...
+    --: ArraySized ... (In (Up12 minX_) (Up12 maxX_))
     ```
     type-safe
 
@@ -265,8 +265,8 @@ but the ideas are really similar
     ```elm
     pushMaybe :
         Maybe element
-        -> ArraySized (In min (Up x To maxPlusX)) element
-        -> ArraySized (In min (Up x To (Add1 maxPlusX))) element
+        -> ArraySized element (In min (Up x To maxPlusX))
+        -> ArraySized element (In min (Up x To (Add1 maxPlusX)))
     ```
 
 ### anything `static-array` is better at?

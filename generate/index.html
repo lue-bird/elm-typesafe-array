@@ -5786,9 +5786,9 @@ var $elm$time$Time$customZone = $elm$time$Time$Zone;
 var $elm$time$Time$here = _Time_here(_Utils_Tuple0);
 var $author$project$ArraySized$Generate$FromXTag = {$: 'FromXTag'};
 var $author$project$Extra$GenerateElm$PackageInternalModule = {$: 'PackageInternalModule'};
-var $stil4m$elm_syntax$Elm$Syntax$Expression$OperatorApplication = F4(
-	function (a, b, c, d) {
-		return {$: 'OperatorApplication', a: a, b: b, c: c, d: d};
+var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed = F2(
+	function (a, b) {
+		return {$: 'Typed', a: a, b: b};
 	});
 var $stil4m$elm_syntax$Elm$Syntax$Node$Node = F2(
 	function (a, b) {
@@ -5801,6 +5801,27 @@ var $stil4m$elm_syntax$Elm$Syntax$Range$emptyRange = {
 var $the_sett$elm_syntax_dsl$Util$nodify = function (exp) {
 	return A2($stil4m$elm_syntax$Elm$Syntax$Node$Node, $stil4m$elm_syntax$Elm$Syntax$Range$emptyRange, exp);
 };
+var $the_sett$elm_syntax_dsl$Util$nodifyAll = $elm$core$List$map($the_sett$elm_syntax_dsl$Util$nodify);
+var $the_sett$elm_syntax_dsl$Elm$CodeGen$typed = F2(
+	function (name, args) {
+		return A2(
+			$stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed,
+			$the_sett$elm_syntax_dsl$Util$nodify(
+				_Utils_Tuple2(_List_Nil, name)),
+			$the_sett$elm_syntax_dsl$Util$nodifyAll(args));
+	});
+var $author$project$ArraySized$Generate$arraySizedType = F2(
+	function (element, length) {
+		return A2(
+			$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+			'ArraySized',
+			_List_fromArray(
+				[element, length]));
+	});
+var $stil4m$elm_syntax$Elm$Syntax$Expression$OperatorApplication = F4(
+	function (a, b, c, d) {
+		return {$: 'OperatorApplication', a: a, b: b, c: c, d: d};
+	});
 var $stil4m$elm_syntax$Elm$Syntax$Expression$ParenthesizedExpression = function (a) {
 	return {$: 'ParenthesizedExpression', a: a};
 };
@@ -5977,7 +5998,6 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$construct = F2(
 var $stil4m$elm_syntax$Elm$Syntax$Exposing$Explicit = function (a) {
 	return {$: 'Explicit', a: a};
 };
-var $the_sett$elm_syntax_dsl$Util$nodifyAll = $elm$core$List$map($the_sett$elm_syntax_dsl$Util$nodify);
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$exposeExplicit = function (topLevelExposes) {
 	return $stil4m$elm_syntax$Elm$Syntax$Exposing$Explicit(
 		$the_sett$elm_syntax_dsl$Util$nodifyAll(topLevelExposes));
@@ -6060,18 +6080,6 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$importStmt = F3(
 			moduleAlias: $the_sett$elm_syntax_dsl$Util$nodifyMaybe(aliasName),
 			moduleName: $the_sett$elm_syntax_dsl$Util$nodify(modName)
 		};
-	});
-var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed = F2(
-	function (a, b) {
-		return {$: 'Typed', a: a, b: b};
-	});
-var $the_sett$elm_syntax_dsl$Elm$CodeGen$typed = F2(
-	function (name, args) {
-		return A2(
-			$stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$Typed,
-			$the_sett$elm_syntax_dsl$Util$nodify(
-				_Utils_Tuple2(_List_Nil, name)),
-			$the_sett$elm_syntax_dsl$Util$nodifyAll(args));
 	});
 var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType = function (a) {
 	return {$: 'GenericType', a: a};
@@ -6284,13 +6292,9 @@ var $author$project$ArraySized$Generate$l = function (x) {
 							x,
 							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')),
 						A2(
-							$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-							'ArraySized',
-							_List_fromArray(
-								[
-									$author$project$ArraySized$Generate$inType(x),
-									$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')
-								]))),
+							$author$project$ArraySized$Generate$arraySizedType,
+							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
+							$author$project$ArraySized$Generate$inType(x))),
 					$elm$core$String$concat(
 						_List_fromArray(
 							[
@@ -6411,14 +6415,6 @@ var $author$project$Extra$GenerateElm$PackageExposedModule = function (a) {
 	return {$: 'PackageExposedModule', a: a};
 };
 var $author$project$ArraySized$Generate$ToXTag = {$: 'ToXTag'};
-var $author$project$ArraySized$Generate$arraySizedType = F2(
-	function (length, element) {
-		return A2(
-			$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-			'ArraySized',
-			_List_fromArray(
-				[length, element]));
-	});
 var $author$project$ArraySized$Generate$exactlyType = function (n) {
 	return A2(
 		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
@@ -6486,13 +6482,9 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 							x,
 							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')),
 						A2(
-							$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-							'ArraySized',
-							_List_fromArray(
-								[
-									$author$project$ArraySized$Generate$inType(x),
-									$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element')
-								]))),
+							$author$project$ArraySized$Generate$arraySizedType,
+							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
+							$author$project$ArraySized$Generate$inType(x))),
 					$elm$core$String$concat(
 						_List_fromArray(
 							[
@@ -6576,9 +6568,9 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 									$elm$core$String$concat(
 										_List_fromArray(
 											[
-												'Transform the `ArraySized` into a `Toop.',
+												'Transform into a `Toop.',
 												t(i),
-												'`. This makes accessing elements and pattern matching easier.'
+												'` to simplify accessing elements, pattern matching'
 											])))
 								]),
 							A2(
@@ -6587,9 +6579,9 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 									[
 										A2(
 										$author$project$ArraySized$Generate$arraySizedType,
+										$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
 										$author$project$ArraySized$Generate$exactlyType(
-											$author$project$ArraySized$Generate$nXType(i)),
-										$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'))
+											$author$project$ArraySized$Generate$nXType(i)))
 									]),
 								A3(
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$fqTyped,
@@ -6658,7 +6650,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 			moduleComment: function (_v1) {
 				return _List_fromArray(
 					[
-						$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown('`l<x>`, `to<x>` declarations exposed from inside `module ArraySized`.')
+						$the_sett$elm_syntax_dsl$Elm$CodeGen$markdown('`l<n>`, `to<n>` declarations exposed from inside `module ArraySized`')
 					]);
 			}
 		})

@@ -1,5 +1,11 @@
 # change log
 
+#### 27.0.0
+
+  - `ArraySized range element` → `ArraySized element range`
+  - `fuzz element n`, `inFuzz element ( lo, hi )` add
+  - dependency `bounded-nat` → >= 29.0.0
+
 ## 26.0.0
 
   - `elementRemoveMin` index constraint remove

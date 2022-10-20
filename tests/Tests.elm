@@ -111,15 +111,15 @@ emptiablePush :
     Emptiable element possiblyOrNever_
     ->
         (ArraySized
+            element
             (In
                 (Up minX To minPlusX)
                 (Up maxX To maxPlusX)
             )
-            element
          ->
             ArraySized
-                (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
                 element
+                (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
         )
 emptiablePush emptiableElementToPush =
     case emptiableElementToPush of
@@ -133,7 +133,7 @@ emptiablePush emptiableElementToPush =
                     |> ArraySized.minDown n1
 
 
-startBoard : ArraySized (Exactly N8) (ArraySized (Exactly N8) Field)
+startBoard : ArraySized (ArraySized Field (Exactly N8)) (Exactly N8)
 startBoard =
     let
         pawnRow color =
