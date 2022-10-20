@@ -8,8 +8,8 @@ ticTacToeBoard
     |> ArraySized.element ( Up, n0 )
 ```
 
-_returns a value, not a `Maybe`_
-if `ticTacToeBoard`'s type can promise that it contains enough elements.
+**gives the element, no `Maybe`**
+if `ticTacToeBoard`'s type proves it contains enough elements.
 Such a type could be:
 
 ```elm
@@ -44,22 +44,20 @@ elm install lue-bird/elm-bounded-nat
 elm install lue-bird/elm-typesafe-array
 ```
 
-  - numbers – [`bounded-nat`][bounded-nat]
-      - `n<x>`, `N<x>`, `Add<x>`, `Up<x>`, `Fixed`, `Min`, `In`, `Exactly`, `Up`
-  - from which side to look – [`linear-direction`][linear-direction]
+  - index, length ⊂ [`bounded-nat`][bounded-nat]
+      - `n<x>`, `N<x>`, `Add<x>`, `Up<x>`, `Fixed`, `Min`, `In`, `Exactly`, `Up`, `To`
+  - which side to face ∈ [`linear-direction`][linear-direction]
       - `Up`, `Down`
 
-```elm
-import Linear exposing (Direction(..)) -- Up or Down
-import N exposing (N, Exactly, Min, In, Up, To, Fixed)
-import ArraySized exposing (ArraySized)
-```
-
-Let's define & use operations for `ArraySized`s with a certain amount of elements ↓
+Let's define & use operations for all kinds of ranges ↓
 
 ## a minimum length?
 
 ```elm
+import Linear exposing (Direction(..)) -- .. = Up, Down
+import N exposing (In, Fixed, Add1)
+import ArraySized exposing (ArraySized)
+
 last :
     ArraySized element (In (Fixed (Add1 minMinus1_)) max_)
     -> element
@@ -141,9 +139,12 @@ initialChessBoard
 ## a maximum length?
 
 ```elm
--- the max tag count should be 53
+import N exposing (In, Up, To, N16)
+import ArraySized exposing (ArraySized)
+
+-- the max tag count should be 16
 tag :
-    ArraySized String (In min_ (Up maxTo53_ To N53))
+    ArraySized String (In min_ (Up maxTo16_ To N16))
     -> (Metadata -> MetadataTagged)
 tag tags =
     ...
