@@ -519,7 +519,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
-Have an `Emptiable (Stacked ...) Never`? → [`fromStackFilled`](#fromStackFilled)
+Got an `Emptiable (Stacked ...) Never`? → [`fromStackFilled`](#fromStackFilled)
 
 -}
 fromStackEmptiable :
@@ -550,7 +550,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
-Only have an `Emptiable (Stacked ...) Possibly`? → [`fromStackEmptiable`](#fromStackEmptiable)
+Only got an `Emptiable (Stacked ...) Possibly`? → [`fromStackEmptiable`](#fromStackEmptiable)
 
 -}
 fromStackFilled :
