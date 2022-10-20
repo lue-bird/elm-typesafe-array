@@ -232,18 +232,18 @@ avoiding type variables
     -- length = 15
     : ArraySized ... (Exactly N15)
 
-`InFixed min max` being a shorthand for
+`InFixed`, `Exactly` are just shorthands exposed from `N`
 
-    In (Fixed min) (Fixed max)
+    InFixed min max =
+        In (Fixed min) (Fixed max)
 
-`Exactly n` being a shorthand for
-
-    InFixed n n
+    Exactly n =
+        InFixed n n
 
 ---
 
-`==` on ranges crashes elm.
-Use [safe comparison methods](#length-compare)
+`==` on both [`ArraySized`](#ArraySized)s and `N`s crashes elm.
+[Compare safely](#length-compare)
 or convert [`toValue`](#toValue)
 
 -}
