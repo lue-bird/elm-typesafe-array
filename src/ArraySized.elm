@@ -184,10 +184,10 @@ import Toop
 
 ### result type
 
-    -- amount >= 5
+    -- length >= 5
     : ArraySized ... (Min (Up5 x_))
 
-    -- 2 <= amount <= 12
+    -- 2 <= length <= 12
     : ArraySized ... (In (Up2 minX_) (Up12 maxX_))
 
 Representing a result's numbers as this weird `Up<n> x`
@@ -197,13 +197,13 @@ is what allows the little magic tricks in the library:
 
 ### argument type
 
-    -- = 15
+    -- length = 15
     : ArraySized ... (Exactly N15)
 
-    -- amount >= 4
+    -- length >= 4
     : ArraySized ... (In (Fixed (Add4 minMinus4_)) max_)
 
-    -- 4 <= amount <= 15
+    -- 4 <= length <= 15
     : ArraySized ...
     :     (In (Fixed (Add4 minMinus4_)) (Up maxTo15_ To N15))
 
@@ -223,13 +223,13 @@ They look just like [result types](#result-type) but every
 `Up<n> x` becomes `Fixed N<n>`,
 avoiding type variables
 
-    -- amount >= 4
+    -- length >= 4
     : ArraySized ... (Min (Fixed N4))
 
-    -- 4 <= amount <= 15
+    -- 4 <= length <= 15
     : ArraySized ... (InFixed N4 N15)
 
-    -- = 15
+    -- length = 15
     : ArraySized ... (Exactly N15)
 
 `InFixed min max` being a shorthand for
@@ -1262,8 +1262,8 @@ fuzz :
     Fuzzer element
     -> N range
     -> Fuzzer (ArraySized element range)
-fuzz elementFuzz amount =
-    ArraySized.Internal.fuzz elementFuzz amount
+fuzz elementFuzz length_ =
+    ArraySized.Internal.fuzz elementFuzz length_
 
 
 {-| `Fuzzer` for an [`ArraySized`](#ArraySized) with a length in a given range.

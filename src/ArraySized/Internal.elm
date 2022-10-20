@@ -317,12 +317,12 @@ fuzz :
     Fuzzer element
     -> N range
     -> Fuzzer (ArraySized element range)
-fuzz elementFuzz amount =
+fuzz elementFuzz length_ =
     Fuzz.map
         (\list ->
-            ArraySized amount (Array.fromList list)
+            ArraySized length_ (Array.fromList list)
         )
-        (Fuzz.listOfLength (amount |> N.toInt) elementFuzz)
+        (Fuzz.listOfLength (length_ |> N.toInt) elementFuzz)
 
 
 inFuzz :
