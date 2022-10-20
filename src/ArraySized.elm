@@ -424,12 +424,12 @@ repeat elementToRepeat howOftenToRepeat =
 
 
 {-| Create from an `Array`.
-As every `Array` has `>= 0` elements:
+As every `Array` has `>= 0` elements
 
     arrayFromSomeOtherLibrary |> ArraySized.fromArray
     --: ArraySized ... (Min (Up0 x_))
 
-Don't use it for construction:
+Don't use it for construction
 
     ArraySized.fromArray
         (Array.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
@@ -452,12 +452,12 @@ fromArray =
 
 
 {-| Create from a `List`.
-As every `List` has `>= 0` elements:
+As every `List` has `>= 0` elements
 
     listFromSomeOtherLibrary |> ArraySized.fromList
     --: ArraySized ... (Min (Up0 x_))
 
-Don't use for construction:
+Don't use for construction
 
     ArraySized.fromList [ 0, 1, 2, 3, 4, 5, 6 ]
     -- big no!
@@ -479,8 +479,8 @@ fromList =
         list |> Array.fromList |> fromArray
 
 
-{-| Create from a `String`.
-As every `String` has `>= 0` elements:
+{-| Create from the `Char`s of a `String`.
+As every `String` has `>= 0` elements
 
     stringFromSomeOtherLibrary |> ArraySized.fromString
     --: ArraySized Char (Min (Up0 x_))
@@ -500,12 +500,12 @@ fromString =
 
 
 {-| Create from a `Stack`.
-As every `Stack` has `>= 0` elements:
+As every `Stack` has `>= 0` elements
 
     listFromSomeOtherLibrary |> ArraySized.fromStackEmptiable
     --: ArraySized ... (Min (Up0 x_))
 
-Don't use for construction:
+Don't use for construction
 
     ArraySized.fromStackEmptiable
         (Stack.fromList [ 0, 1, 2, 3, 4, 5, 6 ])
@@ -531,12 +531,12 @@ fromStackEmptiable =
 
 
 {-| Create from a `Stack`.
-As every `Stack` has `>= 0` elements:
+As every `Stack` has `>= 0` elements
 
     listFromSomeOtherLibrary |> ArraySized.fromStackFilled
     --: ArraySized ... (Min (Up1 x_))
 
-Don't use for construction:
+Don't use for construction
 
     ArraySized.fromStackFilled
         (Stack.topDown 0 [ 1, 2, 3, 4, 5, 6 ])
@@ -2040,9 +2040,9 @@ To make these the same type
 
     [ atLeast1Element, between1And10Elements ]
 
-Elm complains:
+Elm complains
 
-> But all the previous elements in the list are
+> all the previous elements in the list are
 > `ArraySized ... (Min N1)`
 
     [ atLeast1Element
@@ -2071,7 +2071,7 @@ maxToInfinity =
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up rowFromModelOrSomeStorage
 
-Only `Up<n> x` can do that:
+Only `Up<n> x` can do that
 
     glue2TemporaryFields :
         Row
@@ -2128,7 +2128,7 @@ maxTo lengthMaximumNew =
         ArraySized.repeat Temporary n2
             |> ArraySized.glue Up rowFromModelOrSomeStorage
 
-Only `Up<n> x` can do that:
+Only `Up<n> x` can do that
 
     glue2TemporaryFields :
         Row
@@ -2381,7 +2381,7 @@ Every element beyond the minimum [`length`](#length) of both is't part of the fi
                 { directMatch = guessChar == answerChar }
             )
 
-This is often misused:
+This is often misused
 
   - multiple structures for different attributes of the same thing
       - example: one list for exercises, one matching the cards' indexes with progress
