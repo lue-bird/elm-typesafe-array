@@ -1,6 +1,6 @@
 # change log
 
-#### 27.0.0
+## 27.0.0
 
   - `ArraySized range element` → `ArraySized element range`
   - `fuzz element n`, `inFuzz element ( lo, hi )` add
