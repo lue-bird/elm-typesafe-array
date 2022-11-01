@@ -1,5 +1,9 @@
 # change log
 
+### 27.1.0
+
+  - `order` add
+
 ## 27.0.0
 
   - `ArraySized range element` → `ArraySized element range`

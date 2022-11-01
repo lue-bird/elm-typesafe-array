@@ -6,7 +6,7 @@ module ArraySized exposing
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
     , element, elementTry, to1
-    , all, any
+    , all, any, order
     , elementReplace, elementAlter, reverse
     , push, pushMin, insert, insertMin
     , elementRemove, elementRemoveMin
@@ -94,7 +94,7 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 
 @docs length
 @docs element, elementTry, to1
-@docs all, any
+@docs all, any, order
 
 
 # alter
@@ -173,6 +173,7 @@ import Emptiable exposing (Emptiable)
 import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
 import N exposing (Add1, Add2, Down, Exactly, Fixed, FixedValue, In, InFixed, InFixedValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
+import Order exposing (Ordering)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -1798,6 +1799,31 @@ any isOkay =
             |> foldFrom False
                 Up
                 (\el soFar -> soFar || (el |> isOkay))
+
+
+{-| [`Order`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/Order)
+2 [`ArraySized`](#ArraySized)s by elements first to last
+
+    import Order
+
+    ArraySized.order Order.int
+        (ArraySized.l4 11 22 33 188)
+        (ArraySized.l3 11 22 34)
+    --> LT
+
+-}
+order :
+    Ordering element
+    ->
+        (ArraySized element length0_
+         -> ArraySized element length1_
+         -> Order
+        )
+order elementOrder =
+    \arraySized0 arraySized1 ->
+        Order.list elementOrder
+            (arraySized0 |> toList)
+            (arraySized1 |> toList)
 
 
 
