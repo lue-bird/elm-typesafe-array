@@ -1,3 +1,7 @@
+## 28.0.0 plans
+
+  - `order` name → `greaterEarlier`
+
 # change log
 
 ### 27.1.1
