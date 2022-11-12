@@ -16,8 +16,8 @@
         "elm-explorations/test": "2.0.1 <= v < 3.0.0",
         "lue-bird/elm-allowable-state": "1.0.2 <= v < 2.0.0",
         "lue-bird/elm-bounded-nat": "29.0.0 <= v < 30.0.0",
-        "lue-bird/elm-emptiness-typed": "7.0.0 <= v < 8.0.0",
-        "lue-bird/elm-linear-direction": "7.0.0 <= v < 8.0.0"
+        "lue-bird/elm-emptiness-typed": "8.0.0 <= v < 9.0.0",
+        "lue-bird/elm-linear-direction": "8.0.0 <= v < 9.0.0"
     },
     "test-dependencies": {}
 }
