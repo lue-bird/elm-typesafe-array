@@ -1,5 +1,10 @@
 # change log
 
+### 27.1.1
+
+  - `linear-direction` → >= 8.0.0
+  - `emptiness-typed` → >= 8.0.0
+
 ### 27.1.0
 
   - `order` add
