@@ -172,6 +172,7 @@ import ArraySized.Internal
 import Emptiable exposing (Emptiable)
 import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
+import List.Order
 import N exposing (Add1, Add2, Down, Exactly, Fixed, FixedValue, In, InFixed, InFixedValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Order exposing (Ordering)
 import Possibly exposing (Possibly)
@@ -330,7 +331,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     ArraySized.l4 (0 |> Emptiable.filled) Emptiable.empty Emptiable.empty (3 |> Emptiable.filled)
         |> ArraySized.fills
         |> ArraySized.toStackEmptiable
-    --> Stack.topDown 0 [ 3 ]
+    --> Stack.topBelow 0 [ 3 ]
     --: Emptiable (Stacked Int) Possibly
 
 Have `>= 1` element? → Keep an `Emptiable ... never_` [`toStackFilled`](#toStackFilled)
@@ -355,7 +356,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     ArraySized.upTo n4
         |> ArraySized.map N.toInt
         |> ArraySized.toStackFilled
-    --> Stack.topDown 0 [ 1, 2, 3, 4 ]
+    --> Stack.topBelow 0 [ 1, 2, 3, 4 ]
     --: Emptiable (Stacked Int) Never
 
 Don't have `>= 1` element? → [`toStackEmptiable`](#toStackEmptiable)
@@ -370,7 +371,7 @@ toStackFilled =
     \arraySized ->
         case arraySized |> toList of
             top :: down ->
-                Stack.topDown top down
+                Stack.topBelow top down
 
             -- doesn't happen
             -- Preferred over foldFrom (at 0) ... (remove 0) for performance reasons
@@ -540,7 +541,7 @@ As every `Stack` has `>= 0` elements
 Don't use for construction
 
     ArraySized.fromStackFilled
-        (Stack.topDown 0 [ 1, 2, 3, 4, 5, 6 ])
+        (Stack.topBelow 0 [ 1, 2, 3, 4, 5, 6 ])
     -- big no!
 
 Make sure the compiler knows as much as you about the amount of elements!
@@ -1821,7 +1822,7 @@ order :
         )
 order elementOrder =
     \arraySized0 arraySized1 ->
-        Order.list elementOrder
+        List.Order.greaterEarlier elementOrder
             (arraySized0 |> toList)
             (arraySized1 |> toList)
 
