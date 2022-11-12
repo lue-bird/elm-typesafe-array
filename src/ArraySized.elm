@@ -1805,9 +1805,9 @@ any isOkay =
 {-| [`Order`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/Order)
 2 [`ArraySized`](#ArraySized)s by elements first to last
 
-    import Order
+    import Int.Order
 
-    ArraySized.order Order.int
+    ArraySized.order Int.Order.increasing
         (ArraySized.l4 11 22 33 188)
         (ArraySized.l3 11 22 34)
     --> LT
