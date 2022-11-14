@@ -1,6 +1,7 @@
 ## 28.0.0 plans
 
   - `order` name → `greaterEarlier`
+  - `elementRemove`, `elementRemoveMin` name → `remove`, `removeMin`
 
 # change log
 
