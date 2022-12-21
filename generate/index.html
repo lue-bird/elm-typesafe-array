@@ -6081,6 +6081,14 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$importStmt = F3(
 			moduleName: $the_sett$elm_syntax_dsl$Util$nodify(modName)
 		};
 	});
+var $author$project$ArraySized$Generate$inType = F2(
+	function (min, max) {
+		return A2(
+			$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+			'In',
+			_List_fromArray(
+				[min, max]));
+	});
 var $stil4m$elm_syntax$Elm$Syntax$TypeAnnotation$GenericType = function (a) {
 	return {$: 'GenericType', a: a};
 };
@@ -6102,15 +6110,11 @@ var $author$project$ArraySized$Generate$upNType = F2(
 					$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar(_var)
 				]));
 	});
-var $author$project$ArraySized$Generate$inType = function (n) {
+var $author$project$ArraySized$Generate$inUpType = function (n) {
 	return A2(
-		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-		'In',
-		_List_fromArray(
-			[
-				A2($author$project$ArraySized$Generate$upNType, n, 'minX_'),
-				A2($author$project$ArraySized$Generate$upNType, n, 'maxX_')
-			]));
+		$author$project$ArraySized$Generate$inType,
+		A2($author$project$ArraySized$Generate$upNType, n, 'minX_'),
+		A2($author$project$ArraySized$Generate$upNType, n, 'maxX_'));
 };
 var $author$project$Extra$GenerateElm$Exposed = function (a) {
 	return {$: 'Exposed', a: a};
@@ -6294,7 +6298,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 						A2(
 							$author$project$ArraySized$Generate$arraySizedType,
 							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
-							$author$project$ArraySized$Generate$inType(x))),
+							$author$project$ArraySized$Generate$inUpType(x))),
 					$elm$core$String$concat(
 						_List_fromArray(
 							[
@@ -6342,7 +6346,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 							function (chunkStart) {
 								return A2(
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$construct,
-									'glue',
+									'attach',
 									_List_fromArray(
 										[
 											$the_sett$elm_syntax_dsl$Elm$CodeGen$val('Up'),
@@ -6383,7 +6387,7 @@ var $author$project$ArraySized$Generate$l = function (x) {
 									$elm$core$List$map,
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$funExpose,
 									_List_fromArray(
-										['empty', 'glue'])),
+										['empty', 'attach'])),
 									A2(
 									$elm$core$List$map,
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$typeOrAliasExpose,
@@ -6415,12 +6419,29 @@ var $author$project$Extra$GenerateElm$PackageExposedModule = function (a) {
 	return {$: 'PackageExposedModule', a: a};
 };
 var $author$project$ArraySized$Generate$ToXTag = {$: 'ToXTag'};
-var $author$project$ArraySized$Generate$exactlyType = function (n) {
+var $author$project$ArraySized$Generate$addXType = F2(
+	function (x, more) {
+		if (!x) {
+			return more;
+		} else {
+			return A2(
+				$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+				$elm$core$String$concat(
+					_List_fromArray(
+						[
+							'Add',
+							$elm$core$String$fromInt(x)
+						])),
+				_List_fromArray(
+					[more]));
+		}
+	});
+var $author$project$ArraySized$Generate$fixedType = function (number) {
 	return A2(
 		$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
-		'Exactly',
+		'Fixed',
 		_List_fromArray(
-			[n]));
+			[number]));
 };
 var $the_sett$elm_syntax_dsl$Elm$CodeGen$fqConstruct = F3(
 	function (moduleName, name, args) {
@@ -6467,6 +6488,15 @@ var $the_sett$elm_syntax_dsl$Elm$CodeGen$tuple = function (exprs) {
 	return $stil4m$elm_syntax$Elm$Syntax$Expression$TupledExpression(
 		$the_sett$elm_syntax_dsl$Util$nodifyAll(exprs));
 };
+var $author$project$ArraySized$Generate$toType = A2($the_sett$elm_syntax_dsl$Elm$CodeGen$typed, 'To', _List_Nil);
+var $author$project$ArraySized$Generate$upType = F2(
+	function (from, to) {
+		return A2(
+			$the_sett$elm_syntax_dsl$Elm$CodeGen$typed,
+			'Up',
+			_List_fromArray(
+				[from, $author$project$ArraySized$Generate$toType, to]));
+	});
 var $author$project$ArraySized$Generate$lAndTo16 = {
 	declarations: function () {
 		var lX = F2(
@@ -6484,7 +6514,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 						A2(
 							$author$project$ArraySized$Generate$arraySizedType,
 							$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
-							$author$project$ArraySized$Generate$inType(x))),
+							$author$project$ArraySized$Generate$inUpType(x))),
 					$elm$core$String$concat(
 						_List_fromArray(
 							[
@@ -6547,7 +6577,7 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 											'a' + $elm$core$String$fromInt(x - 1))
 										]))));
 					},
-					A2($elm$core$List$range, 1, 16)),
+					A2($elm$core$List$range, 2, 16)),
 					A2(
 					$elm$core$List$map,
 					function (i) {
@@ -6580,8 +6610,31 @@ var $author$project$ArraySized$Generate$lAndTo16 = {
 										A2(
 										$author$project$ArraySized$Generate$arraySizedType,
 										$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar('element'),
-										$author$project$ArraySized$Generate$exactlyType(
-											$author$project$ArraySized$Generate$nXType(i)))
+										A2(
+											$author$project$ArraySized$Generate$inType,
+											$author$project$ArraySized$Generate$fixedType(
+												A2(
+													$author$project$ArraySized$Generate$addXType,
+													i,
+													$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar(
+														$elm$core$String$concat(
+															_List_fromArray(
+																[
+																	'minMinus',
+																	$elm$core$String$fromInt(i),
+																	'_'
+																]))))),
+											A2(
+												$author$project$ArraySized$Generate$upType,
+												$the_sett$elm_syntax_dsl$Elm$CodeGen$typeVar(
+													$elm$core$String$concat(
+														_List_fromArray(
+															[
+																'maxTo',
+																$elm$core$String$fromInt(i),
+																'_'
+															]))),
+												$author$project$ArraySized$Generate$nXType(i))))
 									]),
 								A3(
 									$the_sett$elm_syntax_dsl$Elm$CodeGen$fqTyped,
@@ -11033,7 +11086,7 @@ var $author$project$ArraySized$Generate$update = F2(
 					model,
 					A3(
 						$elm$file$File$Download$bytes,
-						'elm-arrs-modules.zip',
+						'typesafe-array-generated.zip',
 						'application/zip',
 						function () {
 							var toZipEntry = function (moduleFile) {
@@ -20734,7 +20787,7 @@ var $author$project$ArraySized$Generate$view = function (_v0) {
 														$elm$core$String$fromInt(x)
 													]))
 										},
-											{folding: fromAndToXShownOrFolded, kind: $author$project$ArraySized$Generate$LAndTo16, module_: $author$project$ArraySized$Generate$lAndTo16, name: 'l1 → l16, to2 → to16'}
+											{folding: fromAndToXShownOrFolded, kind: $author$project$ArraySized$Generate$LAndTo16, module_: $author$project$ArraySized$Generate$lAndTo16, name: 'l2 → l16, to2 → to16'}
 										]));
 							}()
 							])))

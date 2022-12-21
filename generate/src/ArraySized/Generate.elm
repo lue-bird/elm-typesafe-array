@@ -1,6 +1,6 @@
 module ArraySized.Generate exposing (main)
 
-{-| Helps you generate the source code of `ArraySized.l1` to `from16` & the module `ArgN.Arguments`
+{-| Helps you generate the source code of `ArraySized.l<x>`, `.to<x>` 2 to 16
 
 Thanks to [`the-sett/elm-syntax-dsl`](https://package.elm-lang.org/packages/the-sett/elm-syntax-dsl/latest/)!
 
@@ -99,7 +99,7 @@ update msg model =
         ModulesDownloadRequestedAtTime time ->
             ( model
             , File.Download.bytes
-                "elm-arrs-modules.zip"
+                "typesafe-array-generated.zip"
                 "application/zip"
                 (let
                     toZipEntry moduleFile =
@@ -150,23 +150,30 @@ nType n =
     typed "N" [ n ]
 
 
-inType : Int -> Gen.TypeAnnotation
-inType n =
-    typed "In"
-        [ upNType n "minX_"
-        , upNType n "maxX_"
-        ]
+inType : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
+inType min max =
+    typed "In" [ min, max ]
+
+
+fixedType : Gen.TypeAnnotation -> Gen.TypeAnnotation
+fixedType number =
+    typed "Fixed" [ number ]
+
+
+upType : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
+upType from to =
+    typed "Up" [ from, toType, to ]
+
+
+toType : Gen.TypeAnnotation
+toType =
+    typed "To" []
 
 
 upNType : Int -> String -> Gen.TypeAnnotation
 upNType n var =
     typed ([ "Up", n |> String.fromInt ] |> String.concat)
         [ typeVar var ]
-
-
-toType : Gen.TypeAnnotation
-toType =
-    typed "To" []
 
 
 nXType : Int -> Gen.TypeAnnotation
@@ -188,13 +195,13 @@ addXType x more =
 
 
 arraySizedType : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
-arraySizedType  element length =
+arraySizedType element length =
     typed "ArraySized" [ element, length ]
 
 
-exactlyType : Gen.TypeAnnotation -> Gen.TypeAnnotation
-exactlyType n =
-    typed "Exactly" [ n ]
+inUpType : Int -> Gen.TypeAnnotation
+inUpType n =
+    inType (upNType n "minX_") (upNType n "maxX_")
 
 
 
@@ -224,7 +231,7 @@ lAndTo16 =
                     (x |> fromNDoc)
                     (funAnn
                         (List.repeat x (typeVar "element"))
-                        (arraySizedType (typeVar "element") (inType x))
+                        (arraySizedType (typeVar "element") (inUpType x))
                     )
                     ([ "l", x |> String.fromInt ] |> concat)
                     (List.range 0 (x - 1)
@@ -233,7 +240,7 @@ lAndTo16 =
                     )
                     implementation
         in
-        [ List.range 1 16
+        [ List.range 2 16
             |> List.map
                 (\x ->
                     lX x
@@ -274,7 +281,20 @@ lAndTo16 =
                         (funAnn
                             [ arraySizedType
                                 (typeVar "element")
-                                (exactlyType (nXType i))
+                                -- (In (Fixed (Add1 minMinus1_)) (Up maxTo1_ To N1))
+                                (inType
+                                    (Gen.typeVar
+                                        ([ "minMinus", i |> String.fromInt, "_" ] |> String.concat)
+                                        |> addXType i
+                                        |> fixedType
+                                    )
+                                    (upType
+                                        (Gen.typeVar
+                                            ([ "maxTo", i |> String.fromInt, "_" ] |> String.concat)
+                                        )
+                                        (nXType i)
+                                    )
+                                )
                             ]
                             (fqTyped [ "Toop" ]
                                 (t i)
@@ -334,7 +354,7 @@ l x =
     , imports =
         [ Gen.importStmt [ "ArraySized" ]
             Nothing
-            ([ List.map Gen.funExpose [ "empty", "glue" ]
+            ([ List.map Gen.funExpose [ "empty", "attach" ]
              , List.map Gen.typeOrAliasExpose [ "ArraySized", "In" ]
              ]
                 |> List.concat
@@ -363,7 +383,7 @@ l x =
             (x |> fromNDoc)
             (funAnn
                 (List.repeat x (typeVar "element"))
-                (arraySizedType (typeVar "element") (inType x))
+                (arraySizedType (typeVar "element") (inUpType x))
             )
             ([ "l", x |> String.fromInt ] |> concat)
             (List.range 0 (x - 1)
@@ -388,7 +408,7 @@ l x =
                     |> List.map (\chunk -> remainder + chunk * 16)
                     |> List.map
                         (\chunkStart ->
-                            construct "glue"
+                            construct "attach"
                                 [ val "Up"
                                 , construct "l16"
                                     (List.range chunkStart (chunkStart + 15)
@@ -494,7 +514,7 @@ view { fromAndToXShownOrFolded, lShownOrFolded, x } =
            }
          , { kind = LAndTo16
            , folding = fromAndToXShownOrFolded
-           , name = "l1 → l16, to2 → to16"
+           , name = "l2 → l16, to2 → to16"
            , module_ = lAndTo16
            }
          ]
