@@ -1,9 +1,32 @@
-## 28.0.0 plans
-
-  - `order` name → `greaterEarlier`
-  - `elementRemove`, `elementRemoveMin` name → `remove`, `removeMin`
-
 # change log
+
+## 28.0.0
+
+  - `bounded-nat` → >= 31.0.0
+  - `linear-direction` → >= 10.0.0
+  - `emptiness-typed` → >= 9.1.1
+  - `any`, `all` remove in favor of
+      - `case of` on `allFill`
+  - `order` remove
+  - `all`, `any` remove
+      - in favor of `allFill`
+  - `fromEmptiable`, `toEmptiable` keep emptiness knowledge
+  - TODO `fromStackEmptiable`, `fromStackFilled` and `toStackEmptiable`, `toStackFilled` combine → `fromStack`, `toStack` that keeps emptiness knowledge
+  - `take ( dir, length )`, `drop... ( dir, length )` → `take dir length`, `drop... dir length`
+      - consistent with `linear-direction`
+  - `elementTry : -> Result` → `: -> Emptiable`
+  - `elementRemove`, `elementRemoveMin` name → `remove`, `removeMin`
+      - structure operation, not element operation
+  - `glue`, `glueMin` name → `attach`, `attachMin`
+  - `minDown`, `maxUp` name → `minSubtract`, `maxAdd`
+      - consistent with relative `N` operations
+  - `l1` name → `one`
+      - to be consistent with `Stack.one`, `KeysSet.one`, `foldFromOne`, ...
+  - `to1` name → `toOne`
+      - consistent with `one`
+  - `toOne`→`to16`: argument type more broad
+  - `hasAtLeast1`, `minMinus1Never`, `min0Adapt` add
+  - `foldFromOne` add
 
 ### 27.1.1
 
