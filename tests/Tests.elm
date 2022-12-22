@@ -5,6 +5,7 @@ import Emptiable exposing (Emptiable, filled)
 import Expect exposing (Expectation)
 import Linear exposing (Direction(..))
 import N exposing (Add1, Exactly, In, N8, To, Up, n1, n2, n4, n8)
+import Possibly exposing (Possibly)
 import Test exposing (Test, describe, test)
 
 
@@ -12,63 +13,14 @@ suite : Test
 suite =
     describe "typesafe-array"
         [ maximumConstrainedTest
-        , arraySizedTests
+        , anyMaximumTests
         ]
 
 
-arraySizedTests : Test
-arraySizedTests =
-    describe "ArraySized"
-        [ describe "all"
-            [ test "True"
-                (\() ->
-                    ArraySized.all isEven (ArraySized.l2 2 4)
-                        |> Expect.equal True
-                )
-            , test "False"
-                (\() ->
-                    ArraySized.all isEven (ArraySized.l2 2 3)
-                        |> Expect.equal False
-                )
-            ]
-        , describe "any"
-            [ test "True"
-                (\() ->
-                    ArraySized.any isEven (ArraySized.l2 1 2)
-                        |> Expect.equal True
-                )
-            , test "False"
-                (\() ->
-                    ArraySized.any isEven (ArraySized.l2 1 3)
-                        |> Expect.equal False
-                )
-            ]
-        ]
-
-
-isEven : Int -> Bool
-isEven =
-    \n -> (n |> modBy 2) == 0
-
-
-maximumConstrainedTest : Test
-maximumConstrainedTest =
-    describe "maximum constrained"
-        [ test "append"
-            (\() ->
-                ArraySized.l3 1 1 1
-                    |> ArraySized.glue Up (ArraySized.l3 0 0 0)
-                    |> expectEqualArraySized
-                        (ArraySized.l6 1 1 1 0 0 0)
-            )
-        , test "prepend"
-            (\() ->
-                ArraySized.l3 1 1 1
-                    |> ArraySized.glue Down (ArraySized.l3 0 0 0)
-                    |> expectEqualArraySized
-                        (ArraySized.l6 0 0 0 1 1 1)
-            )
-        , describe "allFill"
+anyMaximumTests : Test
+anyMaximumTests =
+    describe "any maximum"
+        [ describe "allFilled"
             [ test "all Filled → Filled"
                 (\() ->
                     case
@@ -89,6 +41,53 @@ maximumConstrainedTest =
                         |> ArraySized.allFill
                         |> Expect.equal Emptiable.empty
                 )
+            , test "all toEven → filled"
+                (\() ->
+                    ArraySized.l2 2 4
+                        |> ArraySized.map toEven
+                        |> ArraySized.allFill
+                        |> Emptiable.map ArraySized.toList
+                        |> Expect.equal (filled [ 2, 4 ])
+                )
+            , test "one not toEven → empty"
+                (\() ->
+                    ArraySized.l2 2 3
+                        |> ArraySized.map toEven
+                        |> ArraySized.allFill
+                        |> Expect.equal Emptiable.empty
+                )
+            ]
+        ]
+
+
+toEven : Int -> Emptiable Int Possibly
+toEven =
+    \n ->
+        if (n |> modBy 2) == 0 then
+            n |> filled
+
+        else
+            Emptiable.empty
+
+
+maximumConstrainedTest : Test
+maximumConstrainedTest =
+    describe "maximum constrained"
+        [ describe "attach"
+            [ test "Up → append"
+                (\() ->
+                    ArraySized.l3 1 1 1
+                        |> ArraySized.attach Up (ArraySized.l3 0 0 0)
+                        |> expectEqualArraySized
+                            (ArraySized.l6 1 1 1 0 0 0)
+                )
+            , test "Down → prepend"
+                (\() ->
+                    ArraySized.l3 1 1 1
+                        |> ArraySized.attach Down (ArraySized.l3 0 0 0)
+                        |> expectEqualArraySized
+                            (ArraySized.l6 0 0 0 1 1 1)
+                )
             ]
         , test "intersperse"
             (\() ->
@@ -107,7 +106,7 @@ expectEqualArraySized expected actual =
         (actual |> ArraySized.toList)
 
 
-emptiablePush :
+pushEmptiable :
     Emptiable element possiblyOrNever_
     ->
         (ArraySized
@@ -121,16 +120,16 @@ emptiablePush :
                 element
                 (In (Up minX To minPlusX) (Up maxX To (Add1 maxPlusX)))
         )
-emptiablePush emptiableElementToPush =
+pushEmptiable emptiableElementToPush =
     case emptiableElementToPush of
         Emptiable.Empty _ ->
-            \arraySized -> arraySized |> ArraySized.maxUp n1
+            \arraySized -> arraySized |> ArraySized.maxAdd n1
 
         Emptiable.Filled elementToPush ->
             \arraySized ->
                 arraySized
                     |> ArraySized.push elementToPush
-                    |> ArraySized.minDown n1
+                    |> ArraySized.minSubtract n1
 
 
 startBoard : ArraySized (ArraySized Field (Exactly N8)) (Exactly N8)
@@ -145,7 +144,7 @@ startBoard =
     ArraySized.empty
         |> ArraySized.push (firstRow White)
         |> ArraySized.push (pawnRow White)
-        |> ArraySized.glue Up
+        |> ArraySized.attach Up
             (ArraySized.repeat
                 (ArraySized.repeat Empty n8)
                 n4

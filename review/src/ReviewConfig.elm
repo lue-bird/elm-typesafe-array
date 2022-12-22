@@ -176,12 +176,12 @@ config =
     , NoMissingTypeExpose.rule
     , NoUnsortedTopLevelDeclarations.rule
         (NoUnsortedTopLevelDeclarations.sortTopLevelDeclarations
-            |> NoUnsortedTopLevelDeclarations.glueHelpersAfter
-            |> NoUnsortedTopLevelDeclarations.glueDependenciesBeforeFirstDependent
+            |> NoUnsortedTopLevelDeclarations.attachHelpersAfter
+            |> NoUnsortedTopLevelDeclarations.attachDependenciesBeforeFirstDependent
         )
     , NoUnsortedLetDeclarations.rule
         (NoUnsortedLetDeclarations.sortLetDeclarations
-            |> NoUnsortedLetDeclarations.glueDependenciesBeforeFirstDependent
+            |> NoUnsortedLetDeclarations.attachDependenciesBeforeFirstDependent
         )
     , NoFunctionOutsideOfModules.rule
         [ ( forbiddenFunctionOrValues, [] ) ]

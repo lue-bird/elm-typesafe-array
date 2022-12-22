@@ -15,9 +15,9 @@
         "elm-community/array-extra": "2.4.0 <= v < 3.0.0",
         "elm-explorations/test": "2.0.1 <= v < 3.0.0",
         "lue-bird/elm-allowable-state": "1.0.2 <= v < 2.0.0",
-        "lue-bird/elm-bounded-nat": "29.0.0 <= v < 30.0.0",
-        "lue-bird/elm-emptiness-typed": "8.0.0 <= v < 9.0.0",
-        "lue-bird/elm-linear-direction": "8.0.0 <= v < 9.0.0"
+        "lue-bird/elm-bounded-nat": "31.0.0 <= v < 32.0.0",
+        "lue-bird/elm-emptiness-typed": "9.1.1 <= v < 10.0.0",
+        "lue-bird/elm-linear-direction": "10.0.0 <= v < 11.0.0"
     },
     "test-dependencies": {}
 }

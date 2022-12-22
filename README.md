@@ -36,18 +36,20 @@ ticTacToeBoard
 ```
 **We & the compiler knew** there were enough elements in `ticTacToeBoard`
 
-## building blocks
+## 🧩
 
-```noformattingples
-elm install lue-bird/elm-linear-direction
-elm install lue-bird/elm-bounded-nat
-elm install lue-bird/elm-typesafe-array
-```
+  - 🔢 index, length : [`bounded-nat`][bounded-nat]
+      - `n<x>`, `Min`, `In`, `Exactly`, `Up`, `Up<x>`, `Fixed`, `N<x>`, `Add<x>`
+      - ```bash
+        elm install lue-bird/elm-bounded-nat
+        ```
+  - ↔️ which side to face : [`linear-direction`][linear-direction]
+      - `Up | Down`
+      - ```bash
+        elm install lue-bird/elm-linear-direction
+        ```
 
-  - index, length ⊂ [`bounded-nat`][bounded-nat]
-      - `n<x>`, `N<x>`, `Add<x>`, `Up<x>`, `Fixed`, `Min`, `In`, `Exactly`, `Up`, `To`
-  - which side to face ∈ [`linear-direction`][linear-direction]
-      - `Up`, `Down`
+just a quick look will be fine. You can always come back to understand types etc. deeper
 
 Let's define & use operations for all kinds of ranges ↓
 
@@ -75,9 +77,7 @@ greatest ArraySized.empty -- compile-time error
 ```
 
 `ArraySized ... (In (Fixed (Add1 minMinus1_)) max_)` means what exactly?
-→ It constrains the length of possible `ArraySized`s
-
-The types are explained in more detail in [`bounded-nat`][bounded-nat] (`In`, `Min`, `Exactly`). In this example:
+→ It constrains the length of possible `ArraySized`s:
 
 length is `In` a range
   - the minimum length constraint is,
@@ -87,6 +87,8 @@ length is `In` a range
   - any maximum length constraint is allowed
     (even [no maximum at all](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#Infinity))
     → `max_`
+
+The types are explained in more detail in [`bounded-nat`][bounded-nat]
 
 ## an exact length?
 
@@ -124,7 +126,7 @@ initialChessBoard =
     ArraySized.empty
         |> ArraySized.push (firstRow White)
         |> ArraySized.push (pawnRow White)
-        |> ArraySized.glue Up
+        |> ArraySized.attach Up
             (ArraySized.repeat (ArraySized.repeat Empty n8) n4)
         |> ArraySized.push (pawnRow Black)
         |> ArraySized.push (firstRow Black)
@@ -167,7 +169,7 @@ tag (ArraySized.repeat "into-the-trends" n100) -- type error
 ## [Orasund's `static-array`][static-array] – comparison
 
 `typesafe-array` development started before `static-array` was published
-but the ideas are really similar
+but the ideas are similar
 
 ### create
 
@@ -233,7 +235,7 @@ but the ideas are really similar
     arr1, arr2 :
         ArraySized ... (In (Up6 minX_) (Up6 maxX_))
 
-    arr1 |> ArraySized.glue Up arr2
+    arr1 |> ArraySized.attach Up arr2
     --: ArraySized ... (In (Up12 minX_) (Up12 maxX_))
     ```
     type-safe

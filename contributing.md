@@ -16,7 +16,7 @@
 
 ## setup
 
-  - `ArraySized.l1` → `l16` and `ArraySized.to2` → `to16` are [generated using elm](generate/src/ArraySized/Generate.elm)
+  - `ArraySized.l2` → `l16` and `to2` → `to16` are [generated using elm](generate/src/ArraySized/Generate.elm)
   - run `elm-review`, `elm-test`, `elm-verify-examples`
 
 ## commits

@@ -1,31 +1,31 @@
 module ArraySized exposing
     ( ArraySized
     , repeat, upTo, random, fuzz, inFuzz
-    , fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable, fromString
-    , empty, l1
+    , fromArray, fromList, fromEmptiable, fromStack, fromString
+    , empty, one
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
-    , element, elementTry, to1
-    , all, any, order
+    , element, elementTry, toOne
     , elementReplace, elementAlter, reverse
     , push, pushMin, insert, insertMin
-    , elementRemove, elementRemoveMin
+    , remove, removeMin
     , fills, allFill
     , take, drop, dropMin, dropOverMin
     , toChunksOf
     , and
-    , glue, glueMin
+    , attach, attachMin
     , padToLength
     , interweave, interweaveMin
     , hasIn, has, hasAtLeast, hasAtMost
     , map
-    , foldFrom, fold
-    , toArray, toList, toEmptiable, toStackEmptiable, toStackFilled, toString
+    , foldFrom, fold, foldFromOne
+    , toArray, toList, toEmptiable, toStack, toString
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
     , toValue, fromValue
-    , minTo, minDown
-    , maxTo, maxToInfinity, maxUp
+    , minTo, minSubtract
+    , maxTo, maxToInfinity, maxAdd
+    , hasAtLeast1, min0Adapt, minMinus1Never
     , minToValue, minFromValue
     , maxToValue, maxFromValue
     )
@@ -75,12 +75,12 @@ so we can [`fold`](#fold), access, ... without a worry
 # create
 
 @docs repeat, upTo, random, fuzz, inFuzz
-@docs fromArray, fromList, fromEmptiable, fromStackFilled, fromStackEmptiable, fromString
+@docs fromArray, fromList, fromEmptiable, fromStack, fromString
 
 
 ## specific length
 
-@docs empty, l1
+@docs empty, one
 
 [⏭ skip to last](ArraySized#l16)
 
@@ -93,15 +93,16 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 # scan
 
 @docs length
-@docs element, elementTry, to1
-@docs all, any, order
+@docs element, elementTry, toOne
+
+Searching for all, any? → [`allFill`](#allFill)
 
 
 # alter
 
 @docs elementReplace, elementAlter, reverse
 @docs push, pushMin, insert, insertMin
-@docs elementRemove, elementRemoveMin
+@docs remove, removeMin
 
 
 ## filter
@@ -118,7 +119,7 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 ## combine
 
 @docs and
-@docs glue, glueMin
+@docs attach, attachMin
 @docs padToLength
 @docs interweave, interweaveMin
 
@@ -131,8 +132,8 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 # transform
 
 @docs map
-@docs foldFrom, fold
-@docs toArray, toList, toEmptiable, toStackEmptiable, toStackFilled, toString
+@docs foldFrom, fold, foldFromOne
+@docs toArray, toList, toEmptiable, toStack, toString
 
 You have a use-case for `mapAccumulate`/`mapAccumulateFrom`? → issue/PR
 
@@ -153,8 +154,13 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 
 ## type-level
 
-@docs minTo, minDown
-@docs maxTo, maxToInfinity, maxUp
+@docs minTo, minSubtract
+@docs maxTo, maxToInfinity, maxAdd
+
+
+### advanced: generic [`allowable-state`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/)
+
+@docs hasAtLeast1, min0Adapt, minMinus1Never
 
 
 ## safe internals
@@ -169,12 +175,10 @@ Mostly useful for fancy extensions of [`ArraySized`](#ArraySized)
 import Array exposing (Array)
 import Array.Linear
 import ArraySized.Internal
-import Emptiable exposing (Emptiable)
+import Emptiable exposing (Emptiable, filled)
 import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
-import List.Order
-import N exposing (Add1, Add2, Down, Exactly, Fixed, FixedValue, In, InFixed, InFixedValue, Min, N, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
-import Order exposing (Ordering)
+import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, Fixed, FixedValue, In, InFixed, InFixedValue, Min, N, N0, N0OrAdd1(..), N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -194,7 +198,7 @@ import Toop
 
 Representing a result's numbers as this weird `Up<n> x`
 is what allows the little magic tricks in the library:
-[glueing](#combine), [taking, dropping, chunking](#part), [comparing](#length-compare), ...
+[attaching](#combine), [taking, dropping, chunking](#part), [comparing](#length-compare), ...
 
 
 ### argument type
@@ -319,7 +323,7 @@ toString =
             |> String.fromList
 
 
-{-| Convert to an `Emptiable (Stacked ...) Possibly`.
+{-| Convert to an `Emptiable (Stacked ...) never_`.
 
 Make these kinds of conversions your final step.
 Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
@@ -328,76 +332,178 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     import Emptiable
     import Stack
 
-    ArraySized.l4 (0 |> Emptiable.filled) Emptiable.empty Emptiable.empty (3 |> Emptiable.filled)
-        |> ArraySized.fills
-        |> ArraySized.toStackEmptiable
-    --> Stack.topBelow 0 [ 3 ]
-    --: Emptiable (Stacked Int) Possibly
-
-Have `>= 1` element? → Keep an `Emptiable ... never_` [`toStackFilled`](#toStackFilled)
-
--}
-toStackEmptiable :
-    ArraySized element lengthRange_
-    -> Emptiable (Stacked element) Possibly
-toStackEmptiable =
-    \arraySized ->
-        arraySized |> toList |> Stack.fromList
-
-
-{-| Convert to an `Emptiable (Stacked ...) never_`.
-
-Make these kinds of conversions your final step.
-Try to keep extra information as long as you can: ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
-
-    import N exposing (n4)
-    import Stack
-
     ArraySized.upTo n4
         |> ArraySized.map N.toInt
-        |> ArraySized.toStackFilled
+        |> ArraySized.toStack
     --> Stack.topBelow 0 [ 1, 2, 3, 4 ]
     --: Emptiable (Stacked Int) Never
 
-Don't have `>= 1` element? → [`toStackEmptiable`](#toStackEmptiable)
+    ArraySized.l4 (0 |> Emptiable.filled) Emptiable.empty Emptiable.empty (3 |> Emptiable.filled)
+        |> ArraySized.fills
+        |> ArraySized.toStack
+    --> Stack.topBelow 0 [ 3 ]
+    --: Emptiable (Stacked Int) Possibly
 
 -}
-toStackFilled :
+toStack :
     ArraySized
         element
-        (In (Fixed (Add1 minMinus1_)) max_)
-    -> Emptiable (Stacked element) never_
-toStackFilled =
+        (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) max_)
+    -> Emptiable (Stacked element) possiblyOrNever
+toStack =
     \arraySized ->
-        case arraySized |> toList of
-            top :: down ->
-                Stack.topBelow top down
+        arraySized
+            |> hasAtLeast1
+            |> Emptiable.mapFlat
+                (\atLeast1 ->
+                    atLeast1
+                        |> foldFromOne Stack.one Down Stack.onTopLay
+                )
 
-            -- doesn't happen
-            -- Preferred over foldFrom (at 0) ... (remove 0) for performance reasons
-            [] ->
-                arraySized |> element ( Up, n0 ) |> Stack.only
+
+{-| Transfer the knowledge about whether [`n0`](#n0) is a possible length
+
+    toEmptiable :
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) (Up maxTo1_ To N1))
+        -> Emptiable element possiblyOrNever
+    toEmptiable =
+        \arraySized ->
+            arraySized
+                |> ArraySized.hasAtLeast1
+                |> Emptiable.map ArraySized.toOne
+
+It really is just that simple: first try [`hasAtLeast1`](#hasAtLeast1),
+then map that possibility using the knowledge that the [`ArraySized`](#ArraySized)
+has at least 1 element
+
+    toStack :
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) max_)
+        -> Emptiable (Stacked element) possiblyOrNever
+    toStack =
+        \arraySized ->
+            arraySized
+                |> ArraySized.hasAtLeast1
+                |> Emptiable.mapFlat
+                    (ArraySized.foldFromOne Stack.one Down Stack.onTopLay)
+
+-}
+hasAtLeast1 :
+    ArraySized
+        element
+        (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1)) max)
+    ->
+        Emptiable
+            (ArraySized element (In (Up1 minX_) max))
+            possiblyOrNever
+hasAtLeast1 =
+    ArraySized.Internal.hasAtLeast1
 
 
-{-| On [`empty`](#empty) `Nothing`, on [`l1`](#l1) `Just` it's only value
+{-| Change the `possiblyOrNever` type for the case that its length minimum is 0
 
-Sadly, they way natural number constraints are defined,
-emptiness type information can't be transferred
+`never` allows you to adapt any variable,
+`\_ -> yourVariablePossiblyOrNever` swaps it for your given variable
+
+    fromEmptiable :
+        Emptiable element possiblyOrNever
+        ->
+            ArraySized
+                element
+                (In (Fixed (N0OrAdd1 possiblyOrNever N0)) (Up1 maxX_))
+    fromEmptiable =
+        \emptiable ->
+            case emptiable of
+                Emptiable.Filled content ->
+                    ArraySized.one content
+                        -- min = 0 can never happen → any variable possible
+                        |> ArraySized.min0Adapt never
+
+                Emptiable.Empty possiblyOrNever ->
+                    ArraySized.empty
+                        |> ArraySized.min0Adapt (\_ -> possiblyOrNever)
+                        -- there's no min successor → any variable possible
+                        |> ArraySized.minMinus1Never
+                        -- the other has max = 1. Let's adapt that higher max here
+                        |> ArraySized.maxAdd n1
+
+using [`minMinus1Never`](#minMinus1Never), [`maxAdd`](#maxAdd)
+
+Read more at [`N.min0Adapt`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#min0Adapt)
+
+-}
+min0Adapt :
+    (possiblyOrNever -> adaptedPossiblyOrNever)
+    -> ArraySized element (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1)) max)
+    ->
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 adaptedPossiblyOrNever minMinus1)) max)
+min0Adapt length0PossiblyOrNeverAdapt =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.min0Adapt length0PossiblyOrNeverAdapt
+
+
+{-| Change the successor type for the case that its length [`min`](#min) is 1 + ...
+to allow adapting any variable
+
+    fromEmptiable :
+        Emptiable element possiblyOrNever
+        ->
+            ArraySized
+                element
+                (In (Fixed (N0OrAdd1 possiblyOrNever N0)) (Up1 maxX_))
+    fromEmptiable =
+        \emptiable ->
+            case emptiable of
+                Emptiable.Filled content ->
+                    ArraySized.one content
+                        -- min = 0 can never happen → any variable possible
+                        |> ArraySized.min0Adapt never
+
+                Emptiable.Empty possiblyOrNever ->
+                    ArraySized.empty
+                        |> ArraySized.min0Adapt (\_ -> possiblyOrNever)
+                        -- there's no min successor → any variable possible
+                        |> ArraySized.minMinus1Never
+                        -- the other has max = 1. Let's adapt that higher max here
+                        |> ArraySized.maxAdd n1
+
+using [`isAtLeast1`](#isAtLeast1), [`min0Adapt`](#min0Adapt).
+
+-}
+minMinus1Never :
+    ArraySized
+        element
+        (In (Fixed (N0OrAdd1 possiblyOrNever Never)) max)
+    ->
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) max)
+minMinus1Never =
+    ArraySized.Internal.minMinus1Never
+
+
+{-| On [`empty`](#empty) `Emptiable.empty`,
+on [`one`](#one) `filled` with its only value
+
+Emptiness type information is transferred
 
 -}
 toEmptiable :
     ArraySized
         element
-        (In min_ (Up maxToN1_ To N1))
-    -> Emptiable element Possibly
+        (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) (Up maxTo1_ To N1))
+    -> Emptiable element possiblyOrNever
 toEmptiable =
     \arraySized ->
-        case arraySized |> hasAtLeast n1 of
-            Err _ ->
-                Emptiable.empty
-
-            Ok one ->
-                one |> element ( Up, n0 ) |> Emptiable.filled
+        arraySized
+            |> hasAtLeast1
+            |> Emptiable.map toOne
 
 
 
@@ -475,7 +581,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 -}
 fromList :
     List element
-    -> ArraySized element (Min (Up0 x_))
+    -> ArraySized element (Min (Up0 minX_))
 fromList =
     \list ->
         list |> Array.fromList |> fromArray
@@ -485,7 +591,7 @@ fromList =
 As every `String` has `>= 0` elements
 
     stringFromSomeOtherLibrary |> ArraySized.fromString
-    --: ArraySized Char (Min (Up0 x_))
+    --: ArraySized Char (Min (Up0 minX_))
 
 Try not to use this for construction
 and instead use the safe versions like `l<n>`
@@ -501,11 +607,14 @@ fromString =
             |> fromList
 
 
-{-| Create from a `Stack`.
-As every `Stack` has `>= 0` elements
+{-| Create from a stack.
+As every stack has `>= 0` elements
 
-    listFromSomeOtherLibrary |> ArraySized.fromStackEmptiable
-    --: ArraySized ... (Min (Up0 x_))
+    Emptiable.empty |> ArraySized.fromStack
+    --: ArraySized ... (Min (Fixed N0))
+
+    Stack.topBelow '#' [] |> ArraySized.fromStack
+    --: ArraySized Char (Min (Fixed N1))
 
 Don't use for construction
 
@@ -524,48 +633,26 @@ Make sure the compiler knows as much as you about the amount of elements!
 Got an `Emptiable (Stacked ...) Never`? → [`fromStackFilled`](#fromStackFilled)
 
 -}
-fromStackEmptiable :
-    Emptiable (Stacked element) possiblyOrNever_
-    -> ArraySized element (Min (Up0 x_))
-fromStackEmptiable =
+fromStack :
+    Emptiable (Stacked element) possiblyOrNever
+    -> ArraySized element (Min (Fixed (N0OrAdd1 possiblyOrNever N0)))
+fromStack =
     \stack ->
-        stack |> Stack.toList |> fromList
+        case stack |> Emptiable.map filled of
+            Emptiable.Empty possiblyOrNever ->
+                empty
+                    |> min0Adapt (\_ -> possiblyOrNever)
+                    |> minMinus1Never
+                    |> maxToInfinity
+
+            Emptiable.Filled stackFilled ->
+                one (stackFilled |> Stack.top)
+                    |> attachMin Up (stackFilled |> Stack.toList |> fromList)
+                    |> min0Adapt never
 
 
-{-| Create from a `Stack`.
-As every `Stack` has `>= 0` elements
-
-    listFromSomeOtherLibrary |> ArraySized.fromStackFilled
-    --: ArraySized ... (Min (Up1 x_))
-
-Don't use for construction
-
-    ArraySized.fromStackFilled
-        (Stack.topBelow 0 [ 1, 2, 3, 4, 5, 6 ])
-    -- big no!
-
-Make sure the compiler knows as much as you about the amount of elements!
-
-    ArraySized.l7 0 1 2 3 4 5 6 -- ok
-
-    ArraySized.upTo n6 -- big yes
-
-["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
-
-Only got an `Emptiable (Stacked ...) Possibly`? → [`fromStackEmptiable`](#fromStackEmptiable)
-
--}
-fromStackFilled :
-    Emptiable (Stacked element) Never
-    -> ArraySized element (Min (Up1 x_))
-fromStackFilled =
-    \stack ->
-        l1 (stack |> Stack.top)
-            |> glueMin Up
-                (stack |> Stack.topRemove |> fromStackEmptiable)
-
-
-{-| On `Just` [`ArraySized.l1`](#l1), on `Nothing` [`empty`](#empty)
+{-| On `Emptiable.filled` [`ArraySized.one`](#one),
+on `Emptiable.empty` [`ArraySized.empty`](#empty)
 
     import N exposing (n0)
     import Emptiable exposing (filled)
@@ -582,21 +669,26 @@ fromStackFilled =
         |> ArraySized.toList
     --> []
 
-Sadly, they way natural number constraints are defined,
-`possiblyOrNever` can't be transferred
+Emptiness knowledge `possiblyOrNever` is transferred
 
 -}
 fromEmptiable :
-    Emptiable element possiblyOrNever_
-    -> ArraySized element (In (Up0 minX_) (Up1 maxX_))
+    Emptiable element possiblyOrNever
+    ->
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 possiblyOrNever N0)) (Up1 maxX_))
 fromEmptiable =
     \emptiable ->
         case emptiable of
             Emptiable.Filled content ->
-                l1 content |> minDown n1
+                one content |> min0Adapt never
 
-            Emptiable.Empty _ ->
-                empty |> maxUp n1
+            Emptiable.Empty possiblyOrNever ->
+                empty
+                    |> min0Adapt (\_ -> possiblyOrNever)
+                    |> minMinus1Never
+                    |> maxAdd n1
 
 
 {-| No elements
@@ -614,9 +706,9 @@ empty =
 
 {-| Create with only 1 single given element
 -}
-l1 : element -> ArraySized element (In (Up1 minX_) (Up1 maxX_))
-l1 a0 =
-    empty |> push a0
+one : element -> ArraySized element (In (Up1 minX_) (Up1 maxX_))
+one onlyElement =
+    empty |> push onlyElement
 
 
 {-| Create with 2 given elements in the order they are supplied
@@ -626,7 +718,7 @@ l2 :
     -> element
     -> ArraySized element (In (Up2 minX_) (Up2 maxX_))
 l2 a0 a1 =
-    l1 a0 |> push a1
+    one a0 |> push a1
 
 
 {-| Create with 3 given elements in the order they are supplied
@@ -880,14 +972,14 @@ l16 a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 =
 --
 
 
-{-| Its only value
+{-| Its one and only, first and last element
 
-    ArraySized.l1 "hi" |> ArraySized.to1
+    ArraySized.one "hi" |> ArraySized.toOne
     --> "hi"
 
 -}
-to1 : ArraySized element (Exactly N1) -> element
-to1 =
+toOne : ArraySized element (In (Fixed (Add1 minMinus1_)) (Up maxTo1_ To N1)) -> element
+toOne =
     \arraySized ->
         arraySized |> element ( Up, n0 )
 
@@ -895,7 +987,7 @@ to1 =
 {-| Transform into a `Toop.T2` to simplify accessing elements, pattern matching
 -}
 to2 :
-    ArraySized element (Exactly N2)
+    ArraySized element (In (Fixed (Add2 minMinus2_)) (Up maxTo2_ To N2))
     -> Toop.T2 element element
 to2 =
     \arr ->
@@ -907,7 +999,7 @@ to2 =
 {-| Transform into a `Toop.T3` to simplify accessing elements, pattern matching
 -}
 to3 :
-    ArraySized element (Exactly N3)
+    ArraySized element (In (Fixed (Add3 minMinus3_)) (Up maxTo3_ To N3))
     -> Toop.T3 element element element
 to3 =
     \arr ->
@@ -920,7 +1012,7 @@ to3 =
 {-| Transform into a `Toop.T4` to simplify accessing elements, pattern matching
 -}
 to4 :
-    ArraySized element (Exactly N4)
+    ArraySized element (In (Fixed (Add4 minMinus4_)) (Up maxTo4_ To N4))
     -> Toop.T4 element element element element
 to4 =
     \arr ->
@@ -934,7 +1026,7 @@ to4 =
 {-| Transform into a `Toop.T5` to simplify accessing elements, pattern matching
 -}
 to5 :
-    ArraySized element (Exactly N5)
+    ArraySized element (In (Fixed (Add5 minMinus5_)) (Up maxTo5_ To N5))
     -> Toop.T5 element element element element element
 to5 =
     \arr ->
@@ -949,7 +1041,7 @@ to5 =
 {-| Transform into a `Toop.T6` to simplify accessing elements, pattern matching
 -}
 to6 :
-    ArraySized element (Exactly N6)
+    ArraySized element (In (Fixed (Add6 minMinus6_)) (Up maxTo6_ To N6))
     -> Toop.T6 element element element element element element
 to6 =
     \arr ->
@@ -965,7 +1057,7 @@ to6 =
 {-| Transform into a `Toop.T7` to simplify accessing elements, pattern matching
 -}
 to7 :
-    ArraySized element (Exactly N7)
+    ArraySized element (In (Fixed (Add7 minMinus7_)) (Up maxTo7_ To N7))
     -> Toop.T7 element element element element element element element
 to7 =
     \arr ->
@@ -982,7 +1074,7 @@ to7 =
 {-| Transform into a `Toop.T8` to simplify accessing elements, pattern matching
 -}
 to8 :
-    ArraySized element (Exactly N8)
+    ArraySized element (In (Fixed (Add8 minMinus8_)) (Up maxTo8_ To N8))
     -> Toop.T8 element element element element element element element element
 to8 =
     \arr ->
@@ -1000,7 +1092,7 @@ to8 =
 {-| Transform into a `Toop.T9` to simplify accessing elements, pattern matching
 -}
 to9 :
-    ArraySized element (Exactly N9)
+    ArraySized element (In (Fixed (Add9 minMinus9_)) (Up maxTo9_ To N9))
     -> Toop.T9 element element element element element element element element element
 to9 =
     \arr ->
@@ -1019,7 +1111,7 @@ to9 =
 {-| Transform into a `Toop.T10` to simplify accessing elements, pattern matching
 -}
 to10 :
-    ArraySized element (Exactly N10)
+    ArraySized element (In (Fixed (Add10 minMinus10_)) (Up maxTo10_ To N10))
     -> Toop.T10 element element element element element element element element element element
 to10 =
     \arr ->
@@ -1039,7 +1131,7 @@ to10 =
 {-| Transform into a `Toop.T11` to simplify accessing elements, pattern matching
 -}
 to11 :
-    ArraySized element (Exactly N11)
+    ArraySized element (In (Fixed (Add11 minMinus11_)) (Up maxTo11_ To N11))
     -> Toop.T11 element element element element element element element element element element element
 to11 =
     \arr ->
@@ -1060,7 +1152,7 @@ to11 =
 {-| Transform into a `Toop.T12` to simplify accessing elements, pattern matching
 -}
 to12 :
-    ArraySized element (Exactly N12)
+    ArraySized element (In (Fixed (Add12 minMinus12_)) (Up maxTo12_ To N12))
     -> Toop.T12 element element element element element element element element element element element element
 to12 =
     \arr ->
@@ -1082,7 +1174,7 @@ to12 =
 {-| Transform into a `Toop.T13` to simplify accessing elements, pattern matching
 -}
 to13 :
-    ArraySized element (Exactly N13)
+    ArraySized element (In (Fixed (Add13 minMinus13_)) (Up maxTo13_ To N13))
     -> Toop.T13 element element element element element element element element element element element element element
 to13 =
     \arr ->
@@ -1105,7 +1197,7 @@ to13 =
 {-| Transform into a `Toop.T14` to simplify accessing elements, pattern matching
 -}
 to14 :
-    ArraySized element (Exactly N14)
+    ArraySized element (In (Fixed (Add14 minMinus14_)) (Up maxTo14_ To N14))
     -> Toop.T14 element element element element element element element element element element element element element element
 to14 =
     \arr ->
@@ -1129,7 +1221,7 @@ to14 =
 {-| Transform into a `Toop.T15` to simplify accessing elements, pattern matching
 -}
 to15 :
-    ArraySized element (Exactly N15)
+    ArraySized element (In (Fixed (Add15 minMinus15_)) (Up maxTo15_ To N15))
     -> Toop.T15 element element element element element element element element element element element element element element element
 to15 =
     \arr ->
@@ -1154,7 +1246,7 @@ to15 =
 {-| Transform into a `Toop.T16` to simplify accessing elements, pattern matching
 -}
 to16 :
-    ArraySized element (Exactly N16)
+    ArraySized element (In (Fixed (Add16 minMinus16_)) (Up maxTo16_ To N16))
     -> Toop.T16 element element element element element element element element element element element element element element element element
 to16 =
     \arr ->
@@ -1398,12 +1490,12 @@ elementAlter ( direction, index ) elementAlter_ =
                 |> toArray
                 |> Array.Linear.element ( direction, index |> N.toInt )
         of
-            Ok elementFound ->
+            Just elementFound ->
                 arraySized
                     |> elementReplace ( direction, index )
                         (\() -> elementAlter_ elementFound)
 
-            Err _ ->
+            Nothing ->
                 arraySized
 
 
@@ -1411,7 +1503,7 @@ elementAlter ( direction, index ) elementAlter_ =
 
     import Emptiable exposing (filled)
 
-    ArraySized.l3 (filled "This") Emptiable.empty (filled "fine")
+    ArraySized.l3 ("This" |> filled) Emptiable.empty ("fine" |> filled)
         |> ArraySized.fills
         --: ArraySized String (In (Up0 minX_) (Up3 maxX_))
         |> ArraySized.toList
@@ -1440,23 +1532,72 @@ fills =
 {-| If every `Emptiable` is `filled`, all of the values.
 If any element is `empty`, `empty`
 
-    import Emptiable exposing (filled, fillMap)
+    import Emptiable exposing (filled)
 
     ArraySized.empty
         |> ArraySized.allFill
-        |> fillMap ArraySized.toList
+        |> Emptiable.map ArraySized.toList
     --> filled []
 
     ArraySized.l3 (filled 1) (filled 2) (filled 3)
         |> ArraySized.allFill
-        |> fillMap ArraySized.toList
+        |> Emptiable.map ArraySized.toList
     --> filled [ 1, 2, 3 ]
 
     ArraySized.l3 (filled 1) Emptiable.empty (filled 3)
         |> ArraySized.allFill
     --> Emptiable.empty
 
-Funnily, this can sometimes even be nicer than `mapN`/`andMap`
+Can also be used to check whether all/any elements satisfy a given test
+
+    import Possibly exposing (Possibly)
+    import Emptiable exposing (Emptiable)
+
+
+    atMost4 : Int -> Emptiable Int Possibly
+    atMost4 =
+        \n ->
+            if n <= 4 then
+                n |> Emptiable.filled
+            else
+                Emptiable.empty
+
+    -- all
+
+
+    ArraySized.l2 2 3
+        |> ArraySized.map atMost4
+        |> ArraySized.allFill
+        |> (/=) Emptiable.empty
+    --> True
+
+    ArraySized.l2 2 7
+        |> ArraySized.map atMost4
+        |> ArraySized.allFill
+        |> (/=) Emptiable.empty
+    --> False
+
+
+    -- any
+
+
+    ArraySized.l2 -5 300
+        |> ArraySized.map atMost4
+        |> ArraySized.allFill
+        |> (==) Emptiable.empty
+    --> True
+
+    ArraySized.l2 0 0
+        |> ArraySized.map atMost4
+        |> ArraySized.allFill
+        |> (==) Emptiable.empty
+    --> False
+
+Q: Why not expose `any`, `all`?
+
+> A: to push you towards [parsing, not validating](https://elm-radio.com/episode/parse-dont-validate/)
+
+Funny aside, [`allFill`](#allFill) can sometimes even be nicer than `mapN`/`andMap`
 
     groupCall =
         ArraySized.l5 aUser bUser cUser dUser eUser
@@ -1496,49 +1637,160 @@ It's easy if the minimum to take and the `ArraySized`'s minimum length match
 
     -- its three last elements
     ArraySized.upTo n3AtLeast
-        |> ArraySized.take ( Down, n3 )
+        |> ArraySized.take Down n3
 
 If the amount taken is greater than the `ArraySized`'s length minimum,
 add `|> N.minTo currentLengthMinimum`
 
     -- its first four elements
     ArraySized.upTo between3And6
-        |> ArraySized.take ( Down, n4 |> N.minTo n3 )
+        |> ArraySized.take Down (n4 |> N.minTo n3)
 
 If the amount taken is less than the `ArraySized`'s length minimum,
 add `|> ArraySized.minTo takenMinimum`
 
     ArraySized.l8 0 1 2 3 4 5 6 7
         |> ArraySized.minTo n7
-        |> ArraySized.take ( Up, n7 )
+        |> ArraySized.take Up n7
         --: ArraySized number_ (In (Up7 minX_) (Up7 maxX_))
         |> ArraySized.toList
     --> [ 0, 1, 2, 3, 4, 5, 6 ]
 
     ArraySized.l8 0 1 2 3 4 5 6 7
         |> ArraySized.minTo n7
-        |> ArraySized.take ( Up, n7AtLeast )
+        |> ArraySized.take Up n7AtLeast
     --: ArraySized number_ (Min (Up7 x_))
 
     ArraySized.l8 0 1 2 3 4 5 6 7
         |> ArraySized.minTo n2
-        |> ArraySized.take ( Up, between2And7 )
+        |> ArraySized.take Up between2And7
     --: ArraySized number_ (In (Up2 minX_) (Up7 maxX_))
 
 -}
 take :
-    ( Linear.Direction
-    , N (In min takenMax)
-    )
+    Linear.Direction
+    -> N (In min takenMax)
     ->
         (ArraySized element (In min max_)
          -> ArraySized element (In min takenMax)
         )
-take ( direction, toTakeAmount ) =
+take direction toTakeAmount =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.take
-                ( direction, toTakeAmount )
+                direction
+                toTakeAmount
+
+
+{-| Elements after a certain number of elements
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+    import Linear exposing (Direction(..))
+    import N exposing (n2)
+
+    ArraySized.l4 0 1 2 3
+        |> ArraySized.drop Down n2
+        --: ArraySized number_ (In (Up2 minX_) (Up2 maxX_))
+        |> ArraySized.toList
+    --> [ 0, 1 ]
+
+    between6And10Elements
+        |> ArraySized.drop Up between2And3
+        --: ArraySized number_ (In (Up3 minX_) (Up8 maxX_))
+
+  - Don't know its length maximum? → [`dropMin`](#dropMin)
+  - Can the dropped length's maximum be greater than its length's minimum? → [`dropOverMin`](#dropOverMin)
+
+-}
+drop :
+    Linear.Direction
+    ->
+        N
+            (In
+                (Down maxPlusX To takenMaxPlusX)
+                (Down min To takenMin)
+            )
+    ->
+        (ArraySized
+            element
+            (In
+                (Fixed min)
+                (Up maxX To maxPlusX)
+            )
+         ->
+            ArraySized
+                element
+                (In
+                    (Fixed takenMin)
+                    (Up maxX To takenMaxPlusX)
+                )
+        )
+drop direction droppedAmount =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.drop direction droppedAmount
+
+
+{-| Elements after a certain number of elements
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+    import Linear exposing (Direction(..))
+    import N exposing (n2)
+
+    atLeast6Elements
+        |> ArraySized.dropMin Down n2
+    --: ArraySized ... (Min (Fixed N4))
+
+Know its length maximum? → [`drop`](#drop)
+
+-}
+dropMin :
+    Linear.Direction
+    ->
+        N
+            (In
+                dropped_
+                (Down min To takenMin)
+            )
+    ->
+        (ArraySized
+            element
+            (In (Fixed min) max)
+         ->
+            ArraySized
+                element
+                (In (Fixed takenMin) max)
+        )
+dropMin direction lengthToDrop =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.dropMin direction lengthToDrop
+
+
+{-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
+
+    import Linear exposing (Direction(..))
+    import N exposing (n2)
+
+    between3And6Elements
+        |> ArraySized.dropOverMin ( Down, n5 )
+    --: ArraySized ... (In (Up0 minX_) (Fixed N1))
+
+-}
+dropOverMin :
+    Linear.Direction
+    -> N (In (Down max To takenMax) takenMax_)
+    ->
+        (ArraySized element (In min_ (Fixed max))
+         ->
+            ArraySized
+                element
+                (In (Up0 resultMinX_) (Fixed takenMax))
+        )
+dropOverMin direction lengthToDrop =
+    \arraySized ->
+        arraySized
+            |> ArraySized.Internal.dropOverMin direction lengthToDrop
 
 
 
@@ -1635,12 +1887,64 @@ fold :
 fold direction reduce =
     \arraySized ->
         arraySized
-            |> toArray
-            |> Array.Linear.elementRemove ( direction, 0 )
-            |> Array.Linear.foldFrom
-                (arraySized |> element ( direction, n0 ))
+            |> foldFromOne identity direction reduce
+
+
+{-| Fold, starting from one end element transformed to the initial accumulation value,
+then reducing what's accumulated in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+Usually used to convert to a different non-empty structure
+
+    import Emptiable exposing (Emptiable)
+    import N exposing (Add1, Fixed, In)
+    import Stack exposing (Stacked)
+
+    toStackFilled :
+        ArraySized
+            element
+            (In (Fixed (Add1 minMinus1_)) max_)
+        -> Emptiable (Stacked element) Never
+    toStackFilled =
+        ArraySized.foldFromOne Stack.one Stack.onTopLay
+
+[`fold`](#fold) is a simple version that folds directly from the start element:
+
+    Stack.fold =
+        Stack.foldFromOne identity
+
+-}
+foldFromOne :
+    (element -> accumulated)
+    -> Linear.Direction
+    -> (element -> (accumulated -> accumulated))
+    ->
+        (ArraySized
+            element
+            (In (Fixed (Add1 minMinus1_)) max_)
+         -> accumulated
+        )
+foldFromOne startElementToInitialAccumulated direction reduce =
+    \arraySized ->
+        arraySized
+            |> foldFrom
+                { index = 0
+                , result =
+                    arraySized
+                        |> element ( direction, n0 )
+                        |> startElementToInitialAccumulated
+                }
                 direction
-                reduce
+                (\el soFar ->
+                    { soFar
+                        | result =
+                            if soFar.index == 0 then
+                                soFar.result
+
+                            else
+                                soFar.result |> reduce el
+                        , index = soFar.index + 1
+                    }
+                )
+            |> .result
 
 
 {-| Flip the order of the elements
@@ -1715,21 +2019,24 @@ element ( direction, index ) =
             |> ArraySized.Internal.element ( direction, index )
 
 
-{-| Its possible element at a location
+{-| Its element at a given location
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/).
 Because the index doesn't promise it's `<=` the [`ArraySized`](#ArraySized)'s length minimum,
-`elementTry` gives back a `Result`
+`elementTry` gives back an `Emptiable`
+
+Use [`element`](#element) if you know your index always points to a valid location
 
     import Linear exposing (Direction(..))
+    import Emptiable
     import N exposing (n1, n5)
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.elementTry ( Up, n5 )
-    --> Err { indexBeyondElements = () }
+    --> Emptiable.empty
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.elementTry ( Down, n1 )
-    --> Ok 2
+    --> Emptiable.filled 2
 
 -}
 elementTry :
@@ -1738,7 +2045,7 @@ elementTry :
     )
     ->
         (ArraySized element lengthRange_
-         -> Result { indexBeyondElements : () } element
+         -> Emptiable element Possibly
         )
 elementTry ( direction, index ) =
     \arraySized ->
@@ -1746,85 +2053,7 @@ elementTry ( direction, index ) =
             |> toArray
             |> Array.Linear.element
                 ( direction, index |> N.toInt )
-            |> Result.mapError
-                (\_ -> { indexBeyondElements = () })
-
-
-{-| Whether all elements satisfy a given test
-
-    ArraySized.l2 2 3 |> ArraySized.all (\n -> n <= 4)
-    --> True
-
-    ArraySized.l2 2 7 |> ArraySized.all (\n -> n <= 4)
-    --> False
-
-    ArraySized.empty |> ArraySized.all (\n -> n <= 4)
-    --> True
-
--}
-all :
-    (element -> Bool)
-    ->
-        (ArraySized element lengthRange_
-         -> Bool
-        )
-all isOkay =
-    \arraySized ->
-        arraySized
-            |> foldFrom True
-                Up
-                (\el soFar -> soFar && (el |> isOkay))
-
-
-{-| Whether at least one element satisfies a given test
-
-    ArraySized.l2 300 -5 |> ArraySized.any (\n -> n <= 4)
-    --> True
-
-    ArraySized.l2 5 5 |> ArraySized.any (\n -> n <= 4)
-    --> False
-
-    ArraySized.empty |> ArraySized.any (\n -> n <= 4)
-    --> False
-
--}
-any :
-    (element -> Bool)
-    ->
-        (ArraySized element lengthRange_
-         -> Bool
-        )
-any isOkay =
-    \arraySized ->
-        arraySized
-            |> foldFrom False
-                Up
-                (\el soFar -> soFar || (el |> isOkay))
-
-
-{-| [`Order`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/Order)
-2 [`ArraySized`](#ArraySized)s by elements first to last
-
-    import Int.Order
-
-    ArraySized.order Int.Order.increasing
-        (ArraySized.l4 11 22 33 188)
-        (ArraySized.l3 11 22 34)
-    --> LT
-
--}
-order :
-    Ordering element
-    ->
-        (ArraySized element length0_
-         -> ArraySized element length1_
-         -> Order
-        )
-order elementOrder =
-    \arraySized0 arraySized1 ->
-        List.Order.greaterEarlier elementOrder
-            (arraySized0 |> toList)
-            (arraySized1 |> toList)
+            |> Emptiable.fromMaybe
 
 
 
@@ -2004,7 +2233,7 @@ Want to increase the upper bound by a fixed amount? ↓
 
     ArraySized.l4 'a' 'b' 'c' 'd'
         --: ArraySized Char (In (Up4 minX_) (Up4 maxX_))
-        |> ArraySized.minDown n2
+        |> ArraySized.minSubtract n2
     --: ArraySized Char (In (Up2 minX_) (Up4 maxX_))
 
 When is this useful? Very rarely, to preserve type variables
@@ -2026,16 +2255,18 @@ When is this useful? Very rarely, to preserve type variables
     emptiablePush emptiableElementToPush =
         case emptiableElementToPush of
             Emptiable.Empty _ ->
-                ArraySized.maxUp n1
+                ArraySized.maxAdd n1
 
             Emptiable.Filled elementToPush ->
                 ArraySized.push elementToPush
-                    >> ArraySized.minDown n1
+                    >> ArraySized.minSubtract n1
 
-More in [`N.minDown`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#minDown)
+Here, you could alternatively [`attach`](#attach) its [`fromEmptiable`](#fromEmptiable).
+
+More in [`N.minSubtract`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#minSubtract)
 
 -}
-minDown :
+minSubtract :
     N
         (In
             maxDecreaseMin_
@@ -2050,10 +2281,10 @@ minDown :
                 element
                 (In (Up x To minDecreasedPlusX) max)
         )
-minDown lengthMinimumDecrease =
+minSubtract lengthMinimumDecrease =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.minDown lengthMinimumDecrease
+            |> ArraySized.Internal.minSubtract lengthMinimumDecrease
 
 
 {-| Convert the `ArraySized (In min ...)` to a `ArraySized (Min min)`
@@ -2093,22 +2324,22 @@ maxToInfinity =
 
 `Row`'s length range can't be added to another length
 
-    glue2TemporaryFields : Row -> ...
-    glue2TemporaryFields rowFromModelOrSomeStorage =
+    attach2TemporaryFields : Row -> ...
+    attach2TemporaryFields rowFromModelOrSomeStorage =
         ArraySized.repeat Temporary n2
-            |> ArraySized.glue Up rowFromModelOrSomeStorage
+            |> ArraySized.attach Up rowFromModelOrSomeStorage
 
 Only `Up<n> x` can do that
 
-    glue2TemporaryFields :
+    attach2TemporaryFields :
         Row
         ->
             ArraySized
                 Field
                 (In (Up20 minX_) (Up20 maxX_))
-    glue2TemporaryFields rowFromModelOrSomeStorage =
+    attach2TemporaryFields rowFromModelOrSomeStorage =
         ArraySized.repeat Temporary n2
-            |> ArraySized.glue Up
+            |> ArraySized.attach Up
                 (rowFromModelOrSomeStorage
                     |> ArraySized.minTo n18
                     |> ArraySized.maxTo n18
@@ -2124,7 +2355,7 @@ The argument in `atMost18Elements` should also fit in `atMost19Elements` for exa
 
     atMost19Elements (theArgument |> ArraySized.maxTo n19)
 
-[`maxUp n1`](#maxUp) is also possible,
+[`maxAdd n1`](#maxAdd) is also possible,
 but unless you want to preserve the `maxTo18_` type variable,
 there's no need to not use this absolute operation
 
@@ -2150,22 +2381,22 @@ maxTo lengthMaximumNew =
 
 `Row`'s length range can't be added to another length
 
-    glue2TemporaryFields : Row -> ...
-    glue2TemporaryFields rowFromModelOrSomeStorage =
+    attach2TemporaryFields : Row -> ...
+    attach2TemporaryFields rowFromModelOrSomeStorage =
         ArraySized.repeat Temporary n2
-            |> ArraySized.glue Up rowFromModelOrSomeStorage
+            |> ArraySized.attach Up rowFromModelOrSomeStorage
 
 Only `Up<n> x` can do that
 
-    glue2TemporaryFields :
+    attach2TemporaryFields :
         Row
         ->
             ArraySized
                 Field
                 (In (Up20 minX_) (Up20 maxX_))
-    glue2TemporaryFields rowFromModelOrSomeStorage =
+    attach2TemporaryFields rowFromModelOrSomeStorage =
         ArraySized.repeat Temporary n2
-            |> ArraySized.glue Up
+            |> ArraySized.attach Up
                 (rowFromModelOrSomeStorage
                     |> ArraySized.minTo n18
                     |> ArraySized.maxTo n18
@@ -2190,7 +2421,7 @@ Want to increase the upper bound by a fixed amount? ↓
 
     ArraySized.l4 'a' 'b' 'c' 'd'
         --: ArraySized Char (In (Up4 minX_) (Up4 maxX_))
-        |> ArraySized.maxUp n2
+        |> ArraySized.maxAdd n2
     --: ArraySized Char (In (Up4 minX_) (Up6 maxX_))
 
 When is this useful? Very rarely, to preserve type variables
@@ -2212,16 +2443,18 @@ When is this useful? Very rarely, to preserve type variables
     emptiablePush emptiableElementToPush =
         case emptiableElementToPush of
             Emptiable.Empty _ ->
-                ArraySized.maxUp n1
+                ArraySized.maxAdd n1
 
             Emptiable.Filled elementToPush ->
                 ArraySized.push elementToPush
-                    >> ArraySized.minDown n1
+                    >> ArraySized.minSubtract n1
 
-More in [`N.maxUp`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxUp)
+Here, you could alternatively [`attach`](#attach) its [`fromEmptiable`](#fromEmptiable).
+
+More in [`N.maxAdd`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxAdd)
 
 -}
-maxUp :
+maxAdd :
     N
         (In
             maxIncreaseMin_
@@ -2236,10 +2469,10 @@ maxUp :
                 element
                 (In min (Up x To maxIncreasedPlusX))
         )
-maxUp lengthMaximumIncrease =
+maxAdd lengthMaximumIncrease =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.maxUp lengthMaximumIncrease
+            |> ArraySized.Internal.maxAdd lengthMaximumIncrease
 
 
 
@@ -2433,12 +2666,12 @@ and nextArraySized =
 
 
 
--- glue
+-- attach
 
 
 {-| Place all elements of an [`ArraySized`](#ArraySized)
 between all current members.
-Extra elements of either [`ArraySized`](#ArraySized) are glued to the end
+Extra elements of either [`ArraySized`](#ArraySized) are attached to the end
 without separating elements from the other [`ArraySized`](#ArraySized)
 
     import N exposing (n2)
@@ -2484,7 +2717,7 @@ interweave separatorsToPlaceBetweenTheElements =
 
 {-| Place all elements of an [`ArraySized`](#ArraySized)
 between all current members.
-Extra elements of either [`ArraySized`](#ArraySized) are glued to the end
+Extra elements of either [`ArraySized`](#ArraySized) are attached to the end
 without separating elements from the other [`ArraySized`](#ArraySized)
 
     import N exposing (n2)
@@ -2519,25 +2752,26 @@ interweaveMin separatorsToPlaceBetweenTheElements =
             |> ArraySized.Internal.interweaveMin separatorsToPlaceBetweenTheElements
 
 
-{-| Attach elements of an `ArraySized` with an exact amount of elements to a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Glue elements of an [`ArraySized`](#ArraySized) with an amount of elements in a range
+to the end of a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
 
     ArraySized.l3 1 2 3
-        |> ArraySized.glue Up (ArraySized.l3 4 5 6)
+        |> ArraySized.attach Up (ArraySized.l3 4 5 6)
         --: ArraySized number_ (In (Up6 minX_) (Up6 maxX_))
         |> ArraySized.toList
     --> [ 1, 2, 3, 4, 5, 6 ]
 
     ArraySized.l3 1 2 3
-        |> ArraySized.glue Down (ArraySized.l3 4 5 6)
+        |> ArraySized.attach Down (ArraySized.l3 4 5 6)
         |> ArraySized.toList
     --> [ 4, 5, 6, 1, 2, 3 ]
 
-Don't know both length maxima? → [`glueMin`](#glueMin)
+Don't know both length maxima? → [`attachMin`](#attachMin)
 
 -}
-glue :
+attach :
     Linear.Direction
     ->
         ArraySized
@@ -2561,27 +2795,27 @@ glue :
                     (Up maxX To maxSumPlusX)
                 )
         )
-glue direction extension =
+attach direction extension =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.glue direction extension
+            |> ArraySized.Internal.attach direction extension
 
 
-{-| Attach elements of an `ArraySized`
-to the end in a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+{-| Glue elements of an [`ArraySized`](#ArraySized)
+to the end of a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     ArraySized.l3 1 2 3
-        |> ArraySized.glueMin Up atLeast3Elements
+        |> ArraySized.attachMin Up atLeast3Elements
     --: ArraySized ... (Min (Up6 x_))
 
     ArraySized.l3 1 2 3
-        |> ArraySized.glueMin Down atLeast3Elements
+        |> ArraySized.attachMin Down atLeast3Elements
     --: ArraySized ... (Min (Up6 x_))
 
-Know both length maxima? → [`glue`](#glue)
+Know both length maxima? → [`attach`](#attach)
 
 -}
-glueMin :
+attachMin :
     Linear.Direction
     ->
         ArraySized
@@ -2596,10 +2830,10 @@ glueMin :
             (In (Up x To minPlusX) max_)
          -> ArraySized element (Min (Up x To minSumPlusX))
         )
-glueMin direction extension =
+attachMin direction extension =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.glueMin direction extension
+            |> ArraySized.Internal.attachMin direction extension
 
 
 {-| Pad in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
@@ -2677,13 +2911,13 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
     removeLast between1And10Elements =
         between1And10Elements
-            |> ArraySized.elementRemove ( Down, n0 )
+            |> ArraySized.remove ( Down, n0 )
 
-  - Don't know the length maximum? → [`elementRemoveMin`](#elementRemoveMin)
-  - Want to remove an element beyond the length minimum? → [`elementRemoveMin`](#elementRemoveMin)
+  - Don't know the length maximum? → [`removeMin`](#removeMin)
+  - Want to remove an element beyond the length minimum? → [`removeMin`](#removeMin)
 
 -}
-elementRemove :
+remove :
     ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
@@ -2702,29 +2936,29 @@ elementRemove :
                     (Up maxX To maxMinus1PlusX)
                 )
         )
-elementRemove ( direction, index ) =
+remove ( direction, index ) =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.elementRemove ( direction, index )
+            |> ArraySized.Internal.remove ( direction, index )
 
 
 {-| Kick out the element at an index
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     removeLast =
-        ArraySized.elementRemoveMin ( Down, n0 )
+        ArraySized.removeMin ( Down, n0 )
 
 This only works when the [`ArraySized`](#ArraySized)
 has at minimum 1 element.
 To _maybe_ remove an element,
 match on [`ArraySized.hasAtLeast n1`](#hasAtLeast)
 
-  - Know the length maximum? → [`elementRemove`](#elementRemove)
+  - Know the length maximum? → [`remove`](#remove)
   - Want to make the length minimum a difference again (not `Fixed`) for results, ...?
     → [`ArraySized.minTo`](#minTo)
 
 -}
-elementRemoveMin :
+removeMin :
     ( Linear.Direction
     , N indexRange_
     )
@@ -2737,122 +2971,10 @@ elementRemoveMin :
                 element
                 (In (Fixed minMinus1) max)
         )
-elementRemoveMin ( direction, index ) =
+removeMin ( direction, index ) =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.elementRemoveMin ( direction, index )
-
-
-{-| Elements after a certain number of elements
-in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-
-    import Linear exposing (Direction(..))
-    import N exposing (n2)
-
-    ArraySized.l4 0 1 2 3
-        |> ArraySized.drop ( Down, n2 )
-        --: ArraySized number_ (In (Up2 minX_) (Up2 maxX_))
-        |> ArraySized.toList
-    --> [ 0, 1 ]
-
-    between6And10Elements
-        |> ArraySized.drop ( Up, between2And3 )
-        --: ArraySized number_ (In (Up3 minX_) (Up8 maxX_))
-
-  - Don't know its length maximum? → [`dropMin`](#dropMin)
-  - Can the dropped length's maximum be greater than its length's minimum? → [`dropOverMin`](#dropOverMin)
-
--}
-drop :
-    ( Linear.Direction
-    , N
-        (In
-            (Down maxPlusX To takenMaxPlusX)
-            (Down min To takenMin)
-        )
-    )
-    ->
-        (ArraySized
-            element
-            (In
-                (Fixed min)
-                (Up maxX To maxPlusX)
-            )
-         ->
-            ArraySized
-                element
-                (In
-                    (Fixed takenMin)
-                    (Up maxX To takenMaxPlusX)
-                )
-        )
-drop ( direction, droppedAmount ) =
-    \arraySized ->
-        arraySized
-            |> ArraySized.Internal.drop ( direction, droppedAmount )
-
-
-{-| Elements after a certain number of elements
-in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-
-    import Linear exposing (Direction(..))
-    import N exposing (n2)
-
-    atLeast6Elements
-        |> ArraySized.dropMin ( Down, n2 )
-    --: ArraySized ... (Min (Fixed N4))
-
-Know its length maximum? → [`drop`](#drop)
-
--}
-dropMin :
-    ( Linear.Direction
-    , N
-        (In
-            dropped_
-            (Down min To takenMin)
-        )
-    )
-    ->
-        (ArraySized
-            element
-            (In (Fixed min) max)
-         ->
-            ArraySized
-                element
-                (In (Fixed takenMin) max)
-        )
-dropMin ( direction, droppedAmount ) =
-    \arraySized ->
-        arraySized
-            |> ArraySized.Internal.dropMin ( direction, droppedAmount )
-
-
-{-| [`drop`](#drop) a given length that can be greater than the [`ArraySized`](#ArraySized)'s length maximum
-
-    import Linear exposing (Direction(..))
-    import N exposing (n2)
-
-    between3And6Elements
-        |> ArraySized.dropOverMin ( Down, n5 )
-    --: ArraySized ... (In (Up0 minX_) (Fixed N1))
-
--}
-dropOverMin :
-    ( Linear.Direction
-    , N (In (Down max To takenMax) takenMax_)
-    )
-    ->
-        (ArraySized element (In min_ (Fixed max))
-         ->
-            ArraySized
-                element
-                (In (Up0 resultMinX_) (Fixed takenMax))
-        )
-dropOverMin ( direction, lengthToDrop ) =
-    \arraySized ->
-        arraySized
-            |> ArraySized.Internal.dropOverMin ( direction, lengthToDrop )
+            |> ArraySized.Internal.removeMin ( direction, index )
 
 
 

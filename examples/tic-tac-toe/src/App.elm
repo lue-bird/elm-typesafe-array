@@ -8,7 +8,7 @@ import Element.Font as Font
 import Element.Input as UiInput
 import Linear exposing (Direction(..))
 import Maybe.Extra as Maybe
-import N exposing (Exactly, Fixed, In, N, N0, N2, N3, n2, n3)
+import N exposing (Exactly, Fixed, In, InFixed, N, N0, N2, N3, n2, n3)
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Stack
 import Toop
@@ -32,7 +32,7 @@ initialModel =
 
 
 type alias Board =
-    ArraySized (Exactly N3) (ArraySized (Exactly N3) Field)
+    ArraySized (ArraySized Field (Exactly N3)) (Exactly N3)
 
 
 type Field
@@ -55,7 +55,7 @@ type GameOver
     | Draw
 
 
-main : Program () Model Msg
+main : Program () Model Event
 main =
     Browser.document
         { init = \() -> ( initialModel, Cmd.none )
@@ -65,52 +65,53 @@ main =
         }
 
 
-type Msg
+type Event
     = FieldSetByPlayer
-        ( N (In (Fixed N0) (Fixed N2))
-        , N (In (Fixed N0) (Fixed N2))
+        ( N (InFixed N0 N2)
+        , N (InFixed N0 N2)
         )
         Player
     | ClearBoardClicked
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Event -> Model -> ( Model, Cmd Event )
+update msg =
     case msg of
         FieldSetByPlayer ( x, y ) player ->
-            ( let
-                field =
-                    model.board
-                        |> ArraySized.element ( Up, x )
-                        |> ArraySized.element ( Up, y )
-              in
-              case field of
-                FieldNotSet ->
-                    let
-                        updatedBoard =
-                            model.board
-                                |> ArraySized.elementAlter ( Up, x )
-                                    (ArraySized.elementReplace ( Up, y )
-                                        (\() -> FieldSet player)
-                                    )
-                    in
-                    { board = updatedBoard
-                    , gameStage =
-                        case isGameOver updatedBoard of
-                            Nothing ->
-                                Playing (playerOpponent player)
+            \model ->
+                let
+                    field =
+                        model.board
+                            |> ArraySized.element ( Up, x )
+                            |> ArraySized.element ( Up, y )
+                in
+                ( case field of
+                    FieldSet _ ->
+                        model
 
-                            Just gameOver ->
-                                GameOver gameOver
-                    }
+                    FieldNotSet ->
+                        let
+                            updatedBoard =
+                                model.board
+                                    |> ArraySized.elementAlter ( Up, x )
+                                        (ArraySized.elementReplace ( Up, y )
+                                            (\() -> FieldSet player)
+                                        )
+                        in
+                        { board = updatedBoard
+                        , gameStage =
+                            case isGameOver updatedBoard of
+                                Nothing ->
+                                    Playing (playerOpponent player)
 
-                FieldSet _ ->
-                    model
-            , Cmd.none
-            )
+                                Just gameOver ->
+                                    GameOver gameOver
+                        }
+                , Cmd.none
+                )
 
         ClearBoardClicked ->
-            ( initialModel, Cmd.none )
+            \model -> ( initialModel, Cmd.none )
 
 
 isGameOver : Board -> Maybe GameOver
@@ -206,7 +207,7 @@ playerToString player =
             "⯅"
 
 
-view : Model -> Browser.Document Msg
+view : Model -> Browser.Document Event
 view { board, gameStage } =
     { title = "tic tac toe"
     , body =
@@ -242,7 +243,7 @@ view { board, gameStage } =
                 { options =
                     [ Ui.focusStyle
                         { borderColor = Nothing
-                        , backgroundColor = Just (Ui.rgb 0 0.6 0.3)
+                        , backgroundColor = Ui.rgb 0 0.6 0.3 |> Just
                         , shadow = Nothing
                         }
                     ]
@@ -253,74 +254,83 @@ view { board, gameStage } =
     }
 
 
-viewBoard : { gameStage : GameStage } -> Board -> Ui.Element Msg
-viewBoard { gameStage } board =
-    let
-        spacing =
-            6
+fieldSpacing : number_
+fieldSpacing =
+    6
 
-        fieldSize =
-            100
 
-        viewField x y =
-            let
-                fieldToShape field =
-                    case field of
-                        FieldNotSet ->
-                            Ui.none
+fieldSize : number_
+fieldSize =
+    100
 
-                        FieldSet playerOnTheField ->
-                            playerToString playerOnTheField
-                                |> Ui.text
-                                |> Ui.el
-                                    [ Ui.centerX
-                                    , Ui.centerY
-                                    , Font.size ((fieldSize * 0.7) |> round)
-                                    ]
 
-                action =
-                    case gameStage of
-                        Playing player ->
-                            player |> FieldSetByPlayer ( x, y )
+boardSize : number_
+boardSize =
+    fieldSize * 3 + fieldSpacing * 2
 
-                        GameOver _ ->
-                            ClearBoardClicked
-            in
-            { onPress = action |> Just
-            , label =
-                board
-                    |> ArraySized.element ( Up, x )
-                    |> ArraySized.element ( Up, y )
-                    |> fieldToShape
-            }
-                |> UiInput.button
-                    [ Ui.width Ui.fill
-                    , Ui.height Ui.fill
-                    , Background.color (Ui.rgb 0 0 0)
+
+fieldToShape : Field -> Ui.Element event_
+fieldToShape field =
+    case field of
+        FieldNotSet ->
+            Ui.none
+
+        FieldSet playerOnTheField ->
+            playerToString playerOnTheField
+                |> Ui.text
+                |> Ui.el
+                    [ Ui.centerX
+                    , Ui.centerY
+                    , Font.size ((fieldSize * 0.7) |> round)
                     ]
 
-        boardSize =
-            fieldSize * 3 + spacing * 2
-    in
-    ArraySized.upTo n2
-        |> ArraySized.map
-            (\x ->
-                ArraySized.upTo n2
-                    |> ArraySized.map (\y -> viewField x y)
-                    |> ArraySized.toList
-                    |> Ui.column
+
+viewBoard : { gameStage : GameStage } -> Board -> Ui.Element Event
+viewBoard { gameStage } =
+    \board ->
+        let
+            viewField ( x, y ) =
+                let
+                    action =
+                        case gameStage of
+                            Playing player ->
+                                player |> FieldSetByPlayer ( x, y )
+
+                            GameOver _ ->
+                                ClearBoardClicked
+                in
+                { onPress = action |> Just
+                , label =
+                    board
+                        |> ArraySized.element ( Up, x )
+                        |> ArraySized.element ( Up, y )
+                        |> fieldToShape
+                }
+                    |> UiInput.button
                         [ Ui.width Ui.fill
                         , Ui.height Ui.fill
-                        , Ui.spacing spacing
+                        , Background.color (Ui.rgb 0 0 0)
                         ]
-            )
-        |> ArraySized.toList
-        |> Ui.row
-            [ Ui.width (Ui.px boardSize)
-            , Ui.height (Ui.px boardSize)
-            , Ui.centerX
-            , Ui.centerY
-            , Background.color (Ui.rgb 1 1 1)
-            , Ui.spacing spacing
-            , Font.color (Ui.rgb 1 1 1)
-            ]
+        in
+        ArraySized.upTo n2
+            |> ArraySized.map
+                (\x ->
+                    ArraySized.upTo n2
+                        |> ArraySized.map (\y -> viewField ( x, y ))
+                        |> ArraySized.toList
+                        |> Ui.column
+                            [ Ui.width Ui.fill
+                            , Ui.height Ui.fill
+                            , Ui.spacing fieldSpacing
+                            ]
+                )
+            |> ArraySized.toList
+            |> Ui.row
+                [ Ui.width (Ui.px boardSize)
+                , Ui.height (Ui.px boardSize)
+                , Ui.centerX
+                , Ui.centerY
+                , Background.color (Ui.rgb 1 1 1)
+                , Ui.spacing fieldSpacing
+                , Font.color (Ui.rgb 1 1 1)
+                ]

@@ -6,18 +6,20 @@ module ArraySized.Internal exposing
     , toArray
     , minToValue, minFromValue
     , maxToValue, maxFromValue
-    , elementReplace, elementRemove, elementRemoveMin, push, insert, reverse
+    , elementReplace, remove, removeMin, push, insert, reverse
     , map
     , fills, allFill
     , and
-    , glue, glueMin
+    , attach, attachMin
     , padToLength
     , interweave, interweaveMin
     , take
     , drop, dropMin, dropOverMin
     , toChunksOf
-    , minDown, maxNo, maxUp
+    , minSubtract, maxNo, maxAdd
     , min, max
+    , hasAtLeast1, min0Adapt
+    , minMinus1Never
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -55,7 +57,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # alter
 
-@docs elementReplace, elementRemove, elementRemoveMin, push, insert, reverse
+@docs elementReplace, remove, removeMin, push, insert, reverse
 @docs map
 
 
@@ -67,7 +69,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 ## combine
 
 @docs and
-@docs glue, glueMin
+@docs attach, attachMin
 @docs padToLength
 @docs interweave, interweaveMin
 
@@ -81,8 +83,13 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## type information
 
-@docs minDown, maxNo, maxUp
+@docs minSubtract, maxNo, maxAdd
 @docs min, max
+
+
+### allowable-state
+
+@docs hasAtLeast1, min0Adapt
 
 -}
 
@@ -90,10 +97,10 @@ import Array exposing (Array)
 import Array.Extra as Array
 import Array.Linear
 import ArrayExtra as Array
-import Emptiable exposing (Emptiable, fillMap)
+import Emptiable exposing (Emptiable)
 import Fuzz exposing (Fuzzer)
-import Linear
-import N exposing (Add1, Add2, Down, Fixed, FixedValue, In, Min, N, To, Up, Up0, n0, n1)
+import Linear exposing (Direction(..))
+import N exposing (Add1, Add2, Down, Fixed, FixedValue, In, Min, N, N0, N0OrAdd1(..), N1, To, Up, Up0, Up1, n0, n1)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -131,10 +138,10 @@ element ( direction, index ) =
                 |> toArray
                 |> Array.Linear.element ( direction, index |> N.toInt )
         of
-            Ok elementFound ->
+            Just elementFound ->
                 elementFound
 
-            Err _ ->
+            Nothing ->
                 failLoudlyWithStackOverflow
                     { details =
                         [ "`ArraySized` was shorter than promised by its type.\n"
@@ -209,8 +216,8 @@ fills =
             |> ArraySized
                 (filtered
                     |> Array.length
-                    |> N.atLeastInt n0
-                    |> N.in_ ( n0, arraySizedOfEmptiable |> length )
+                    |> N.intToAtLeast n0
+                    |> N.toIn ( n0, arraySizedOfEmptiable |> length )
                 )
 
 
@@ -222,7 +229,7 @@ allFill =
         arraySized
             |> toArray
             |> Array.allFill
-            |> fillMap (ArraySized (arraySized |> length))
+            |> Emptiable.map (ArraySized (arraySized |> length))
 
 
 
@@ -250,7 +257,7 @@ fromArray =
     \array ->
         array
             |> ArraySized
-                (array |> Array.length |> N.atLeastInt n0)
+                (array |> Array.length |> N.intToAtLeast n0)
 
 
 stackUpTo :
@@ -267,7 +274,7 @@ stackUpTo { first, last } =
             Emptiable.empty
 
         Ok indexAtMostLast ->
-            { first = indexAtMostLast |> N.addMin n1 |> N.minDown n1
+            { first = indexAtMostLast |> N.addMin n1 |> N.minSubtract n1
             , last = last
             }
                 |> stackUpToRecursive
@@ -347,7 +354,7 @@ inFuzz elementFuzz ( lowerLimit, upperLimit ) =
         (\list ->
             ArraySized
                 ((list |> List.length)
-                    |> N.inInt ( lowerLimit, upperLimit )
+                    |> N.intToIn ( lowerLimit, upperLimit )
                 )
                 (list |> Array.fromList)
         )
@@ -430,7 +437,7 @@ insert ( direction, index ) elementToInsert =
             |> ArraySized (arraySized |> length |> N.add n1)
 
 
-elementRemove :
+remove :
     ( Linear.Direction
     , N (In indexMin_ (Up indexMaxToMinMinus1_ To minMinus1))
     )
@@ -449,16 +456,16 @@ elementRemove :
                     (Up maxX To maxMinus1PlusX)
                 )
         )
-elementRemove ( direction, index ) =
+remove ( direction, index ) =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.elementRemove
+            |> Array.Linear.remove
                 ( direction, index |> N.toInt )
             |> ArraySized (arraySized |> length |> N.subtract n1)
 
 
-elementRemoveMin :
+removeMin :
     ( Linear.Direction
     , N indexRange_
     )
@@ -466,11 +473,11 @@ elementRemoveMin :
         (ArraySized element (In (Fixed (Add1 minMinus1)) max)
          -> ArraySized element (In (Fixed minMinus1) max)
         )
-elementRemoveMin ( direction, index ) =
+removeMin ( direction, index ) =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.elementRemove
+            |> Array.Linear.remove
                 ( direction, index |> N.toInt )
             |> ArraySized (arraySized |> length |> N.subtractMin n1)
 
@@ -501,7 +508,7 @@ and nextArraySized =
                 (N.smaller (arraySized |> length) (nextArraySized |> length))
 
 
-glue :
+attach :
     Linear.Direction
     ->
         ArraySized
@@ -525,11 +532,11 @@ glue :
                     (Up maxX To maxSumPlusX)
                 )
         )
-glue direction extension =
+attach direction extension =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.glue direction
+            |> Array.Linear.attach direction
                 (extension |> toArray)
             |> ArraySized
                 ((arraySized |> length)
@@ -587,7 +594,7 @@ interweaveMin separatorsToPlaceBetweenTheElements =
                 )
 
 
-glueMin :
+attachMin :
     Linear.Direction
     ->
         ArraySized
@@ -600,11 +607,11 @@ glueMin :
         (ArraySized element (In (Up x To minPlusX) max_)
          -> ArraySized element (Min (Up x To minSumPlusX))
         )
-glueMin direction extension =
+attachMin direction extension =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.glue direction
+            |> Array.Linear.attach direction
                 (extension |> toArray)
             |> ArraySized
                 ((arraySized |> length) |> N.addMin (extension |> length))
@@ -638,7 +645,7 @@ padToLength =
         in
         arraySized
             |> toArray
-            |> Array.Linear.glue paddingDirection
+            |> Array.Linear.attach paddingDirection
                 (paddingLength |> paddingForLength |> toArray)
             |> ArraySized paddedLength
 
@@ -648,13 +655,13 @@ padToLength =
 
 
 drop :
-    ( Linear.Direction
-    , N
-        (In
-            (Down maxPlusX To takenMaxPlusX)
-            (Down min To takenMin)
-        )
-    )
+    Linear.Direction
+    ->
+        N
+            (In
+                (Down maxPlusX To takenMaxPlusX)
+                (Down min To takenMin)
+            )
     ->
         (ArraySized
             element
@@ -670,12 +677,12 @@ drop :
                     (Up maxX To takenMaxPlusX)
                 )
         )
-drop ( direction, droppedAmount ) =
+drop direction droppedAmount =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.drop
-                ( direction, droppedAmount |> N.toInt )
+            |> Array.Linear.drop direction
+                (droppedAmount |> N.toInt)
             |> ArraySized
                 ((arraySized |> length)
                     |> N.subtract droppedAmount
@@ -683,9 +690,8 @@ drop ( direction, droppedAmount ) =
 
 
 dropOverMin :
-    ( Linear.Direction
-    , N (In (Down max To takenMax) takenMax_)
-    )
+    Linear.Direction
+    -> N (In (Down max To takenMax) takenMax_)
     ->
         (ArraySized element (In min_ (Fixed max))
          ->
@@ -693,16 +699,16 @@ dropOverMin :
                 element
                 (In (Up0 resultMinX_) (Fixed takenMax))
         )
-dropOverMin ( direction, lengthToDrop ) =
+dropOverMin direction lengthToDrop =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.drop
-                ( direction, lengthToDrop |> N.toInt )
+            |> Array.Linear.drop direction
+                (lengthToDrop |> N.toInt)
             |> ArraySized
                 ((arraySized |> length |> N.toInt)
                     - (lengthToDrop |> N.toInt)
-                    |> N.inInt
+                    |> N.intToIn
                         ( n0
                         , arraySized
                             |> length
@@ -715,23 +721,23 @@ dropOverMin ( direction, lengthToDrop ) =
 
 
 dropMin :
-    ( Linear.Direction
-    , N
-        (In
-            dropped_
-            (Down min To takenMin)
-        )
-    )
+    Linear.Direction
+    ->
+        N
+            (In
+                dropped_
+                (Down min To takenMin)
+            )
     ->
         (ArraySized element (In (Fixed min) max)
          -> ArraySized element (In (Fixed takenMin) max)
         )
-dropMin ( direction, droppedAmount ) =
+dropMin direction droppedAmount =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.drop
-                ( direction, droppedAmount |> N.toInt )
+            |> Array.Linear.drop direction
+                (droppedAmount |> N.toInt)
             |> ArraySized
                 ((arraySized |> length)
                     |> N.subtractMin droppedAmount
@@ -739,22 +745,22 @@ dropMin ( direction, droppedAmount ) =
 
 
 take :
-    ( Linear.Direction
-    , N (In min takenMax)
-    )
+    Linear.Direction
+    -> N (In min takenMax)
     ->
         (ArraySized element (In min max_)
          -> ArraySized element (In min takenMax)
         )
-take ( direction, toTakeAmount ) =
+take direction toTakeAmount =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.Linear.take ( direction, toTakeAmount |> N.toInt )
+            |> Array.Linear.take direction
+                (toTakeAmount |> N.toInt)
             |> ArraySized
                 (arraySized
                     |> length
-                    |> N.atMost
+                    |> N.toAtMost
                         toTakeAmount
                 )
 
@@ -859,7 +865,7 @@ maxFromValue =
 -- ## type information
 
 
-minDown :
+minSubtract :
     N
         (In
             maxDecreaseMin_
@@ -872,13 +878,13 @@ minDown :
                 element
                 (In (Up x To minDecreasedPlusX) max)
         )
-minDown lengthMinimumLower =
+minSubtract lengthMinimumLower =
     \arraySized ->
         arraySized
             |> toArray
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.minDown lengthMinimumLower
+                    |> N.minSubtract lengthMinimumLower
                 )
 
 
@@ -892,7 +898,7 @@ maxNo =
             |> ArraySized (arraySized |> length |> N.maxToInfinity)
 
 
-maxUp :
+maxAdd :
     N
         (In
             maxIncreaseMin_
@@ -905,13 +911,13 @@ maxUp :
                 element
                 (In min (Up x To maxIncreasedPlusX))
         )
-maxUp lengthMaximumIncrement =
+maxAdd lengthMaximumIncrement =
     \arraySized ->
         arraySized
             |> toArray
             |> ArraySized
                 ((arraySized |> length)
-                    |> N.maxUp lengthMaximumIncrement
+                    |> N.maxAdd lengthMaximumIncrement
                 )
 
 
@@ -1112,3 +1118,65 @@ hasAtMost upperLimit =
             Err above ->
                 (arraySized |> toArray |> ArraySized above)
                     |> Err
+
+
+
+-- allowable-state
+
+
+hasAtLeast1 :
+    ArraySized
+        element
+        (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1)) max)
+    ->
+        Emptiable
+            (ArraySized element (In (Up1 minX_) max))
+            possiblyOrNever
+hasAtLeast1 =
+    \arraySized ->
+        case arraySized |> length |> N.isAtLeast1 of
+            Ok atLeast1 ->
+                ArraySized
+                    atLeast1
+                    (arraySized |> toArray)
+                    |> Emptiable.filled
+
+            Err possiblyOrNever ->
+                Emptiable.Empty possiblyOrNever
+
+
+min0Adapt :
+    (possiblyOrNever -> adaptedPossiblyOrNever)
+    -> ArraySized element (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1)) max)
+    ->
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 adaptedPossiblyOrNever minMinus1)) max)
+min0Adapt length0PossiblyOrNeverAdapt =
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> ArraySized
+                (arraySized
+                    |> length
+                    |> N.min0Adapt length0PossiblyOrNeverAdapt
+                )
+
+
+minMinus1Never :
+    ArraySized
+        element
+        (In (Fixed (N0OrAdd1 possiblyOrNever Never)) max)
+    ->
+        ArraySized
+            element
+            (In (Fixed (N0OrAdd1 possiblyOrNever minMinus1_)) max)
+minMinus1Never =
+    \arraySized ->
+        arraySized
+            |> toArray
+            |> ArraySized
+                (arraySized
+                    |> length
+                    |> N.minMinus1Never
+                )

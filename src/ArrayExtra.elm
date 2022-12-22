@@ -10,7 +10,7 @@ module ArrayExtra exposing (allFill)
 -}
 
 import Array exposing (Array)
-import Emptiable exposing (Emptiable, fillAnd, fillMap, filled)
+import Emptiable exposing (Emptiable, filled)
 
 
 allFill :
@@ -21,7 +21,7 @@ allFill =
         array
             |> Array.toList
             |> listAllFill
-            |> fillMap Array.fromList
+            |> Emptiable.map Array.fromList
 
 
 listAllFill :
@@ -31,8 +31,8 @@ listAllFill =
     List.foldr
         (\element soFar ->
             soFar
-                |> fillAnd element
-                |> fillMap
+                |> Emptiable.and element
+                |> Emptiable.map
                     (\( fills, fill ) -> fills |> (::) fill)
         )
         ([] |> filled)
