@@ -4,7 +4,7 @@ import ArraySized exposing (ArraySized)
 import Emptiable exposing (Emptiable, filled)
 import Expect exposing (Expectation)
 import Linear exposing (Direction(..))
-import N exposing (Add1, Exactly, In, N8, To, Up, n1, n2, n4, n8)
+import N exposing (Add1, Exactly, In, N8, On, To, Up, n1, n2, n4, n8)
 import Possibly exposing (Possibly)
 import Test exposing (Test, describe, test)
 
@@ -132,7 +132,7 @@ pushEmptiable emptiableElementToPush =
                     |> ArraySized.minSubtract n1
 
 
-startBoard : ArraySized (ArraySized Field (Exactly N8)) (Exactly N8)
+startBoard : ArraySized (ArraySized Field (Exactly (On N8))) (Exactly (On N8))
 startBoard =
     let
         pawnRow color =

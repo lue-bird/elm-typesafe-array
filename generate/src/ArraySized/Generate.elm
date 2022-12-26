@@ -155,9 +155,9 @@ inType min max =
     typed "In" [ min, max ]
 
 
-fixedType : Gen.TypeAnnotation -> Gen.TypeAnnotation
-fixedType number =
-    typed "Fixed" [ number ]
+onType : Gen.TypeAnnotation -> Gen.TypeAnnotation
+onType number =
+    typed "On" [ number ]
 
 
 upType : Gen.TypeAnnotation -> Gen.TypeAnnotation -> Gen.TypeAnnotation
@@ -281,12 +281,12 @@ lAndTo16 =
                         (funAnn
                             [ arraySizedType
                                 (typeVar "element")
-                                -- (In (Fixed (Add1 minMinus1_)) (Up maxTo1_ To N1))
+                                -- (In (On (Add1 minFrom1_)) (Up maxTo1_ To N1))
                                 (inType
                                     (Gen.typeVar
-                                        ([ "minMinus", i |> String.fromInt, "_" ] |> String.concat)
+                                        ([ "minFrom", i |> String.fromInt, "_" ] |> String.concat)
                                         |> addXType i
-                                        |> fixedType
+                                        |> onType
                                     )
                                     (upType
                                         (Gen.typeVar

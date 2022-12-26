@@ -15,7 +15,7 @@ Such a type could be:
 ```elm
 type alias TicTacToeBoard =
     -- 3 by 3
-    ArraySized (ArraySized Field (Exactly N3)) (Exactly N3)
+    ArraySized (ArraySized Field (Exactly (On N3))) (Exactly (On N3))
 
 type Field
     = Empty
@@ -39,7 +39,7 @@ ticTacToeBoard
 ## 🧩
 
   - 🔢 index, length : [`bounded-nat`][bounded-nat]
-      - `n<x>`, `Min`, `In`, `Exactly`, `Up`, `Up<x>`, `Fixed`, `N<x>`, `Add<x>`
+      - `n<x>`, `Min`, `In`, `Exactly`, `Up`, `Up<x>`, `On`, `N<x>`, `Add<x>`
       - ```bash
         elm install lue-bird/elm-bounded-nat
         ```
@@ -57,17 +57,17 @@ Let's define & use operations for all kinds of ranges ↓
 
 ```elm
 import Linear exposing (Direction(..)) -- .. = Up, Down
-import N exposing (In, Fixed, Add1)
+import N exposing (In, On, Add1)
 import ArraySized exposing (ArraySized)
 
 last :
-    ArraySized element (In (Fixed (Add1 minMinus1_)) max_)
+    ArraySized element (In (On (Add1 minFrom1_)) max_)
     -> element
 last =
     ArraySized.element ( Down, n0 )
 
 greatest :
-    ArraySized comparable (In (Fixed (Add1 minMinus1_)) max_)
+    ArraySized comparable (In (On (Add1 minFrom1_)) max_)
     -> comparable
 greatest =
     ArraySized.fold Up max
@@ -76,14 +76,14 @@ first ArraySized.empty -- compile-time error
 greatest ArraySized.empty -- compile-time error
 ```
 
-`ArraySized ... (In (Fixed (Add1 minMinus1_)) max_)` means what exactly?
+`ArraySized ... (In (On (Add1 minFrom1_)) max_)` means what exactly?
 → It constrains the length of possible `ArraySized`s:
 
 length is `In` a range
   - the minimum length constraint is,
     without adding anything,
-    `1 + ` a variable (`1 + 0` | `1 + 1` | `1 + ...`)
-    → `Fixed (Add1 minMinus1_)`
+    on `1 + ` a variable (`1 + 0` | `1 + 1` | `1 + ...`)
+    → `On (Add1 minFrom1_)`
   - any maximum length constraint is allowed
     (even [no maximum at all](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#Infinity))
     → `max_`
@@ -96,12 +96,12 @@ Like in the tic-tac-toe example
 
 ```elm
 import Linear exposing (Direction(..))
-import N exposing (n1, n4, n6, n8, N8, Exactly)
+import N exposing (n1, n4, n6, n8, N8, Exactly, On)
 import ArraySized exposing (ArraySized)
 
 type alias ChessBoard =
     -- 8 by 8
-    ArraySized (ArraySized Field (Exactly N8)) (Exactly N8)
+    ArraySized (ArraySized Field (Exactly (On N8))) (Exactly (On N8))
 
 type Field
     = Empty
@@ -161,11 +161,6 @@ tag (ArraySized.repeat "into-the-trends" n100) -- type error
   - [some example apps using `ArraySized`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
   - [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in [`ArraySized`](ArraySized#ArraySized)
 
-[bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
-[static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
-[linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/
-
-
 ## [Orasund's `static-array`][static-array] – comparison
 
 `typesafe-array` development started before `static-array` was published
@@ -192,6 +187,9 @@ but the ideas are similar
 
     ArraySized.l11 0 1 2 3 4 5 6 7 8 9 10 11 -- type error
     ```
+    for more then 16 elements,
+    you can always easily safely
+    [`attach`](ArraySized#attach) another [`ArraySized`](ArraySized#ArraySized)
 
 ### append
 
@@ -275,3 +273,7 @@ but the ideas are similar
 ### anything `static-array` is better at?
   - separating length and index types
   - simple, easy to understand types
+
+[bounded-nat]: https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/
+[static-array]: https://package.elm-lang.org/packages/Orasund/elm-static-array/latest/
+[linear-direction]: https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/

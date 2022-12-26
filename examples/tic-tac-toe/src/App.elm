@@ -8,7 +8,7 @@ import Element.Font as Font
 import Element.Input as UiInput
 import Linear exposing (Direction(..))
 import Maybe.Extra as Maybe
-import N exposing (Exactly, Fixed, In, InFixed, N, N0, N2, N3, n2, n3)
+import N exposing (Exactly, In, N, N0, N2, N3, On, n2, n3)
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Stack
 import Toop
@@ -32,7 +32,7 @@ initialModel =
 
 
 type alias Board =
-    ArraySized (ArraySized Field (Exactly N3)) (Exactly N3)
+    ArraySized (ArraySized Field (Exactly (On N3))) (Exactly (On N3))
 
 
 type Field
@@ -67,8 +67,8 @@ main =
 
 type Event
     = FieldSetByPlayer
-        ( N (InFixed N0 N2)
-        , N (InFixed N0 N2)
+        ( N (In (On N0) (On N2))
+        , N (In (On N0) (On N2))
         )
         Player
     | ClearBoardClicked

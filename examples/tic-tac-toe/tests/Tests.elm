@@ -4,7 +4,7 @@ import App exposing (Field(..), GameOver(..), Player(..), isGameOver)
 import ArraySized
 import Expect
 import N exposing (n3)
-import Test exposing (..)
+import Test exposing (Test, describe, test)
 
 
 suite : Test
