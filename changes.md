@@ -2,7 +2,7 @@
 
 ## 28.0.0
 
-  - `bounded-nat` → >= 31.0.0
+  - `bounded-nat` → >= 33.0.0
   - `linear-direction` → >= 10.0.0
   - `emptiness-typed` → >= 9.1.1
   - `any`, `all` remove in favor of
@@ -10,22 +10,36 @@
   - `order` remove
   - `all`, `any` remove
       - in favor of `allFill`
+  - `dropOverMin` remove
+      - in favor of `hasAtLeast atLeast >> Result.map (drop dir toDrop)`
   - `fromEmptiable`, `toEmptiable` keep emptiness knowledge
-  - TODO `fromStackEmptiable`, `fromStackFilled` and `toStackEmptiable`, `toStackFilled` combine → `fromStack`, `toStack` that keeps emptiness knowledge
-  - `take ( dir, length )`, `drop... ( dir, length )` → `take dir length`, `drop... dir length`
+  - `fromStackEmptiable`, `fromStackFilled` and `toStackEmptiable`, `toStackFilled` combine → `fromStack`, `toStack` that keeps emptiness knowledge
+  - `drop... ( dir, length )` → `drop... dir length`
       - consistent with `linear-direction`
+  - `take ( dir, length )` where both minima had to match →
+    ```elm
+    Direction
+    -> { atLeast : N (In takenMin (Up takenMaxToMin_ To min)) }
+    -> N (In takenMin takenMax)
+    -> ArraySized element (In (On min) max_)
+    -> ArraySized element (In takenMin takenMax)
+    ```
+      - equivalent to `minTo atLeast >> oldTake ( dir, length )`
+      - because the `minTo` is almost always needed anyway
   - `elementTry : -> Result` → `: -> Emptiable`
   - `elementRemove`, `elementRemoveMin` name → `remove`, `removeMin`
       - structure operation, not element operation
   - `glue`, `glueMin` name → `attach`, `attachMin`
   - `minDown`, `maxUp` name → `minSubtract`, `maxAdd`
       - consistent with relative `N` operations
+  - -`toValue`, -`fromValue` name → -`toNumber`, -`toOn`
+      - consistent with relative `N` operations
   - `l1` name → `one`
       - to be consistent with `Stack.one`, `KeysSet.one`, `foldFromOne`, ...
   - `to1` name → `toOne`
       - consistent with `one`
   - `toOne`→`to16`: argument type more broad
-  - `hasAtLeast1`, `minMinus1Never`, `min0Adapt` add
+  - `hasAtLeast1`, `minAtLeast1Never`, `min0Adapt` add
   - `foldFromOne` add
 
 ### 27.1.1
