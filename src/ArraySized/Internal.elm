@@ -107,9 +107,9 @@ import Stack exposing (Stacked)
 
 type ArraySized element lengthRange
     = ArraySized
-        -- TODO to record
-        (N lengthRange)
-        (Array element)
+        { length : N lengthRange
+        , array : Array element
+        }
 
 
 
@@ -173,9 +173,16 @@ failLoudlyWithStackOverflow messageAndCulprit =
     failLoudlyWithStackOverflowMutuallyRecursive messageAndCulprit
 
 
+toRecord :
+    ArraySized element range
+    -> { length : N range, array : Array element }
+toRecord =
+    \(ArraySized arraySizedInternal) -> arraySizedInternal
+
+
 length : ArraySized element_ range -> N range
 length =
-    \(ArraySized length_ _) -> length_
+    \arraySized -> arraySized |> toRecord |> .length
 
 
 
@@ -184,7 +191,7 @@ length =
 
 toArray : ArraySized element lengthRange_ -> Array element
 toArray =
-    \(ArraySized _ array) -> array
+    \arraySized -> arraySized |> toRecord |> .array
 
 
 map :
@@ -195,10 +202,13 @@ map :
         )
 map alter =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.map alter
-            |> ArraySized (arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.map alter
+            , length = arraySized |> length
+            }
 
 
 fills :
@@ -214,13 +224,14 @@ fills =
                     |> toArray
                     |> Array.filterMap Emptiable.toMaybe
         in
-        filtered
-            |> ArraySized
-                (filtered
+        ArraySized
+            { array = filtered
+            , length =
+                filtered
                     |> Array.length
                     |> N.intToAtLeast n0
                     |> N.toIn ( n0, arraySizedOfEmptiable |> length )
-                )
+            }
 
 
 allFill :
@@ -231,7 +242,13 @@ allFill =
         arraySized
             |> toArray
             |> Array.allFill
-            |> Emptiable.map (ArraySized (arraySized |> length))
+            |> Emptiable.map
+                (\array ->
+                    ArraySized
+                        { array = array
+                        , length = arraySized |> length
+                        }
+                )
 
 
 
@@ -240,7 +257,7 @@ allFill =
 
 empty : ArraySized element_ (In (Up0 minX_) (Up0 maxX_))
 empty =
-    Array.empty |> ArraySized n0
+    ArraySized { array = Array.empty, length = n0 }
 
 
 repeat :
@@ -248,8 +265,11 @@ repeat :
     -> N range
     -> ArraySized element range
 repeat elementToRepeat howOftenToRepeat =
-    Array.repeat (howOftenToRepeat |> N.toInt) elementToRepeat
-        |> ArraySized howOftenToRepeat
+    ArraySized
+        { array =
+            Array.repeat (howOftenToRepeat |> N.toInt) elementToRepeat
+        , length = howOftenToRepeat
+        }
 
 
 fromArray : Array element -> ArraySized element (Min (Up0 x_))
@@ -257,9 +277,11 @@ fromArray =
     -- could be implemented safely using fold
     -- ↓ is for performance reasons
     \array ->
-        array
-            |> ArraySized
-                (array |> Array.length |> N.intToAtLeast n0)
+        ArraySized
+            { array = array
+            , length =
+                array |> Array.length |> N.intToAtLeast n0
+            }
 
 
 stackUpTo :
@@ -290,10 +312,13 @@ upTo :
             (N (In (Up0 nMinX_) (Up maxX To maxPlusX)))
             (In (On (Add1 min)) (Up maxX To (Add1 maxPlusX)))
 upTo last =
-    stackUpTo { first = n0, last = last |> N.minTo n0 }
-        |> Stack.toList
-        |> Array.fromList
-        |> ArraySized (last |> N.add n1)
+    ArraySized
+        { array =
+            stackUpTo { first = n0, last = last |> N.minTo n0 }
+                |> Stack.toList
+                |> Array.fromList
+        , length = last |> N.add n1
+        }
 
 
 stackUpToRecursive :
@@ -313,12 +338,14 @@ random :
     -> N range
     -> Random.Generator (ArraySized element range)
 random elementRandomGenerator amount =
+    -- implement safely, recursively
     Random.list (amount |> N.toInt) elementRandomGenerator
         |> Random.map
             (\list ->
-                list
-                    |> Array.fromList
-                    |> ArraySized amount
+                ArraySized
+                    { array = list |> Array.fromList
+                    , length = amount
+                    }
             )
 
 
@@ -327,9 +354,13 @@ fuzz :
     -> N range
     -> Fuzzer (ArraySized element range)
 fuzz elementFuzz length_ =
+    -- implement safely
     Fuzz.map
         (\list ->
-            ArraySized length_ (Array.fromList list)
+            ArraySized
+                { array = list |> Array.fromList
+                , length = length_
+                }
         )
         (Fuzz.listOfLength (length_ |> N.toInt) elementFuzz)
 
@@ -352,13 +383,15 @@ inFuzz :
         Fuzzer
             (ArraySized element (In lowerLimitMin upperLimitMax))
 inFuzz elementFuzz ( lowerLimit, upperLimit ) =
+    -- implement safely
     Fuzz.map
         (\list ->
             ArraySized
-                ((list |> List.length)
-                    |> N.intToIn ( lowerLimit, upperLimit )
-                )
-                (list |> Array.fromList)
+                { array = list |> Array.fromList
+                , length =
+                    (list |> List.length)
+                        |> N.intToIn ( lowerLimit, upperLimit )
+                }
         )
         (Fuzz.listOfLengthBetween (lowerLimit |> N.toInt)
             (upperLimit |> N.toInt)
@@ -381,12 +414,15 @@ elementReplace :
         )
 elementReplace ( direction, index ) replacement =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.elementReplace
-                ( direction, index |> N.toInt )
-                replacement
-            |> ArraySized (arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.elementReplace
+                        ( direction, index |> N.toInt )
+                        replacement
+            , length = arraySized |> length
+            }
 
 
 push :
@@ -403,10 +439,13 @@ push :
         )
 push elementToPush =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.push elementToPush
-            |> ArraySized (arraySized |> length |> N.add n1)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.push elementToPush
+            , length = arraySized |> length |> N.add n1
+            }
 
 
 insert :
@@ -431,12 +470,15 @@ insert :
         )
 insert ( direction, index ) elementToInsert =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.insert
-                ( direction, index |> N.toInt )
-                (\() -> elementToInsert)
-            |> ArraySized (arraySized |> length |> N.add n1)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.insert
+                        ( direction, index |> N.toInt )
+                        (\() -> elementToInsert)
+            , length = arraySized |> length |> N.add n1
+            }
 
 
 remove :
@@ -460,11 +502,14 @@ remove :
         )
 remove ( direction, index ) =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.remove
-                ( direction, index |> N.toInt )
-            |> ArraySized (arraySized |> length |> N.subtract n1)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.remove
+                        ( direction, index |> N.toInt )
+            , length = arraySized |> length |> N.subtract n1
+            }
 
 
 removeMin :
@@ -477,20 +522,26 @@ removeMin :
         )
 removeMin ( direction, index ) =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.remove
-                ( direction, index |> N.toInt )
-            |> ArraySized (arraySized |> length |> N.subtractMin n1)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.remove
+                        ( direction, index |> N.toInt )
+            , length = arraySized |> length |> N.subtractMin n1
+            }
 
 
 reverse : ArraySized range element -> ArraySized range element
 reverse =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.reverse
-            |> ArraySized (arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.reverse
+            , length = arraySized |> length
+            }
 
 
 
@@ -505,9 +556,12 @@ and :
         )
 and nextArraySized =
     \arraySized ->
-        Array.zip (arraySized |> toArray) (nextArraySized |> toArray)
-            |> ArraySized
-                (N.smaller (arraySized |> length) (nextArraySized |> length))
+        ArraySized
+            { array =
+                Array.zip (arraySized |> toArray) (nextArraySized |> toArray)
+            , length =
+                N.smaller (arraySized |> length) (nextArraySized |> length)
+            }
 
 
 attach :
@@ -536,14 +590,16 @@ attach :
         )
 attach direction extension =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.attach direction
-                (extension |> toArray)
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.attach direction
+                        (extension |> toArray)
+            , length =
+                (arraySized |> length)
                     |> N.add (extension |> length)
-                )
+            }
 
 
 interweave :
@@ -565,13 +621,15 @@ interweave :
         )
 interweave separatorsToPlaceBetweenTheElements =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
+            , length =
+                (arraySized |> length)
                     |> N.add (separatorsToPlaceBetweenTheElements |> length)
-                )
+            }
 
 
 interweaveMin :
@@ -587,13 +645,15 @@ interweaveMin :
         )
 interweaveMin separatorsToPlaceBetweenTheElements =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.interweave (separatorsToPlaceBetweenTheElements |> toArray)
+            , length =
+                (arraySized |> length)
                     |> N.addMin (separatorsToPlaceBetweenTheElements |> length)
-                )
+            }
 
 
 attachMin :
@@ -611,12 +671,15 @@ attachMin :
         )
 attachMin direction extension =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.attach direction
-                (extension |> toArray)
-            |> ArraySized
-                ((arraySized |> length) |> N.addMin (extension |> length))
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.attach direction
+                        (extension |> toArray)
+            , length =
+                (arraySized |> length) |> N.addMin (extension |> length)
+            }
 
 
 padToLength :
@@ -645,11 +708,14 @@ padToLength =
             paddingLength =
                 paddedLength |> N.subtract (arraySized |> length)
         in
-        arraySized
-            |> toArray
-            |> Array.Linear.attach paddingDirection
-                (paddingLength |> paddingForLength |> toArray)
-            |> ArraySized paddedLength
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.attach paddingDirection
+                        (paddingLength |> paddingForLength |> toArray)
+            , length = paddedLength
+            }
 
 
 
@@ -681,14 +747,16 @@ drop :
         )
 drop direction droppedAmount =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.drop direction
-                (droppedAmount |> N.toInt)
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.drop direction
+                        (droppedAmount |> N.toInt)
+            , length =
+                (arraySized |> length)
                     |> N.subtract droppedAmount
-                )
+            }
 
 
 dropMin :
@@ -710,14 +778,16 @@ dropMin :
         )
 dropMin direction droppedAmount =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.drop direction
-                (droppedAmount |> N.toInt)
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.drop direction
+                        (droppedAmount |> N.toInt)
+            , length =
+                (arraySized |> length)
                     |> N.subtractMin droppedAmount
-                )
+            }
 
 
 take :
@@ -730,11 +800,14 @@ take :
         )
 take direction _ toTakeAmount =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> Array.Linear.take direction
-                (toTakeAmount |> N.toInt)
-            |> ArraySized toTakeAmount
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.take direction
+                        (toTakeAmount |> N.toInt)
+            , length = toTakeAmount
+            }
 
 
 toChunksOf :
@@ -777,15 +850,22 @@ toChunksOf chunkingDirection chunkLength =
                         (chunkLength |> N.toInt)
         in
         { chunks =
-            chunked.chunks
-                |> Array.map (ArraySized chunkLength)
-                |> ArraySized (arraySized |> length |> N.divideBy chunkLength)
+            ArraySized
+                { array =
+                    chunked.chunks
+                        |> Array.map
+                            (\chunk ->
+                                ArraySized { array = chunk, length = chunkLength }
+                            )
+                , length = arraySized |> length |> N.divideBy chunkLength
+                }
         , remainder =
-            chunked.remainder
-                |> ArraySized
-                    (length arraySized
+            ArraySized
+                { array = chunked.remainder
+                , length =
+                    length arraySized
                         |> N.remainderBy chunkLength
-                    )
+                }
         }
 
 
@@ -798,9 +878,10 @@ minToNumber :
     -> ArraySized element (In min max)
 minToNumber =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized (arraySized |> length |> N.minToNumber)
+        ArraySized
+            { array = arraySized |> toArray
+            , length = arraySized |> length |> N.minToNumber
+            }
 
 
 minToOn :
@@ -808,9 +889,10 @@ minToOn :
     -> ArraySized element (In (On min) max)
 minToOn =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized (arraySized |> length |> N.minToOn)
+        ArraySized
+            { array = arraySized |> toArray
+            , length = arraySized |> length |> N.minToOn
+            }
 
 
 maxToNumber :
@@ -818,9 +900,10 @@ maxToNumber :
     -> ArraySized element (In min max)
 maxToNumber =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized (arraySized |> length |> N.maxToNumber)
+        ArraySized
+            { array = arraySized |> toArray
+            , length = arraySized |> length |> N.maxToNumber
+            }
 
 
 maxToOn :
@@ -828,9 +911,10 @@ maxToOn :
     -> ArraySized element (In min (On max))
 maxToOn =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized (arraySized |> length |> N.maxToOn)
+        ArraySized
+            { array = arraySized |> toArray
+            , length = arraySized |> length |> N.maxToOn
+            }
 
 
 
@@ -852,12 +936,12 @@ minSubtract :
         )
 minSubtract lengthMinimumLower =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                ((arraySized |> length)
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                (arraySized |> length)
                     |> N.minSubtract lengthMinimumLower
-                )
+            }
 
 
 maxToInfinity :
@@ -865,9 +949,10 @@ maxToInfinity :
     -> ArraySized element (Min min)
 maxToInfinity =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized (arraySized |> length |> N.maxToInfinity)
+        ArraySized
+            { array = arraySized |> toArray
+            , length = arraySized |> length |> N.maxToInfinity
+            }
 
 
 maxAdd :
@@ -883,14 +968,13 @@ maxAdd :
                 element
                 (In min (Up x To maxIncreasedPlusX))
         )
-maxAdd lengthMaximumIncrement =
+maxAdd lengthMaximumIncrease =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                ((arraySized |> length)
-                    |> N.maxAdd lengthMaximumIncrement
-                )
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                arraySized |> length |> N.maxAdd lengthMaximumIncrease
+            }
 
 
 maxTo :
@@ -903,12 +987,11 @@ maxTo :
         )
 maxTo lengthMaximumNew =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                ((arraySized |> length)
-                    |> N.maxTo lengthMaximumNew
-                )
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                arraySized |> length |> N.maxTo lengthMaximumNew
+            }
 
 
 minTo :
@@ -919,12 +1002,11 @@ minTo :
         )
 minTo lengthMinimumNew =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                ((arraySized |> length)
-                    |> N.minTo lengthMinimumNew
-                )
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                arraySized |> length |> N.minTo lengthMinimumNew
+            }
 
 
 
@@ -969,16 +1051,16 @@ has lengthToCompareAgainst =
     \arraySized ->
         case arraySized |> length |> N.is lengthToCompareAgainst of
             Err (N.Below less) ->
-                (arraySized |> toArray |> ArraySized less)
+                ArraySized { array = arraySized |> toArray, length = less }
                     |> N.Below
                     |> Err
 
             Ok equal ->
-                (arraySized |> toArray |> ArraySized equal)
+                ArraySized { array = arraySized |> toArray, length = equal }
                     |> Ok
 
             Err (N.Above greater) ->
-                (arraySized |> toArray |> ArraySized greater)
+                ArraySized { array = arraySized |> toArray, length = greater }
                     |> N.Above
                     |> Err
 
@@ -1023,16 +1105,16 @@ hasIn ( lowerLimit, upperLimit ) =
             length arraySized |> N.isIn ( lowerLimit, upperLimit )
         of
             Err (N.Below below) ->
-                (arraySized |> toArray |> ArraySized below)
+                ArraySized { array = arraySized |> toArray, length = below }
                     |> N.Below
                     |> Err
 
             Ok inRange ->
-                (arraySized |> toArray |> ArraySized inRange)
+                ArraySized { array = arraySized |> toArray, length = inRange }
                     |> Ok
 
             Err (N.Above above) ->
-                (arraySized |> toArray |> ArraySized above)
+                ArraySized { array = arraySized |> toArray, length = above }
                     |> N.Above
                     |> Err
 
@@ -1057,11 +1139,11 @@ hasAtLeast lowerLimit =
     \arraySized ->
         case arraySized |> length |> N.isAtLeast lowerLimit of
             Err below ->
-                (arraySized |> toArray |> ArraySized below)
+                ArraySized { array = arraySized |> toArray, length = below }
                     |> Err
 
             Ok atLeast ->
-                (arraySized |> toArray |> ArraySized atLeast)
+                ArraySized { array = arraySized |> toArray, length = atLeast }
                     |> Ok
 
 
@@ -1084,11 +1166,11 @@ hasAtMost upperLimit =
     \arraySized ->
         case arraySized |> length |> N.isAtMost upperLimit of
             Ok atMost ->
-                (arraySized |> toArray |> ArraySized atMost)
+                ArraySized { array = arraySized |> toArray, length = atMost }
                     |> Ok
 
             Err above ->
-                (arraySized |> toArray |> ArraySized above)
+                ArraySized { array = arraySized |> toArray, length = above }
                     |> Err
 
 
@@ -1108,9 +1190,7 @@ hasAtLeast1 =
     \arraySized ->
         case arraySized |> length |> N.isAtLeast1 of
             Ok atLeast1 ->
-                ArraySized
-                    atLeast1
-                    (arraySized |> toArray)
+                ArraySized { array = arraySized |> toArray, length = atLeast1 }
                     |> Emptiable.filled
 
             Err possiblyOrNever ->
@@ -1126,13 +1206,13 @@ min0Adapt :
             (In (On (N0OrAdd1 adaptedPossiblyOrNever minFrom1)) max)
 min0Adapt length0PossiblyOrNeverAdapt =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                (arraySized
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                arraySized
                     |> length
                     |> N.min0Adapt length0PossiblyOrNeverAdapt
-                )
+            }
 
 
 minAtLeast1Never :
@@ -1145,10 +1225,10 @@ minAtLeast1Never :
             (In (On (N0OrAdd1 possiblyOrNever minFrom1_)) max)
 minAtLeast1Never =
     \arraySized ->
-        arraySized
-            |> toArray
-            |> ArraySized
-                (arraySized
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                arraySized
                     |> length
                     |> N.minAtLeast1Never
-                )
+            }
