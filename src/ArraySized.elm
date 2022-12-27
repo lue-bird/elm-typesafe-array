@@ -172,7 +172,7 @@ import ArraySized.Internal
 import Emptiable exposing (Emptiable, filled)
 import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
-import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, Exactly, In, Min, N, N0, N0OrAdd1(..), N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, On, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
+import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, In, Min, N, N0, N0OrAdd1, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, On, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -388,7 +388,7 @@ has at least 1 element
 hasAtLeast1 :
     ArraySized
         element
-        (In (On (N0OrAdd1 possiblyOrNever minFrom1)) max)
+        (In (On (N0OrAdd1 possiblyOrNever minFrom1_)) max)
     ->
         Emptiable
             (ArraySized element (In (Up1 minX_) max))
@@ -1516,9 +1516,9 @@ elementAlter ( direction, index ) elementAlter_ =
 -}
 fills :
     ArraySized
-        (Emptiable value possiblyOrNever_)
+        (Emptiable fill possiblyOrNever_)
         (In (On min_) max)
-    -> ArraySized value (In (Up0 minX_) max)
+    -> ArraySized fill (In (Up0 minX_) max)
 fills =
     ArraySized.Internal.fills
 
@@ -1610,9 +1610,9 @@ Funny aside, [`allFill`](#allFill) can sometimes even be nicer than `mapN`/`andM
 -}
 allFill :
     ArraySized
-        (Emptiable value possiblyOrNever)
+        (Emptiable fill possiblyOrNever)
         range
-    -> Emptiable (ArraySized value range) possiblyOrNever
+    -> Emptiable (ArraySized fill range) possiblyOrNever
 allFill =
     ArraySized.Internal.allFill
 

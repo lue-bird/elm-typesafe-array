@@ -98,8 +98,8 @@ import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable)
 import Fuzz exposing (Fuzzer)
-import Linear exposing (Direction(..))
-import N exposing (Add1, Add2, Down, In, Min, N, N0, N0OrAdd1(..), N1, On, To, Up, Up0, Up1, n0, n1)
+import Linear
+import N exposing (Add1, Add2, Down, In, Min, N, N0OrAdd1, On, To, Up, Up0, Up1, n0, n1)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
@@ -203,9 +203,9 @@ map alter =
 
 fills :
     ArraySized
-        (Emptiable value possiblyOrNever_)
+        (Emptiable fill possiblyOrNever_)
         (In (On min_) max)
-    -> ArraySized value (In (Up0 minX_) max)
+    -> ArraySized fill (In (Up0 minX_) max)
 fills =
     \arraySizedOfEmptiable ->
         let
@@ -728,7 +728,7 @@ take :
         (ArraySized element (In (On min) max_)
          -> ArraySized element (In takenMin takenMax)
         )
-take direction toTakeAmountAtLeast toTakeAmount =
+take direction _ toTakeAmount =
     \arraySized ->
         arraySized
             |> toArray
@@ -1099,7 +1099,7 @@ hasAtMost upperLimit =
 hasAtLeast1 :
     ArraySized
         element
-        (In (On (N0OrAdd1 possiblyOrNever minFrom1)) max)
+        (In (On (N0OrAdd1 possiblyOrNever minFrom1_)) max)
     ->
         Emptiable
             (ArraySized element (In (Up1 minX_) max))
