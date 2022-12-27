@@ -22,7 +22,7 @@ module ArraySized exposing
     , toArray, toList, toEmptiable, toStack, toString
     , to2
     , to3, to4, to5, to6, to7, to8, to9, to10, to11, to12, to13, to14, to15, to16
-    , toNumber, toOn
+    , inToNumber, inToOn
     , minToNumber, minToOn
     , maxToNumber, maxToOn
     , minTo, minSubtract
@@ -149,7 +149,7 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 
 ## without internal functions
 
-@docs toNumber, toOn
+@docs inToNumber, inToOn
 @docs minToNumber, minToOn
 @docs maxToNumber, maxToOn
 
@@ -244,7 +244,7 @@ avoiding type variables
 
 `==` on both [`ArraySized`](#ArraySized)s and `N`s crashes elm.
 [Compare safely](#length-compare)
-or convert [`toNumber`](#toNumber)
+or convert [`inToNumber`](#inToNumber)
 
 -}
 type alias ArraySized element lengthRange =
@@ -2115,10 +2115,10 @@ of [`On` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/l
 If you have a `Min` length, you instead only need [`minToNumber`](#minToNumber)
 
 -}
-toNumber :
+inToNumber :
     ArraySized element (In (On min) (On max))
     -> ArraySized element (In min max)
-toNumber =
+inToNumber =
     \arraySized ->
         arraySized |> minToNumber |> maxToNumber
 
@@ -2131,10 +2131,10 @@ allowing it to be [altered](#alter), [compared](#length-compare), ...
 If you have a `Min` length, you instead only need [`minToOn`](#minToOn)
 
 -}
-toOn :
+inToOn :
     ArraySized element (In min max)
     -> ArraySized element (In (On min) (On max))
-toOn =
+inToOn =
     \arraySized ->
         arraySized |> minToOn |> maxToOn
 
