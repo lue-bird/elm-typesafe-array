@@ -355,7 +355,7 @@ toStack =
                 )
 
 
-{-| Transfer the knowledge about whether [`n0`](#n0) is a possible length
+{-| Transfer the knowledge about whether 0 is a possible length
 
     toEmptiable :
         ArraySized
@@ -442,7 +442,7 @@ min0Adapt length0PossiblyOrNeverAdapt =
             |> ArraySized.Internal.min0Adapt length0PossiblyOrNeverAdapt
 
 
-{-| Change the successor type for the case that its length [`min`](#min) is 1 + ...
+{-| Change the successor type for the case that its length minimum is 1 + ...
 to allow adapting any variable
 
     fromEmptiable :
@@ -467,7 +467,7 @@ to allow adapting any variable
                         -- the other has max = 1. Let's adapt that higher max here
                         |> ArraySized.maxAdd n1
 
-using [`isAtLeast1`](#isAtLeast1), [`min0Adapt`](#min0Adapt).
+using [`hasAtLeast1`](#hasAtLeast1), [`min0Adapt`](#min0Adapt).
 
 -}
 minAtLeast1Never :
@@ -623,8 +623,6 @@ Make sure the compiler knows as much as you about the amount of elements!
     ArraySized.upTo n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
-
-Got an `Emptiable (Stacked ...) Never`? → [`fromStackFilled`](#fromStackFilled)
 
 -}
 fromStack :
@@ -1691,7 +1689,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
   - Don't know its length maximum? → [`dropMin`](#dropMin)
   - Can the dropped length's maximum be greater than its length's minimum?
-    → [`isAtLeast`](#isAtLeast), then [`drop`](#drop)
+    → [`hasAtLeast`](#hasAtLeast), then [`drop`](#drop)
 
 -}
 drop :
@@ -1735,7 +1733,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
   - Know its length maximum? → [`drop`](#drop)
   - Can the dropped length's maximum be greater than its length's minimum?
-    → [`isAtLeast`](#isAtLeast), then [`drop`](#drop)
+    → [`sAtLeast`](#hasAtLeast), then [`drop`](#drop)
 
 -}
 dropMin :
