@@ -25,8 +25,8 @@ module ArraySized exposing
     , inToNumber, inToOn
     , minToNumber, minToOn
     , maxToNumber, maxToOn
-    , minTo, minSubtract
-    , maxTo, maxToInfinity, maxAdd
+    , minTo, minSubtract, minEndsSubtract
+    , maxTo, maxToInfinity, maxAdd, maxEndsSubtract
     , hasAtLeast1, min0Adapt, minAtLeast1Never
     )
 
@@ -156,8 +156,8 @@ put them in a `module exposing (to<x>)` + `import as ArraySized`
 
 ## type-level
 
-@docs minTo, minSubtract
-@docs maxTo, maxToInfinity, maxAdd
+@docs minTo, minSubtract, minEndsSubtract
+@docs maxTo, maxToInfinity, maxAdd, maxEndsSubtract
 
 
 ### advanced: generic [`allowable-state`](https://dark.elm.dmy.fr/packages/lue-bird/elm-allowable-state/latest/)
@@ -2199,6 +2199,52 @@ maxToOn =
 
 
 -- ## type information
+
+
+{-| Decrease the start and end of its [length](#length) minimum
+[difference](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#Up)
+
+    ArraySized.repeat () n3
+        --: ArraySized () (In (Up3 (Add2 minX_)) (Up3 maxX_))
+        |> ArraySized.minEndsSubtract n2
+    --: ArraySized () (In (Up5 minX_) (Up5 maxX_))
+
+[`N.maxEndsSubtract`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxEndsSubtract)
+has an example of where this can be useful.
+
+-}
+minEndsSubtract :
+    N (In (Down minX To minXDecreased) (Down minPlusX To minPlusXDecreased))
+    ->
+        (ArraySized element (In (Up minX To minPlusX) max)
+         -> ArraySized element (In (Up minXDecreased To minPlusXDecreased) max)
+        )
+minEndsSubtract decrease =
+    \arraySized ->
+        arraySized |> ArraySized.Internal.minEndsSubtract decrease
+
+
+{-| Decrease the start and end of its [length](#length) maximum
+[difference](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#Up)
+
+    ArraySized.repeat () n3
+        --: ArraySized () (In (Up3 minX_) (Up3 (Add2 maxX_)))
+        |> ArraySized.maxEndsSubtract n2
+    --: ArraySized () (In (Up5 minX_) (Up5 maxX_))
+
+[`N.maxEndsSubtract`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#maxEndsSubtract)
+has an example of where this can be useful.
+
+-}
+maxEndsSubtract :
+    N (In (Down maxPlusX To maxPlusXDecreased) (Down maxX To maxXDecreased))
+    ->
+        (ArraySized element (In min (Up maxX To maxPlusX))
+         -> ArraySized element (In min (Up maxXDecreased To maxPlusXDecreased))
+        )
+maxEndsSubtract decrease =
+    \arraySized ->
+        arraySized |> ArraySized.Internal.maxEndsSubtract decrease
 
 
 {-| Have a specific minimum in mind? → [`minTo`](#minTo)

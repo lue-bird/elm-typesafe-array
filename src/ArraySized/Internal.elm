@@ -16,8 +16,8 @@ module ArraySized.Internal exposing
     , toArray
     , minToNumber, minToOn
     , maxToNumber, maxToOn
-    , minSubtract, minTo
-    , maxTo, maxToInfinity, maxAdd
+    , minSubtract, minTo, minEndsSubtract
+    , maxTo, maxToInfinity, maxAdd, maxEndsSubtract
     , hasAtLeast1, min0Adapt, minAtLeast1Never
     )
 
@@ -82,8 +82,8 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## type information
 
-@docs minSubtract, minTo
-@docs maxTo, maxToInfinity, maxAdd
+@docs minSubtract, minTo, minEndsSubtract
+@docs maxTo, maxToInfinity, maxAdd, maxEndsSubtract
 
 
 ### allowable-state
@@ -384,14 +384,17 @@ inFuzz :
             (ArraySized element (In lowerLimitMin upperLimitMax))
 inFuzz elementFuzz ( lowerLimit, upperLimit ) =
     -- implement safely
-    Fuzz.map
+    Fuzz.andThen
         (\list ->
-            ArraySized
-                { array = list |> Array.fromList
-                , length =
-                    (list |> List.length)
-                        |> N.intToIn ( lowerLimit, upperLimit )
-                }
+            case list |> Array.fromList |> fromArray |> hasIn ( lowerLimit |> N.maxAdd n1, upperLimit ) of
+                Err (N.Below below) ->
+                    Fuzz.invalid ("length too low: " ++ (below |> length |> N.toString))
+
+                Err (N.Above above) ->
+                    Fuzz.invalid ("length too high: " ++ (above |> length |> N.toString))
+
+                Ok inRange ->
+                    inRange |> Fuzz.constant
         )
         (Fuzz.listOfLengthBetween (lowerLimit |> N.toInt)
             (upperLimit |> N.toInt)
@@ -919,6 +922,38 @@ maxToOn =
 
 
 -- ## type information
+
+
+minEndsSubtract :
+    N (In (Down minX To minXDecreased) (Down minPlusX To minPlusXDecreased))
+    ->
+        (ArraySized element (In (Up minX To minPlusX) max)
+         -> ArraySized element (In (Up minXDecreased To minPlusXDecreased) max)
+        )
+minEndsSubtract decrease =
+    \arraySized ->
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                (arraySized |> length)
+                    |> N.minEndsSubtract decrease
+            }
+
+
+maxEndsSubtract :
+    N (In (Down maxPlusX To maxPlusXDecreased) (Down maxX To maxXDecreased))
+    ->
+        (ArraySized element (In min (Up maxX To maxPlusX))
+         -> ArraySized element (In min (Up maxXDecreased To maxPlusXDecreased))
+        )
+maxEndsSubtract decrease =
+    \arraySized ->
+        ArraySized
+            { array = arraySized |> toArray
+            , length =
+                (arraySized |> length)
+                    |> N.maxEndsSubtract decrease
+            }
 
 
 minSubtract :
