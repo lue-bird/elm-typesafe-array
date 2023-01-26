@@ -1,5 +1,11 @@
 # change log
 
+### 29.1.0
+
+  - `bounded-nat` → >= 33.1.0
+  - `minEndsSubtract`, `maxEndsSubtract` add
+      - consistent with `bounded-nat`
+
 ## 29.0.0
 
   - `toNumber`, `toOn` name → `inToNumber`, `inToOn`
