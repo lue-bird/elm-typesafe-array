@@ -8,7 +8,7 @@ module ArraySized.Internal exposing
     , fills, allFill
     , and
     , attach, attachMin
-    , padToLength
+    , padToAtLeast
     , interweave, interweaveMin
     , take
     , drop, dropMin
@@ -58,7 +58,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 @docs and
 @docs attach, attachMin
-@docs padToLength
+@docs padToAtLeast
 @docs interweave, interweaveMin
 
 
@@ -685,8 +685,9 @@ attachMin direction extension =
             }
 
 
-padToLength :
+padToAtLeast :
     Linear.Direction
+    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
     ->
         (N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
          ->
@@ -694,7 +695,6 @@ padToLength :
                 element
                 (In (On paddingMin) (Up maxX To paddingMaxPlusX))
         )
-    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
     ->
         (ArraySized
             element
@@ -704,8 +704,8 @@ padToLength :
                 element
                 (In (On paddedMin) (Up maxX To paddedMaxPlusX))
         )
-padToLength =
-    \paddingDirection paddingForLength paddedLength arraySized ->
+padToAtLeast paddingDirection paddedLength paddingForLength =
+    \arraySized ->
         let
             paddingLength : N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
             paddingLength =

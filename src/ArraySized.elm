@@ -14,7 +14,7 @@ module ArraySized exposing
     , toChunksOf
     , and
     , attach, attachMin
-    , padToLength
+    , padToAtLeast
     , interweave, interweaveMin
     , hasIn, has, hasAtLeast, hasAtMost
     , map
@@ -120,7 +120,7 @@ Searching for all, any? → [`allFill`](#allFill)
 
 @docs and
 @docs attach, attachMin
-@docs padToLength
+@docs padToAtLeast
 @docs interweave, interweaveMin
 
 
@@ -2868,7 +2868,7 @@ to reach a given length
         | O
 
     ArraySized.l3 I O I
-        |> ArraySized.padToLength Down (ArraySized.repeat O) n8
+        |> ArraySized.padToAtLeast Down n8 (ArraySized.repeat O)
         --: ArraySized Bit (In (On N8) (Up8 x_))
         |> ArraySized.toList
     --> [ O, O, O, O, O, I, O, I ]
@@ -2879,7 +2879,7 @@ to reach a given length
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
         |> ArraySized.map
-            (ArraySized.padToLength Down (ArraySized.repeat O) n8)
+            (ArraySized.padToAtLeast Down n8 (ArraySized.repeat O))
         |> ArraySized.map ArraySized.toList
         |> ArraySized.toList
     --> [ [ O, O, O, O, O, I, I, I ]
@@ -2889,8 +2889,9 @@ to reach a given length
     --> ]
 
 -}
-padToLength :
+padToAtLeast :
     Linear.Direction
+    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
     ->
         (N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
          ->
@@ -2901,7 +2902,6 @@ padToLength :
                     (Up maxX To paddingMaxPlusX)
                 )
         )
-    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
     ->
         (ArraySized
             element
@@ -2917,10 +2917,10 @@ padToLength :
                     (Up maxX To paddedMaxPlusX)
                 )
         )
-padToLength paddingDirection paddingForLength paddedLength =
+padToAtLeast paddingDirection paddedLength paddingForLength =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.padToLength paddingDirection paddingForLength paddedLength
+            |> ArraySized.Internal.padToAtLeast paddingDirection paddedLength paddingForLength
 
 
 {-| Kick out the element at a given index

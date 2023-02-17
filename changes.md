@@ -1,5 +1,10 @@
 # change log
 
+## 30.0.0
+
+  - `linear-direction` → >= 11.0.0
+  - `padToLength dir pad length` → `padToAtLeast dir length pad`
+
 ### 29.1.0
 
   - `bounded-nat` → >= 33.1.0
