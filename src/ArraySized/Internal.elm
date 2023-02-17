@@ -189,7 +189,7 @@ length =
 -- ## transform
 
 
-toArray : ArraySized element lengthRange_ -> Array element
+toArray : ArraySized element range_ -> Array element
 toArray =
     \arraySized -> arraySized |> toRecord |> .array
 

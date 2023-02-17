@@ -255,7 +255,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     --> Array.fromList [ 0, 1, 2, 3, 4 ]
 
 -}
-toArray : ArraySized element lengthRange_ -> Array element
+toArray : ArraySized element range_ -> Array element
 toArray =
     ArraySized.Internal.toArray
 
@@ -273,7 +273,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     --> [ 0, 1, 2, 3, 4 ]
 
 -}
-toList : ArraySized element lengthRange_ -> List element
+toList : ArraySized element range_ -> List element
 toList =
     \arraySized ->
         arraySized
@@ -299,7 +299,7 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     --> "abcde"
 
 -}
-toString : ArraySized Char lengthRange_ -> String
+toString : ArraySized Char range_ -> String
 toString =
     \arraySized ->
         arraySized
@@ -1855,7 +1855,7 @@ foldFrom :
     -> Linear.Direction
     -> (element -> (result -> result))
     ->
-        (ArraySized element lengthRange_
+        (ArraySized element range_
          -> result
         )
 foldFrom initial direction reduce =
@@ -2049,7 +2049,7 @@ elementTry :
     , N range_
     )
     ->
-        (ArraySized element lengthRange_
+        (ArraySized element range_
          -> Emptiable element Possibly
         )
 elementTry ( direction, index ) =
