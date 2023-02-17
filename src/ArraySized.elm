@@ -1302,11 +1302,11 @@ upTo last =
     --:         (In (Up5 minX_) (Up5 maxX_))
     --:     )
 
-Pairs really well with
+Pairs well with
 
-    N.randomIn ( <length min>, <length max> )
-        |> Random.andThen
-            (ArraySized.random <element>)
+    Random.andThen
+        (ArraySized.random <element>)
+        (N.randomIn ( <length min>, <length max> ))
 
 -}
 random :
