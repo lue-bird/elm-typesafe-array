@@ -227,20 +227,10 @@ avoiding type variables
     : ArraySized ... (Min (On N4))
 
     -- 4 <= length <= 15
-    : ArraySized ... (InOn N4 N15)
+    : ArraySized ... (In (On N4) (On N15))
 
     -- length = 15
     : ArraySized ... (Exactly (On N15))
-
-`InOn`, `Exactly` are just shorthands exposed from `N`
-
-    InOn min max =
-        In (On min) (On max)
-
-    Exactly n =
-        In n n
-
----
 
 `==` on both [`ArraySized`](#ArraySized)s and `N`s crashes elm.
 [Compare safely](#length-compare)
