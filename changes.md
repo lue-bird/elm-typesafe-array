@@ -4,6 +4,8 @@
 
   - `linear-direction` → >= 11.0.0
   - `padToLength dir pad length` → `padToAtLeast dir length pad`
+  - `...Min` argument max more broad
+  - `mapFoldFrom` add
 
 ### 29.1.0
 

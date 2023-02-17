@@ -4,7 +4,7 @@ module ArraySized.Internal exposing
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
     , elementReplace, remove, removeMin, push, insert, reverse
-    , map
+    , map, mapFoldFrom
     , fills, allFill
     , and
     , attach, attachMin
@@ -46,7 +46,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 # alter
 
 @docs elementReplace, remove, removeMin, push, insert, reverse
-@docs map
+@docs map, mapFoldFrom
 
 
 ## filter
@@ -249,6 +249,38 @@ allFill =
                         , length = arraySized |> length
                         }
                 )
+
+
+mapFoldFrom :
+    accumulationValue
+    -> Linear.Direction
+    ->
+        ({ element : element, folded : accumulationValue }
+         -> { element : mappedElement, folded : accumulationValue }
+        )
+    ->
+        (ArraySized element length
+         ->
+            { mapped : ArraySized mappedElement length
+            , folded : accumulationValue
+            }
+        )
+mapFoldFrom accumulationValueInitial direction reduce =
+    \arraySized ->
+        let
+            mapFolded : { mapped : Array mappedElement, folded : accumulationValue }
+            mapFolded =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.mapFoldFrom accumulationValueInitial direction reduce
+        in
+        { mapped =
+            ArraySized
+                { array = mapFolded.mapped
+                , length = arraySized |> length
+                }
+        , folded = mapFolded.folded
+        }
 
 
 

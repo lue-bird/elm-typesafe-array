@@ -17,7 +17,7 @@ module ArraySized exposing
     , padToAtLeast
     , interweave, interweaveMin
     , hasIn, has, hasAtLeast, hasAtMost
-    , map
+    , map, mapFoldFrom
     , foldFrom, fold, foldFromOne
     , toArray, toList, toEmptiable, toStack, toString
     , to2
@@ -131,7 +131,7 @@ Searching for all, any? → [`allFill`](#allFill)
 
 # transform
 
-@docs map
+@docs map, mapFoldFrom
 @docs foldFrom, fold, foldFromOne
 @docs toArray, toList, toEmptiable, toStack, toString
 
@@ -1738,20 +1738,10 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 -}
 dropMin :
     Linear.Direction
+    -> N (In (On droppedMin_) (Down min To takenMin))
     ->
-        N
-            (In
-                (On droppedMin_)
-                (Down min To takenMin)
-            )
-    ->
-        (ArraySized
-            element
-            (In (On min) max)
-         ->
-            ArraySized
-                element
-                (In (On takenMin) max)
+        (ArraySized element (In (On min) max)
+         -> ArraySized element (In (On takenMin) max)
         )
 dropMin direction lengthToDrop =
     \arraySized ->
@@ -1790,6 +1780,65 @@ map alter =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.map alter
+
+
+{-| Map each element using information collected from previous steps,
+folding in a given [`Direction`](https://dark.elm.dmy.fr/packages/lue-bird/elm-linear-direction/latest/)
+from given initial information.
+
+Both the mapped [`ArraySized`](#ArraySized) and the folded information will be returned
+
+You'll often find this under the name "mapAccum"
+
+    import Linear exposing (Direction(..))
+
+    ArraySized.l3 1 2 3
+        |> ArraySized.mapFoldFrom 0
+            Down
+            (\state ->
+                { element = state.folded
+                , folded = state.folded + state.element
+                }
+            )
+    --> { mapped = ArraySized.l3 5 3 0, folded = 6 }
+
+    mapIndexed : Direction -> (Int -> a -> b) -> (Array a -> Array b)
+    mapIndexed indexDirection mapAtIndex =
+        Array.Linear.mapFoldFrom 0
+            indexDirection
+            (\state ->
+                { element = state.element |> mapAtIndex state.folded
+                , folded = state.folded + 1
+                }
+            )
+            >> .mapped
+
+    ArraySized.l4 'h' 'i' 'y' 'o'
+        |> mapIndexed Up Tuple.pair
+    --> Array.l4 ( 0, 'h' ) ( 1, 'i' ) ( 2, 'y' ) ( 3, 'o' )
+
+    Array.fromList [ 'h', 'i', 'y', 'o' ]
+        |> mapIndexed Down Tuple.pair
+    --> Array.l4 ( 3, 'h' ) ( 2, 'i' ) ( 1, 'y' ) ( 0, 'o' )
+
+-}
+mapFoldFrom :
+    accumulationValue
+    -> Linear.Direction
+    ->
+        ({ element : element, folded : accumulationValue }
+         -> { element : mappedElement, folded : accumulationValue }
+        )
+    ->
+        (ArraySized element length
+         ->
+            { mapped : ArraySized mappedElement length
+            , folded : accumulationValue
+            }
+        )
+mapFoldFrom accumulationValueInitial direction reduce =
+    \arraySized ->
+        arraySized |> ArraySized.Internal.mapFoldFrom accumulationValueInitial direction reduce
 
 
 {-| Reduce an `ArraySized` in a given [`Direction`](https://package.elm-lang.org/packages/indique/elm-linear-direction/latest/)
@@ -2542,10 +2591,7 @@ pushMin :
     ->
         (ArraySized
             element
-            (In
-                (Up minX To minPlusX)
-                (Up maxX_ To maxPlusX_)
-            )
+            (In (Up minX To minPlusX) max_)
          ->
             ArraySized
                 element
@@ -2554,6 +2600,7 @@ pushMin :
 pushMin newLastElement =
     \arraySized ->
         arraySized
+            |> maxToOn
             |> push newLastElement
             |> maxToInfinity
 
@@ -2636,14 +2683,13 @@ insertMin :
     )
     -> element
     ->
-        (ArraySized
-            element
-            (In (On min) (Up x_ To maxPlusX_))
+        (ArraySized element (In (On min) max_)
          -> ArraySized element (Min (On (Add1 min)))
         )
 insertMin ( direction, index ) toInsert =
     \arraySized ->
         arraySized
+            |> maxToOn
             |> insert ( direction, index ) toInsert
             |> maxToInfinity
 
@@ -2753,10 +2799,7 @@ Know both maxima → [`interweave`](#interweave)
 interweaveMin :
     ArraySized
         element
-        (In
-            (Up minPlusX To minSumPlusX)
-            interweaveMax_
-        )
+        (In (Up minPlusX To minSumPlusX) interweaveMax_)
     ->
         (ArraySized
             element
@@ -2840,14 +2883,9 @@ attachMin :
     ->
         ArraySized
             element
-            (In
-                (Up minPlusX To minSumPlusX)
-                extensionMax_
-            )
+            (In (Up minPlusX To minSumPlusX) extensionMax_)
     ->
-        (ArraySized
-            element
-            (In (Up x To minPlusX) max_)
+        (ArraySized element (In (Up x To minPlusX) max_)
          -> ArraySized element (Min (Up x To minSumPlusX))
         )
 attachMin direction extension =
