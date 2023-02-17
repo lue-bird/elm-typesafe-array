@@ -1790,11 +1790,11 @@ You'll often find this under the name "mapAccum"
                 , folded = state.folded + state.element
                 }
             )
-    --> { mapped = ArraySized.l3 5 3 0, folded = 6 }
+    --→ { mapped = ArraySized.l3 5 3 0, folded = 6 }
 
-    mapIndexed : Direction -> (Int -> a -> b) -> (Array a -> Array b)
+    mapIndexed : Direction -> (Int -> a -> b) -> (ArraySized a l -> ArraySized b l)
     mapIndexed indexDirection mapAtIndex =
-        Array.Linear.mapFoldFrom 0
+        ArraySized.mapFoldFrom 0
             indexDirection
             (\state ->
                 { element = state.element |> mapAtIndex state.folded
@@ -1805,11 +1805,11 @@ You'll often find this under the name "mapAccum"
 
     ArraySized.l4 'h' 'i' 'y' 'o'
         |> mapIndexed Up Tuple.pair
-    --> Array.l4 ( 0, 'h' ) ( 1, 'i' ) ( 2, 'y' ) ( 3, 'o' )
+    --→ ArraySized.l4 ( 0, 'h' ) ( 1, 'i' ) ( 2, 'y' ) ( 3, 'o' )
 
-    Array.fromList [ 'h', 'i', 'y', 'o' ]
+    ArraySized.l4 'h' 'i' 'y' 'o'
         |> mapIndexed Down Tuple.pair
-    --> Array.l4 ( 3, 'h' ) ( 2, 'i' ) ( 1, 'y' ) ( 0, 'o' )
+    --→ ArraySized.l4 ( 3, 'h' ) ( 2, 'i' ) ( 1, 'y' ) ( 0, 'o' )
 
 -}
 mapFoldFrom :
