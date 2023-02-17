@@ -2046,7 +2046,7 @@ Use [`element`](#element) if you know your index always points to a valid locati
 -}
 elementTry :
     ( Linear.Direction
-    , N range_
+    , N indexRange_
     )
     ->
         (ArraySized element range_
@@ -2111,7 +2111,7 @@ toChunksOf :
         N
             (In
                 (On (Add1 chunkMinFrom1))
-                (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+                (Up chunkMaxX To (Add1 chunkMaxFrom1PlusX))
             )
     ->
         (ArraySized element (In (On minLength_) max)
@@ -2122,7 +2122,7 @@ toChunksOf :
                         element
                         (In
                             (On (Add1 chunkMinFrom1))
-                            (Up chunkMaxX To (Add1 chunkMaxMinus1PlusX))
+                            (Up chunkMaxX To (Add1 chunkMaxFrom1PlusX))
                         )
                     )
                     (In (Up0 minX_) max)
@@ -2131,7 +2131,7 @@ toChunksOf :
                     element
                     (In
                         (Up remainderMinX To remainderMinX)
-                        (Up chunkMaxX To chunkMaxMinus1PlusX)
+                        (Up chunkMaxX To chunkMaxFrom1PlusX)
                     )
             }
         )
@@ -2974,14 +2974,14 @@ remove :
             element
             (In
                 (On (Add1 minFrom1))
-                (Up maxX To (Add1 maxMinus1PlusX))
+                (Up maxX To (Add1 maxFrom1PlusX))
             )
          ->
             ArraySized
                 element
                 (In
                     (On minFrom1)
-                    (Up maxX To maxMinus1PlusX)
+                    (Up maxX To maxFrom1PlusX)
                 )
         )
 remove ( direction, index ) =
@@ -3051,8 +3051,8 @@ removeMin ( direction, index ) =
 has :
     N
         (In
-            (Up minX To (Add1 comparedAgainstMinPlusXMinus1))
-            (Up maxX To (Add1 comparedAgainstMaxPlusXMinus1))
+            (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
+            (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
         )
     ->
         (ArraySized element (In min max)
@@ -3063,13 +3063,13 @@ has :
                         element
                         (In
                             min
-                            (Up maxX To comparedAgainstMaxPlusXMinus1)
+                            (Up maxX To comparedAgainstMaxPlusXFrom1)
                         )
                     )
                     (ArraySized
                         element
                         (In
-                            (Up minX To (Add2 comparedAgainstMinPlusXMinus1))
+                            (Up minX To (Add2 comparedAgainstMinPlusXFrom1))
                             max
                         )
                     )
@@ -3077,8 +3077,8 @@ has :
                 (ArraySized
                     element
                     (In
-                        (Up minX To (Add1 comparedAgainstMinPlusXMinus1))
-                        (Up maxX To (Add1 comparedAgainstMaxPlusXMinus1))
+                        (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
+                        (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
                     )
                 )
         )
@@ -3111,7 +3111,7 @@ hasIn :
     ( N
         (In
             lowerLimitMin
-            (Up lowerLimitMaxX To (Add1 lowerLimitMaxPlusXMinus1))
+            (Up lowerLimitMaxX To (Add1 lowerLimitMaxPlusXFrom1))
         )
     , N
         (In
@@ -3128,7 +3128,7 @@ hasIn :
                         element
                         (In
                             min
-                            (Up lowerLimitMaxX To lowerLimitMaxPlusXMinus1)
+                            (Up lowerLimitMaxX To lowerLimitMaxPlusXFrom1)
                         )
                     )
                     (ArraySized
@@ -3163,7 +3163,7 @@ hasAtLeast :
     N
         (In
             lowerLimitMin
-            (Up lowerLimitMaxX To (Add1 lowerLimitMaxMinus1PlusX))
+            (Up lowerLimitMaxX To (Add1 lowerLimitMaxFrom1PlusX))
         )
     ->
         (ArraySized element (In min max)
@@ -3173,7 +3173,7 @@ hasAtLeast :
                     element
                     (In
                         min
-                        (Up lowerLimitMaxX To lowerLimitMaxMinus1PlusX)
+                        (Up lowerLimitMaxX To lowerLimitMaxFrom1PlusX)
                     )
                 )
                 (ArraySized element (In lowerLimitMin max))
