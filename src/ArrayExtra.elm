@@ -1,38 +1,50 @@
-module ArrayExtra exposing (allFill)
+module ArrayExtra exposing (allOk)
 
 {-| Should be replaced by Array.Extra functions if they are added there
 
 
 # transform
 
-@docs allFill
+@docs allOk
 
 -}
 
 import Array exposing (Array)
 import Emptiable exposing (Emptiable, filled)
+import Stack exposing (Stacked)
 
 
-allFill :
-    Array (Emptiable element possiblyOrNever)
-    -> Emptiable (Array element) possiblyOrNever
-allFill =
+allOk :
+    Array (Result error ok)
+    ->
+        Result
+            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (Array ok)
+allOk =
     \array ->
         array
-            |> Array.toList
-            |> listAllFill
-            |> Emptiable.map Array.fromList
+            |> Array.foldr
+                (\element soFar ->
+                    { index = soFar.index + 1
+                    , combined =
+                        case soFar.combined of
+                            Ok soFarOks ->
+                                case element of
+                                    Ok elementOk ->
+                                        soFarOks |> (::) elementOk |> Ok
 
+                                    Err elementError ->
+                                        Stack.one { index = soFar.index, error = elementError } |> Err
 
-listAllFill :
-    List (Emptiable element possiblyOrNever)
-    -> Emptiable (List element) possiblyOrNever
-listAllFill =
-    List.foldr
-        (\element soFar ->
-            soFar
-                |> Emptiable.and element
-                |> Emptiable.map
-                    (\( fills, fill ) -> fills |> (::) fill)
-        )
-        ([] |> filled)
+                            Err soFarErrors ->
+                                case element of
+                                    Ok elementOk ->
+                                        soFarErrors |> Err
+
+                                    Err elementError ->
+                                        soFarErrors |> Stack.onTopLay { index = soFar.index, error = elementError } |> Err
+                    }
+                )
+                { index = 0, combined = [] |> Ok }
+            |> .combined
+            |> Result.map Array.fromList

@@ -5,7 +5,7 @@ module ArraySized.Internal exposing
     , has, hasAtLeast, hasAtMost, hasIn
     , elementReplace, remove, removeMin, push, insert, reverse
     , map, mapFoldFrom
-    , fills, allFill
+    , fills
     , and
     , attach, attachMin
     , padToAtLeast
@@ -19,6 +19,7 @@ module ArraySized.Internal exposing
     , minSubtract, minTo, minEndsSubtract
     , maxTo, maxToInfinity, maxAdd, maxEndsSubtract
     , hasAtLeast1, min0Adapt, minAtLeast1Never
+    , allOk
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -234,15 +235,18 @@ fills =
             }
 
 
-allFill :
-    ArraySized (Emptiable elementContent possiblyOrNever) range
-    -> Emptiable (ArraySized elementContent range) possiblyOrNever
-allFill =
+allOk :
+    ArraySized (Result error ok) range
+    ->
+        Result
+            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (ArraySized ok range)
+allOk =
     \arraySized ->
         arraySized
             |> toArray
-            |> Array.allFill
-            |> Emptiable.map
+            |> Array.allOk
+            |> Result.map
                 (\array ->
                     ArraySized
                         { array = array
