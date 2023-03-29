@@ -1,5 +1,9 @@
 # change log
 
+### 30.1.0
+
+  - `allOk` add
+
 ## 30.0.0
 
   - `linear-direction` → >= 11.0.0

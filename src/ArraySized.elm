@@ -9,7 +9,7 @@ module ArraySized exposing
     , elementReplace, elementAlter, reverse
     , push, pushMin, insert, insertMin
     , remove, removeMin
-    , fills, allFill
+    , fills, allFill, allOk
     , take, drop, dropMin
     , toChunksOf
     , and
@@ -107,7 +107,7 @@ Searching for all, any? → [`allFill`](#allFill)
 
 ## filter
 
-@docs fills, allFill
+@docs fills, allFill, allOk
 
 
 ## part
@@ -1602,7 +1602,59 @@ allFill :
         range
     -> Emptiable (ArraySized fill range) possiblyOrNever
 allFill =
-    ArraySized.Internal.allFill
+    \arraySized ->
+        let
+            -- annotating lead to a compiler crash
+            -- combinedResult : Result (Emptiable (Stacked { index : Int, error : error }) Never) (ArraySized ok range)
+            combinedResult =
+                arraySized
+                    |> map
+                        (\emptiable ->
+                            case emptiable of
+                                Emptiable.Filled fill ->
+                                    fill |> Ok
+
+                                Emptiable.Empty possiblyOrNever ->
+                                    possiblyOrNever |> Err
+                        )
+                    |> allOk
+        in
+        case combinedResult of
+            Err possiblyOrNeverStack ->
+                possiblyOrNeverStack |> Stack.top |> .error |> Emptiable.Empty
+
+            Ok oks ->
+                oks |> Emptiable.filled
+
+
+{-| If every `Emptiable` is `filled`, all of the values.
+If any element is `empty`, `empty`
+
+    import Stack
+
+    ArraySized.empty
+        |> ArraySized.allOk
+        |> Result.map ArraySized.toList
+    --> Ok []
+
+    ArraySized.l3 (Ok 1) (Ok 2) (Ok 3)
+        |> ArraySized.allOk
+        |> Result.map ArraySized.toList
+    --> Ok [ 1, 2, 3 ]
+
+    ArraySized.l3 (Ok 1) (Err "not a number") (Ok 3)
+        |> ArraySized.allOk
+    --> Err (Stack.one { index = 1, error = "not a number" })
+
+-}
+allOk :
+    ArraySized (Result error ok) range
+    ->
+        Result
+            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (ArraySized ok range)
+allOk =
+    ArraySized.Internal.allOk
 
 
 
