@@ -1603,32 +1603,27 @@ allFill :
     -> Emptiable (ArraySized fill range) possiblyOrNever
 allFill =
     \arraySized ->
-        let
-            -- annotating lead to a compiler crash
-            -- combinedResult : Result (Emptiable (Stacked { index : Int, error : error }) Never) (ArraySized ok range)
-            combinedResult =
-                arraySized
-                    |> map
-                        (\emptiable ->
-                            case emptiable of
-                                Emptiable.Filled fill ->
-                                    fill |> Ok
-
-                                Emptiable.Empty possiblyOrNever ->
-                                    possiblyOrNever |> Err
-                        )
-                    |> allOk
-        in
-        case combinedResult of
+        case arraySized |> map filledToOk |> allOk of
             Err possiblyOrNeverStack ->
-                possiblyOrNeverStack |> Stack.top |> .error |> Emptiable.Empty
+                possiblyOrNeverStack |> Stack.top |> Emptiable.Empty
 
-            Ok oks ->
-                oks |> Emptiable.filled
+            Ok fillValues ->
+                fillValues |> Emptiable.filled
 
 
-{-| If every `Emptiable` is `filled`, all of the values.
-If any element is `empty`, `empty`
+filledToOk : Emptiable value error -> Result error value
+filledToOk =
+    \emptiable ->
+        case emptiable of
+            Emptiable.Filled fill ->
+                fill |> Ok
+
+            Emptiable.Empty possiblyOrNever ->
+                possiblyOrNever |> Err
+
+
+{-| If every `Result` is `Ok`, all of the values.
+If any element is `Err`, all the errors.
 
     import Stack
 
@@ -1644,14 +1639,14 @@ If any element is `empty`, `empty`
 
     ArraySized.l3 (Ok 1) (Err "not a number") (Ok 3)
         |> ArraySized.allOk
-    --> Err (Stack.one { index = 1, error = "not a number" })
+    --> Err (Stack.one "not a number")
 
 -}
 allOk :
     ArraySized (Result error ok) range
     ->
         Result
-            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (Emptiable (Stacked error) Never)
             (ArraySized ok range)
 allOk =
     ArraySized.Internal.allOk

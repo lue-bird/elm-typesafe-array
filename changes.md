@@ -1,5 +1,9 @@
 # change log
 
+## 31.0.0
+
+  - `allOk` don't add indexes in favor of adding indexes to errors yourself beforehand
+
 ### 30.1.0
 
   - `allOk` add

@@ -10,7 +10,7 @@ module ArrayExtra exposing (allOk)
 -}
 
 import Array exposing (Array)
-import Emptiable exposing (Emptiable, filled)
+import Emptiable exposing (Emptiable)
 import Stack exposing (Stacked)
 
 
@@ -18,33 +18,29 @@ allOk :
     Array (Result error ok)
     ->
         Result
-            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (Emptiable (Stacked error) Never)
             (Array ok)
 allOk =
     \array ->
         array
             |> Array.foldr
                 (\element soFar ->
-                    { index = soFar.index + 1
-                    , combined =
-                        case soFar.combined of
-                            Ok soFarOks ->
-                                case element of
-                                    Ok elementOk ->
-                                        soFarOks |> (::) elementOk |> Ok
+                    case soFar of
+                        Ok soFarOks ->
+                            case element of
+                                Ok elementOk ->
+                                    soFarOks |> (::) elementOk |> Ok
 
-                                    Err elementError ->
-                                        Stack.one { index = soFar.index, error = elementError } |> Err
+                                Err elementError ->
+                                    Stack.one elementError |> Err
 
-                            Err soFarErrors ->
-                                case element of
-                                    Ok elementOk ->
-                                        soFarErrors |> Err
+                        Err soFarErrors ->
+                            case element of
+                                Ok _ ->
+                                    soFarErrors |> Err
 
-                                    Err elementError ->
-                                        soFarErrors |> Stack.onTopLay { index = soFar.index, error = elementError } |> Err
-                    }
+                                Err elementError ->
+                                    soFarErrors |> Stack.onTopLay elementError |> Err
                 )
-                { index = 0, combined = [] |> Ok }
-            |> .combined
+                ([] |> Ok)
             |> Result.map Array.fromList

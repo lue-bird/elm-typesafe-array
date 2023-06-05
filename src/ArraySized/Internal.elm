@@ -5,7 +5,7 @@ module ArraySized.Internal exposing
     , has, hasAtLeast, hasAtMost, hasIn
     , elementReplace, remove, removeMin, push, insert, reverse
     , map, mapFoldFrom
-    , fills
+    , fills, allOk
     , and
     , attach, attachMin
     , padToAtLeast
@@ -19,7 +19,6 @@ module ArraySized.Internal exposing
     , minSubtract, minTo, minEndsSubtract
     , maxTo, maxToInfinity, maxAdd, maxEndsSubtract
     , hasAtLeast1, min0Adapt, minAtLeast1Never
-    , allOk
     )
 
 {-| Contains all functions that directly use type-unsafe operations.
@@ -52,7 +51,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## filter
 
-@docs fills, allFill
+@docs fills, allOk
 
 
 ## combine
@@ -239,7 +238,7 @@ allOk :
     ArraySized (Result error ok) range
     ->
         Result
-            (Emptiable (Stacked { index : Int, error : error }) Never)
+            (Emptiable (Stacked error) Never)
             (ArraySized ok range)
 allOk =
     \arraySized ->
