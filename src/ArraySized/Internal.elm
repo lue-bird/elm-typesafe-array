@@ -1,6 +1,6 @@
 module ArraySized.Internal exposing
     ( ArraySized
-    , empty, fromArray, repeat, upTo, random, fuzz, inFuzz
+    , empty, fromArray, repeat, n1To, random, fuzz, inFuzz
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
     , elementReplace, remove, removeMin, push, insert, reverse
@@ -30,15 +30,15 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # create
 
-@docs empty, fromArray, repeat, upTo, random, fuzz, inFuzz
+@docs empty, fromArray, repeat, n1To, random, fuzz, inFuzz
 
 
-# scan
+# observe
 
 @docs element, length
 
 
-## scan length
+## observe length
 
 @docs has, hasAtLeast, hasAtMost, hasIn
 
@@ -127,10 +127,10 @@ instead of failing silently like [Orasund's static-array](https://package.elm-la
 -}
 element :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMinFrom1_ To minFrom1))
+    , N (In (On (Add1 indexMin_)) (Up indexMaxToMin_ To min))
     )
     ->
-        (ArraySized element (In (On (Add1 minFrom1)) max_)
+        (ArraySized element (In (On min) max_)
          -> element
         )
 element ( direction, index ) =
@@ -138,7 +138,7 @@ element ( direction, index ) =
         case
             arraySized
                 |> toArray
-                |> Array.Linear.element ( direction, index |> N.toInt )
+                |> Array.Linear.element ( direction, (index |> N.toInt) - 1 )
         of
             Just elementFound ->
                 elementFound
@@ -314,18 +314,17 @@ fromArray =
     \array ->
         ArraySized
             { array = array
-            , length =
-                array |> Array.length |> N.intToAtLeast n0
+            , length = array |> Array.length |> N.intToAtLeast n0
             }
 
 
 stackUpTo :
-    { first : N (In (Up minX To minPlusX) firstMax_)
-    , last : N (In (Up minX To minPlusX) max)
+    { first : N (In (Up firstMinX To firstMinPlusX) firstMax_)
+    , last : N (In (Up lastMinX_ To lastMinPlusX_) max)
     }
     ->
         Emptiable
-            (Stacked (N (In (Up minX To minPlusX) max)))
+            (Stacked (N (In (Up firstMinX To firstMinPlusX) max)))
             Possibly
 stackUpTo { first, last } =
     case first |> N.isAtMost last of
@@ -333,36 +332,36 @@ stackUpTo { first, last } =
             Emptiable.empty
 
         Ok indexAtMostLast ->
-            { first = indexAtMostLast |> N.addMin n1 |> N.minSubtract n1
-            , last = last
-            }
-                |> stackUpToRecursive
+            stackUpToRecursive
+                { first = indexAtMostLast |> N.addMin n1 |> N.minSubtract n1
+                , last = last
+                }
                 |> Stack.onTopLay indexAtMostLast
 
 
-upTo :
-    N (In (On min) (Up maxX To maxPlusX))
+n1To :
+    N (In (Up minX To minPlusX) max)
     ->
         ArraySized
-            (N (In (Up0 nMinX_) (Up maxX To maxPlusX)))
-            (In (On (Add1 min)) (Up maxX To (Add1 maxPlusX)))
-upTo last =
+            (N (In (Up1 nMinX_) max))
+            (In (Up minX To minPlusX) max)
+n1To last =
     ArraySized
         { array =
-            stackUpTo { first = n0, last = last |> N.minTo n0 }
+            stackUpTo { first = n1, last = last }
                 |> Stack.toList
                 |> Array.fromList
-        , length = last |> N.add n1
+        , length = last
         }
 
 
 stackUpToRecursive :
-    { first : N (In (Up minX To minPlusX) firstMax_)
-    , last : N (In (Up minX To minPlusX) max)
+    { first : N (In (Up firstMinX To firstMinPlusX) firstMax_)
+    , last : N (In (Up lastMinX_ To lastMinPlusX_) max)
     }
     ->
         Emptiable
-            (Stacked (N (In (Up minX To minPlusX) max)))
+            (Stacked (N (In (Up firstMinX To firstMinPlusX) max)))
             Possibly
 stackUpToRecursive =
     stackUpTo
@@ -488,16 +487,13 @@ push elementToPush =
 
 insert :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMin_ To min))
+    , N (In (On (Add1 indexMinFrom1_)) (Up indexMaxToMin_ To (Add1 min)))
     )
     -> element
     ->
         (ArraySized
             element
-            (In
-                (On min)
-                (Up maxX To maxPlusX)
-            )
+            (In (On min) (Up maxX To maxPlusX))
          ->
             ArraySized
                 element
@@ -513,7 +509,7 @@ insert ( direction, index ) elementToInsert =
                 arraySized
                     |> toArray
                     |> Array.Linear.insert
-                        ( direction, index |> N.toInt )
+                        ( direction, index |> N.subtract n1 |> N.toInt )
                         (\() -> elementToInsert)
             , length = arraySized |> length |> N.add n1
             }
@@ -521,7 +517,7 @@ insert ( direction, index ) elementToInsert =
 
 remove :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMinFrom1_ To minFrom1))
+    , N (In (On (Add1 indexMinFrom1_)) (Up indexMaxToMinFrom1_ To (Add1 minFrom1)))
     )
     ->
         (ArraySized
@@ -533,10 +529,7 @@ remove :
          ->
             ArraySized
                 element
-                (In
-                    (On minFrom1)
-                    (Up maxX To maxFrom1PlusX)
-                )
+                (In (On minFrom1) (Up maxX To maxFrom1PlusX))
         )
 remove ( direction, index ) =
     \arraySized ->
@@ -545,14 +538,14 @@ remove ( direction, index ) =
                 arraySized
                     |> toArray
                     |> Array.Linear.remove
-                        ( direction, index |> N.toInt )
+                        ( direction, index |> N.subtract n1 |> N.toInt )
             , length = arraySized |> length |> N.subtract n1
             }
 
 
 removeMin :
     ( Linear.Direction
-    , N indexRange_
+    , N (In (On (Add1 indexMinFrom1_)) indexMax_)
     )
     ->
         (ArraySized element (In (On (Add1 minFrom1)) max)
@@ -565,7 +558,7 @@ removeMin ( direction, index ) =
                 arraySized
                     |> toArray
                     |> Array.Linear.remove
-                        ( direction, index |> N.toInt )
+                        ( direction, index |> N.subtractMin n1 |> N.toInt )
             , length = arraySized |> length |> N.subtractMin n1
             }
 
@@ -648,13 +641,13 @@ interweave :
             (Up maxPlusX To maxSumPlusX)
         )
     ->
-        (ArraySized element (In (Up x To minPlusX) (Up x To maxPlusX))
+        (ArraySized element (In (Up minX To minPlusX) (Up maxX To maxPlusX))
          ->
             ArraySized
                 element
                 (In
-                    (Up x To minSumPlusX)
-                    (Up x To maxSumPlusX)
+                    (Up minX To minSumPlusX)
+                    (Up maxX To maxSumPlusX)
                 )
         )
 interweave separatorsToPlaceBetweenTheElements =

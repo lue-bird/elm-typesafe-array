@@ -306,7 +306,7 @@ lAndTo16 =
                         (lambda [ varPattern "arr" ]
                             (fqConstruct [ "Toop" ]
                                 (t i)
-                                (List.range 0 (i - 1)
+                                (List.range 1 i
                                     |> List.map
                                         (\argI ->
                                             applyBinOp

@@ -5,7 +5,7 @@ Knowing more about the length of an `Array` at compile-time to help you **access
 ```elm
 ticTacToeBoard
     |> ArraySized.element ( Up, n2 )
-    |> ArraySized.element ( Up, n0 )
+    |> ArraySized.element ( Up, n1 )
 ```
 
 **gives the element, no `Maybe`**
@@ -31,8 +31,8 @@ ticTacToeBoard =
 
 ticTacToeBoard
     |> ArraySized.element ( Up, n2 )
-    |> ArraySized.element ( Up, n0 )
---→ O
+    |> ArraySized.element ( Up, n1 )
+--→ Empty (indexes start with 1)
 ```
 **We & the compiler knew** there were enough elements in `ticTacToeBoard`
 
@@ -64,7 +64,7 @@ last :
     ArraySized element (In (On (Add1 minFrom1_)) max_)
     -> element
 last =
-    ArraySized.element ( Down, n0 )
+    ArraySized.element ( Down, n1 ) -- indexes start with 1
 
 greatest :
     ArraySized comparable (In (On (Add1 minFrom1_)) max_)
@@ -96,7 +96,7 @@ Like in the tic-tac-toe example
 
 ```elm
 import Linear exposing (Direction(..))
-import N exposing (n1, n4, n6, n8, N8, Exactly, On)
+import N exposing (n2, n4, n7, n8, N8, Exactly, On)
 import ArraySized exposing (ArraySized)
 
 type alias ChessBoard =
@@ -132,9 +132,10 @@ initialChessBoard =
         |> ArraySized.push (firstRow Black)
 
 initialChessBoard
-    |> ArraySized.element ( Up, n1 )
-    |> ArraySized.element ( Up, n6 )
+    |> ArraySized.element ( Up, n2 )
+    |> ArraySized.element ( Up, n7 )
 --> Piece Pawn White
+--  (indexes start with 1)
 ```
 
 
@@ -159,7 +160,9 @@ tag (ArraySized.repeat "into-the-trends" n100) -- type error
 
   - [`module ArraySized`](ArraySized) documents everything to start
   - [some example apps using `ArraySized`](https://github.com/lue-bird/elm-typesafe-array/tree/master/examples)
-  - [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in [`ArraySized`](ArraySized#ArraySized)
+  - [elm-bits](https://package.elm-lang.org/packages/lue-bird/elm-bits/latest/): bits stored in an [`ArraySized`](ArraySized#ArraySized)
+  - [elm-morph](https://package.elm-lang.org/packages/lue-bird/elm-morph/latest/) can safely parse a number of elements in a given range using [`ArraySized`](ArraySized#ArraySized)
+  - [schach](https://github.com/lue-bird/schach) with a 8x8 [`ArraySized`](ArraySized#ArraySized) chess board
 
 ## [Orasund's `static-array`][static-array] – comparison
 

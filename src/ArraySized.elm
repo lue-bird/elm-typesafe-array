@@ -1,12 +1,13 @@
 module ArraySized exposing
     ( ArraySized
-    , repeat, upTo, random, fuzz, inFuzz
+    , repeat, n1To, random, fuzz, inFuzz
     , fromArray, fromList, fromEmptiable, fromStack, fromString
     , empty, one
     , l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16
     , length
     , element, elementTry, toOne
-    , elementReplace, elementAlter, reverse
+    , hasIn, has, hasAtLeast, hasAtMost
+    , elementReplace, elementAlter, reverse, andIndexes, map, mapFoldFrom
     , push, pushMin, insert, insertMin
     , remove, removeMin
     , fills, allFill, allOk
@@ -16,8 +17,6 @@ module ArraySized exposing
     , attach, attachMin
     , padToAtLeast
     , interweave, interweaveMin
-    , hasIn, has, hasAtLeast, hasAtMost
-    , map, mapFoldFrom
     , foldFrom, fold, foldFromOne
     , toArray, toList, toEmptiable, toStack, toString
     , to2
@@ -74,7 +73,7 @@ so we can [`fold`](#fold), access, ... without a worry
 
 # create
 
-@docs repeat, upTo, random, fuzz, inFuzz
+@docs repeat, n1To, random, fuzz, inFuzz
 @docs fromArray, fromList, fromEmptiable, fromStack, fromString
 
 
@@ -90,7 +89,7 @@ You can [generate `l<n>` with `n >= 17` locally](https://lue-bird.github.io/elm-
 put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySized.Local as ArraySized`
 
 
-# scan
+# observe
 
 @docs length
 @docs element, elementTry, toOne
@@ -98,9 +97,14 @@ put them in a `module ArraySized.Local exposing (l<n>, ...)` + `import ArraySize
 Searching for all, any? → [`allFill`](#allFill)
 
 
+## observe length
+
+@docs hasIn, has, hasAtLeast, hasAtMost
+
+
 # alter
 
-@docs elementReplace, elementAlter, reverse
+@docs elementReplace, elementAlter, reverse, andIndexes, map, mapFoldFrom
 @docs push, pushMin, insert, insertMin
 @docs remove, removeMin
 
@@ -124,14 +128,8 @@ Searching for all, any? → [`allFill`](#allFill)
 @docs interweave, interweaveMin
 
 
-# length compare
-
-@docs hasIn, has, hasAtLeast, hasAtMost
-
-
 # transform
 
-@docs map, mapFoldFrom
 @docs foldFrom, fold, foldFromOne
 @docs toArray, toList, toEmptiable, toStack, toString
 
@@ -172,14 +170,14 @@ import ArraySized.Internal
 import Emptiable exposing (Emptiable, filled)
 import Fuzz exposing (Fuzzer)
 import Linear exposing (Direction(..))
-import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, In, Min, N, N0, N0OrAdd1, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, On, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n0, n1, n10, n11, n12, n13, n14, n15, n2, n3, n4, n5, n6, n7, n8, n9)
+import N exposing (Add1, Add10, Add11, Add12, Add13, Add14, Add15, Add16, Add2, Add3, Add4, Add5, Add6, Add7, Add8, Add9, Down, In, Min, N, N0, N0OrAdd1, N1, N10, N11, N12, N13, N14, N15, N16, N2, N3, N4, N5, N6, N7, N8, N9, On, To, Up, Up0, Up1, Up10, Up11, Up12, Up13, Up14, Up15, Up16, Up2, Up3, Up4, Up5, Up6, Up7, Up8, Up9, n1, n10, n11, n12, n13, n14, n15, n16, n2, n3, n4, n5, n6, n7, n8, n9)
 import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
 import Toop
 
 
-{-| An `Array` that knows+ about the amount of elements it holds
+{-| An `Array` that knows about the amount of elements it holds.
 
 
 ### result type
@@ -192,7 +190,7 @@ import Toop
 
 Representing a result's numbers as this weird `Up<n> x`
 is what allows the little magic tricks in the library:
-[attaching](#combine), [taking, dropping, chunking](#part), [comparing](#length-compare), ...
+[attaching](#combine), [taking, dropping, chunking](#part), [comparing](#observe-length), ...
 
 
 ### argument type
@@ -233,7 +231,7 @@ avoiding type variables
     : ArraySized ... (Exactly (On N15))
 
 `==` on both [`ArraySized`](#ArraySized)s and `N`s crashes elm.
-[Compare safely](#length-compare)
+[Compare safely](#observe-length)
 or convert [`inToNumber`](#inToNumber)
 
 -}
@@ -249,10 +247,10 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     import N exposing (n4)
     import Array
 
-    ArraySized.upTo n4
+    ArraySized.n1To n4
         |> ArraySized.map N.toInt
         |> ArraySized.toArray
-    --> Array.fromList [ 0, 1, 2, 3, 4 ]
+    --> Array.fromList [ 1, 2, 3, 4 ]
 
 -}
 toArray : ArraySized element range_ -> Array element
@@ -267,10 +265,10 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
 
     import N exposing (n4)
 
-    ArraySized.upTo n4
+    ArraySized.n1To n4
         |> ArraySized.map N.toInt
         |> ArraySized.toList
-    --> [ 0, 1, 2, 3, 4 ]
+    --> [ 1, 2, 3, 4 ]
 
 -}
 toList : ArraySized element range_ -> List element
@@ -288,15 +286,15 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
 
     import N exposing (n4)
 
-    ArraySized.upTo n4
+    ArraySized.n1To n4
         |> ArraySized.map
             (\n ->
                 ('a' |> Char.toCode)
-                    + (n |> N.toInt)
+                    + (n |> N.toInt) - 1
                     |> Char.fromCode
             )
         |> ArraySized.toString
-    --> "abcde"
+    --> "abcd"
 
 -}
 toString : ArraySized Char range_ -> String
@@ -316,10 +314,10 @@ Try to keep extra information as long as you can: ["wrap early, unwrap late"](ht
     import Emptiable
     import Stack
 
-    ArraySized.upTo n4
+    ArraySized.n1To n4
         |> ArraySized.map N.toInt
         |> ArraySized.toStack
-    --> Stack.topBelow 0 [ 1, 2, 3, 4 ]
+    --> Stack.topBelow 1 [ 2, 3, 4 ]
     --: Emptiable (Stacked Int) Never
 
     ArraySized.l4 (0 |> Emptiable.filled) Emptiable.empty Emptiable.empty (3 |> Emptiable.filled)
@@ -531,7 +529,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.upTo n6 -- big yes
+    ArraySized.n1To n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -558,7 +556,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.upTo n6 -- big yes
+    ArraySized.n1To n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -610,7 +608,7 @@ Make sure the compiler knows as much as you about the amount of elements!
 
     ArraySized.l7 0 1 2 3 4 5 6 -- ok
 
-    ArraySized.upTo n6 -- big yes
+    ArraySized.n1To n6 -- big yes
 
 ["wrap early, unwrap late"](https://elm-radio.com/episode/wrap-early-unwrap-late)
 
@@ -963,7 +961,7 @@ l16 a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 =
 toOne : ArraySized element (In (On (Add1 minFrom1_)) (Up maxTo1_ To N1)) -> element
 toOne =
     \arraySized ->
-        arraySized |> element ( Up, n0 )
+        arraySized |> element ( Up, n1 )
 
 
 {-| Transform into a `Toop.T2` to simplify accessing elements, pattern matching
@@ -974,8 +972,8 @@ to2 :
 to2 =
     \arr ->
         Toop.T2
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
+            (arr |> element ( Up, n2 ))
 
 
 {-| Transform into a `Toop.T3` to simplify accessing elements, pattern matching
@@ -986,9 +984,9 @@ to3 :
 to3 =
     \arr ->
         Toop.T3
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
+            (arr |> element ( Up, n3 ))
 
 
 {-| Transform into a `Toop.T4` to simplify accessing elements, pattern matching
@@ -999,10 +997,10 @@ to4 :
 to4 =
     \arr ->
         Toop.T4
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
+            (arr |> element ( Up, n4 ))
 
 
 {-| Transform into a `Toop.T5` to simplify accessing elements, pattern matching
@@ -1013,11 +1011,11 @@ to5 :
 to5 =
     \arr ->
         Toop.T5
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
             (arr |> element ( Up, n4 ))
+            (arr |> element ( Up, n5 ))
 
 
 {-| Transform into a `Toop.T6` to simplify accessing elements, pattern matching
@@ -1028,12 +1026,12 @@ to6 :
 to6 =
     \arr ->
         Toop.T6
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
             (arr |> element ( Up, n4 ))
             (arr |> element ( Up, n5 ))
+            (arr |> element ( Up, n6 ))
 
 
 {-| Transform into a `Toop.T7` to simplify accessing elements, pattern matching
@@ -1044,13 +1042,13 @@ to7 :
 to7 =
     \arr ->
         Toop.T7
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
             (arr |> element ( Up, n4 ))
             (arr |> element ( Up, n5 ))
             (arr |> element ( Up, n6 ))
+            (arr |> element ( Up, n7 ))
 
 
 {-| Transform into a `Toop.T8` to simplify accessing elements, pattern matching
@@ -1061,25 +1059,6 @@ to8 :
 to8 =
     \arr ->
         Toop.T8
-            (arr |> element ( Up, n0 ))
-            (arr |> element ( Up, n1 ))
-            (arr |> element ( Up, n2 ))
-            (arr |> element ( Up, n3 ))
-            (arr |> element ( Up, n4 ))
-            (arr |> element ( Up, n5 ))
-            (arr |> element ( Up, n6 ))
-            (arr |> element ( Up, n7 ))
-
-
-{-| Transform into a `Toop.T9` to simplify accessing elements, pattern matching
--}
-to9 :
-    ArraySized element (In (On (Add9 minFrom9_)) (Up maxTo9_ To N9))
-    -> Toop.T9 element element element element element element element element element
-to9 =
-    \arr ->
-        Toop.T9
-            (arr |> element ( Up, n0 ))
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1090,15 +1069,14 @@ to9 =
             (arr |> element ( Up, n8 ))
 
 
-{-| Transform into a `Toop.T10` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T9` to simplify accessing elements, pattern matching
 -}
-to10 :
-    ArraySized element (In (On (Add10 minFrom10_)) (Up maxTo10_ To N10))
-    -> Toop.T10 element element element element element element element element element element
-to10 =
+to9 :
+    ArraySized element (In (On (Add9 minFrom9_)) (Up maxTo9_ To N9))
+    -> Toop.T9 element element element element element element element element element
+to9 =
     \arr ->
-        Toop.T10
-            (arr |> element ( Up, n0 ))
+        Toop.T9
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1110,15 +1088,14 @@ to10 =
             (arr |> element ( Up, n9 ))
 
 
-{-| Transform into a `Toop.T11` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T10` to simplify accessing elements, pattern matching
 -}
-to11 :
-    ArraySized element (In (On (Add11 minFrom11_)) (Up maxTo11_ To N11))
-    -> Toop.T11 element element element element element element element element element element element
-to11 =
+to10 :
+    ArraySized element (In (On (Add10 minFrom10_)) (Up maxTo10_ To N10))
+    -> Toop.T10 element element element element element element element element element element
+to10 =
     \arr ->
-        Toop.T11
-            (arr |> element ( Up, n0 ))
+        Toop.T10
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1131,15 +1108,14 @@ to11 =
             (arr |> element ( Up, n10 ))
 
 
-{-| Transform into a `Toop.T12` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T11` to simplify accessing elements, pattern matching
 -}
-to12 :
-    ArraySized element (In (On (Add12 minFrom2_)) (Up maxTo12_ To N12))
-    -> Toop.T12 element element element element element element element element element element element element
-to12 =
+to11 :
+    ArraySized element (In (On (Add11 minFrom11_)) (Up maxTo11_ To N11))
+    -> Toop.T11 element element element element element element element element element element element
+to11 =
     \arr ->
-        Toop.T12
-            (arr |> element ( Up, n0 ))
+        Toop.T11
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1153,15 +1129,14 @@ to12 =
             (arr |> element ( Up, n11 ))
 
 
-{-| Transform into a `Toop.T13` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T12` to simplify accessing elements, pattern matching
 -}
-to13 :
-    ArraySized element (In (On (Add13 minFrom13_)) (Up maxTo13_ To N13))
-    -> Toop.T13 element element element element element element element element element element element element element
-to13 =
+to12 :
+    ArraySized element (In (On (Add12 minFrom2_)) (Up maxTo12_ To N12))
+    -> Toop.T12 element element element element element element element element element element element element
+to12 =
     \arr ->
-        Toop.T13
-            (arr |> element ( Up, n0 ))
+        Toop.T12
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1176,15 +1151,14 @@ to13 =
             (arr |> element ( Up, n12 ))
 
 
-{-| Transform into a `Toop.T14` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T13` to simplify accessing elements, pattern matching
 -}
-to14 :
-    ArraySized element (In (On (Add14 minFrom14_)) (Up maxTo14_ To N14))
-    -> Toop.T14 element element element element element element element element element element element element element element
-to14 =
+to13 :
+    ArraySized element (In (On (Add13 minFrom13_)) (Up maxTo13_ To N13))
+    -> Toop.T13 element element element element element element element element element element element element element
+to13 =
     \arr ->
-        Toop.T14
-            (arr |> element ( Up, n0 ))
+        Toop.T13
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1200,15 +1174,14 @@ to14 =
             (arr |> element ( Up, n13 ))
 
 
-{-| Transform into a `Toop.T15` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T14` to simplify accessing elements, pattern matching
 -}
-to15 :
-    ArraySized element (In (On (Add15 minFrom15_)) (Up maxTo15_ To N15))
-    -> Toop.T15 element element element element element element element element element element element element element element element
-to15 =
+to14 :
+    ArraySized element (In (On (Add14 minFrom14_)) (Up maxTo14_ To N14))
+    -> Toop.T14 element element element element element element element element element element element element element element
+to14 =
     \arr ->
-        Toop.T15
-            (arr |> element ( Up, n0 ))
+        Toop.T14
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1225,15 +1198,14 @@ to15 =
             (arr |> element ( Up, n14 ))
 
 
-{-| Transform into a `Toop.T16` to simplify accessing elements, pattern matching
+{-| Transform into a `Toop.T15` to simplify accessing elements, pattern matching
 -}
-to16 :
-    ArraySized element (In (On (Add16 minFrom16_)) (Up maxTo16_ To N16))
-    -> Toop.T16 element element element element element element element element element element element element element element element element
-to16 =
+to15 :
+    ArraySized element (In (On (Add15 minFrom15_)) (Up maxTo15_ To N15))
+    -> Toop.T15 element element element element element element element element element element element element element element element
+to15 =
     \arr ->
-        Toop.T16
-            (arr |> element ( Up, n0 ))
+        Toop.T15
             (arr |> element ( Up, n1 ))
             (arr |> element ( Up, n2 ))
             (arr |> element ( Up, n3 ))
@@ -1251,44 +1223,99 @@ to16 =
             (arr |> element ( Up, n15 ))
 
 
-{-| Increasing natural numbers until including a given number
+{-| Transform into a `Toop.T16` to simplify accessing elements, pattern matching
+-}
+to16 :
+    ArraySized element (In (On (Add16 minFrom16_)) (Up maxTo16_ To N16))
+    -> Toop.T16 element element element element element element element element element element element element element element element element
+to16 =
+    \arr ->
+        Toop.T16
+            (arr |> element ( Up, n1 ))
+            (arr |> element ( Up, n2 ))
+            (arr |> element ( Up, n3 ))
+            (arr |> element ( Up, n4 ))
+            (arr |> element ( Up, n5 ))
+            (arr |> element ( Up, n6 ))
+            (arr |> element ( Up, n7 ))
+            (arr |> element ( Up, n8 ))
+            (arr |> element ( Up, n9 ))
+            (arr |> element ( Up, n10 ))
+            (arr |> element ( Up, n11 ))
+            (arr |> element ( Up, n12 ))
+            (arr |> element ( Up, n13 ))
+            (arr |> element ( Up, n14 ))
+            (arr |> element ( Up, n15 ))
+            (arr |> element ( Up, n16 ))
+
+
+{-| Increasing natural numbers from `n1` until including a given number
 
     import N exposing (n3, n0)
 
-    ArraySized.upTo n3
+    ArraySized.n1To n3
     --: ArraySized
-    --:     (N (In (Up0 minX_) (Up3 maxX_)))
-    --:     (In (On N4) (Up4 maxX_))
+    --:     (N (In (Up1 nMinX_) (Up3 maxX)))
+    --:     (In (Up3 minX_) (Up3 maxX))
         |> ArraySized.map N.toInt
         |> ArraySized.toList
-    --> [ 0, 1, 2, 3 ]
+    --> [ 1, 2, 3 ]
 
-    ArraySized.upTo n0
+    ArraySized.n1To n0
     --: ArraySized
-    --:     (N (In (Up0 minX_) (Up0 maxX_)))
-    --:     (In (On N1) (Up1 maxX_))
+    --:     (N (In (Up1 nMinX_) (Up0 maxX)))
+    --:     (In (Up0 minX_) (Up0 maxX))
         |> ArraySized.map N.toInt
         |> ArraySized.toList
-    --> [ 0 ]
+    --> []
+    -- This does look weird at first glance...
+    -- The ArraySized says it has Ns in it that are impossible to construct!
+    -- but I promise it makes sense:
+    -- The ArraySized is empty, so we're all good after all
 
-    ArraySized.upTo between2And9
+    ArraySized.n1To between2And9
         |> ArraySized.map (N.add n3)
     --: ArraySized
-    --:    (N (In (Up5 minX_) (Up12 maxX_)))
-    --:    (In (On N3) (Up10 maxX_))
+    --:    (N (In (Up5 nMinX_) (Up12 maxX)))
+    --:    (In (On (Up3 minX_)) (Up10 maxX))
 
-To turn the `On` length minimum into a difference (for results etc.)
-→ [`minTo`](#minTo)
+To add index info to your `ArraySized`, use [`andIndexes`](#andIndexes)
 
 -}
-upTo :
-    N (In (On min) (Up maxX To maxPlusX))
+n1To :
+    N (In (Up minX To minPlusX) max)
     ->
         ArraySized
-            (N (In (Up0 nMinX_) (Up maxX To maxPlusX)))
-            (In (On (Add1 min)) (Up maxX To (Add1 maxPlusX)))
-upTo last =
-    ArraySized.Internal.upTo last
+            (N (In (Up1 nMinX_) max))
+            (In (Up minX To minPlusX) max)
+n1To last =
+    ArraySized.Internal.n1To last
+
+
+{-| Add index info to each element.
+
+    import N exposing (n1, n2, n3)
+
+    ArraySized.l3 'a' 'b' 'c'
+        |> ArraySized.andIndexes
+        |> ArraySized.toList
+    --→ [ { element = 'a', index = n1 |> N.maxTo n3 }
+    --→ , { element = 'b', index = n2 |> N.minTo n1 |> N.maxTo n3 }
+    --→ , { element = 'b', index = n3 |> N.minTo n1 }
+    --→ ]
+
+-}
+andIndexes :
+    ArraySized element (In (Up minX To minPlusX) max)
+    ->
+        ArraySized
+            { element : element, index : N (In (Up1 nMinX_) max) }
+            (In (Up minX To minPlusX) max)
+andIndexes =
+    \arraySized ->
+        arraySized
+            |> and (n1To (arraySized |> length))
+            |> map (\( element_, index ) -> { index = index, element = element_ })
 
 
 {-| `Random.Generator` for a given amount of random elements
@@ -1663,7 +1690,7 @@ in a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear
     import N exposing (n7)
 
     -- its three last elements
-    ArraySized.upTo n3AtLeast
+    ArraySized.n1To n3AtLeast
         |> ArraySized.take Down { atLeast = n3 } n3
 
 Is the amount taken less than the `ArraySized`'s length minimum?
@@ -1685,7 +1712,7 @@ Is the amount taken less than the `ArraySized`'s length minimum?
 
 Is the amount taken greater than the `ArraySized`'s length minimum?
 
-    ArraySized.upTo between3And6
+    ArraySized.n1To between3And6
         -- its first four elements
         |> ArraySized.take Down { atLeast = n3 } (n4 |> N.minTo n3)
 
@@ -1796,7 +1823,7 @@ dropMin direction lengthToDrop =
 
     aToZ : ArraySized Char (In N26 (N26Plus a_))
     aToZ =
-        ArraySized.upTo n25
+        ArraySized.n1To n25
             |> ArraySized.map inABC
 
     inABC index =
@@ -1981,7 +2008,7 @@ foldFromOne startElementToInitialAccumulated direction reduce =
                 { index = 0
                 , result =
                     arraySized
-                        |> element ( direction, n0 )
+                        |> element ( direction, n1 )
                         |> startElementToInitialAccumulated
                 }
                 direction
@@ -2043,26 +2070,26 @@ length =
 {-| Its element at a valid location
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
+Remember that indexes are 1-indexed!
+
     import Linear exposing (Direction(..))
-    import N exposing (n1)
+    import N exposing (n1, n2)
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.element ( Up, n1 )
-    --> 1
+    --> 0
 
     ArraySized.l4 0 1 2 3
-        |> ArraySized.element ( Down, n1 )
+        |> ArraySized.element ( Down, n2 )
     --> 2
 
 -}
 element :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMinFrom1_ To minFrom1))
+    , N (In (On (Add1 indexMin_)) (Up indexMaxToMin_ To min))
     )
     ->
-        (ArraySized
-            element
-            (In (On (Add1 minFrom1)) max_)
+        (ArraySized element (In (On min) max_)
          -> element
         )
 element ( direction, index ) =
@@ -2088,7 +2115,7 @@ Use [`element`](#element) if you know your index always points to a valid locati
 
     ArraySized.l4 0 1 2 3
         |> ArraySized.elementTry ( Down, n1 )
-    --> Emptiable.filled 2
+    --> Emptiable.filled 3
 
 -}
 elementTry :
@@ -2104,7 +2131,7 @@ elementTry ( direction, index ) =
         arraySized
             |> toArray
             |> Array.Linear.element
-                ( direction, index |> N.toInt )
+                ( direction, (index |> N.toInt) - 1 )
             |> Emptiable.fromMaybe
 
 
@@ -2210,7 +2237,7 @@ inToNumber =
 {-| [`ArraySized`](#ArraySized) with a [`length`](#length)
 of equatable [`OnValue` range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InOnValue)
 → [On range](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#InOn),
-allowing it to be [altered](#alter), [compared](#length-compare), ...
+allowing it to be [altered](#alter), [compared](#observe-length), ...
 
 If you have a `Min` length, you instead only need [`minToOn`](#minToOn)
 
@@ -2242,7 +2269,7 @@ minToNumber =
 {-| [`ArraySized`](#ArraySized) with a [`length`](#length)
 with an equatable [`OnValue`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#OnValue) minimum
 → [`On`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#On) minimum,
-allowing it to be [altered](#alter), [compared](#length-compare), ...
+allowing it to be [altered](#alter), [compared](#observe-length), ...
 
 You'll usually use this to convert to a `Min (On ...)` length
 
@@ -2272,7 +2299,7 @@ maxToNumber =
 {-| [`ArraySized`](#ArraySized) with a [`length`](#length)
 with an equatable [`OnValue`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#OnValue) maximum
 → [`On`](https://package.elm-lang.org/packages/lue-bird/elm-bounded-nat/latest/N#On) maximum,
-allowing it to be [altered](#alter), [compared](#length-compare), ...
+allowing it to be [altered](#alter), [compared](#observe-length), ...
 -}
 maxToOn :
     ArraySized element (In min max)
@@ -2645,17 +2672,19 @@ pushMin newLastElement =
 {-| Put an element in the `ArraySized` at a given index
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
+Remember that indexes are 1-indexed!
+
     import Linear exposing (Direction(..))
-    import N exposing (n1, n2)
+    import N exposing (n2, n3)
 
     ArraySized.l3 'a' 'c' 'd'
-        |> ArraySized.insert ( Up, n1 ) 'b'
+        |> ArraySized.insert ( Up, n2 ) 'b'
         --: ArraySized Char (In (On N4) (Up4 maxX_))
         |> ArraySized.toList
     --> [ 'a', 'b', 'c', 'd' ]
 
     ArraySized.l3 'a' 'c' 'd'
-        |> ArraySized.insert ( Down, n2 ) 'b'
+        |> ArraySized.insert ( Down, n3 ) 'b'
         |> ArraySized.toList
     --> [ 'a', 'b', 'c', 'd' ]
 
@@ -2667,16 +2696,13 @@ Need the length minimum to not become `On`
 -}
 insert :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMin_ To min))
+    , N (In (On (Add1 indexMinFrom1_)) (Up indexMaxToMin_ To (Add1 min)))
     )
     -> element
     ->
         (ArraySized
             element
-            (In
-                (On min)
-                (Up maxX To maxPlusX)
-            )
+            (In (On min) (Up maxX To maxPlusX))
          ->
             ArraySized
                 element
@@ -2716,7 +2742,7 @@ Need the length minimum to not become `On`
 -}
 insertMin :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMin_ To min))
+    , N (In (On (Add1 indexMinFrom1_)) (Up indexMaxToMin_ To (Add1 min)))
     )
     -> element
     ->
@@ -3001,12 +3027,14 @@ padToAtLeast paddingDirection paddedLength paddingForLength =
 {-| Kick out the element at a given index
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
+Remember that indexes are 1-indexed!
+
     import Linear exposing (Direction(..))
-    import N exposing (n0)
+    import N exposing (n1)
 
     removeLast between1And10Elements =
         between1And10Elements
-            |> ArraySized.remove ( Down, n0 )
+            |> ArraySized.remove ( Down, n1 )
 
   - Don't know the length maximum? → [`removeMin`](#removeMin)
   - Want to remove an element beyond the length minimum? → [`removeMin`](#removeMin)
@@ -3014,7 +3042,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 -}
 remove :
     ( Linear.Direction
-    , N (In indexMin_ (Up indexMaxToMinFrom1_ To minFrom1))
+    , N (In (On (Add1 indexMinFrom1_)) (Up indexMaxToMinFrom1_ To (Add1 minFrom1)))
     )
     ->
         (ArraySized
@@ -3026,10 +3054,7 @@ remove :
          ->
             ArraySized
                 element
-                (In
-                    (On minFrom1)
-                    (Up maxX To maxFrom1PlusX)
-                )
+                (In (On minFrom1) (Up maxX To maxFrom1PlusX))
         )
 remove ( direction, index ) =
     \arraySized ->
@@ -3039,6 +3064,8 @@ remove ( direction, index ) =
 
 {-| Kick out the element at an index
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+Remember that indexes are 1-indexed!
 
     removeLast =
         ArraySized.removeMin ( Down, n0 )
@@ -3055,16 +3082,11 @@ match on [`ArraySized.hasAtLeast n1`](#hasAtLeast)
 -}
 removeMin :
     ( Linear.Direction
-    , N indexRange_
+    , N (In (On (Add1 indexMinFrom1_)) indexMax_)
     )
     ->
-        (ArraySized
-            element
-            (In (On (Add1 minFrom1)) max)
-         ->
-            ArraySized
-                element
-                (In (On minFrom1) max)
+        (ArraySized element (In (On (Add1 minFrom1)) max)
+         -> ArraySized element (In (On minFrom1) max)
         )
 removeMin ( direction, index ) =
     \arraySized ->

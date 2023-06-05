@@ -2,7 +2,11 @@
 
 ## 31.0.0
 
+  - indexes are now 1-based!
+      - this allows for nicer types for for example `n1To`
   - `allOk` don't add indexes in favor of adding indexes to errors yourself beforehand
+  - `upTo` name → `n1To`
+  - `andIndexes` add
 
 ### 30.1.0
 
@@ -87,7 +91,7 @@
 
   - `elementRemoveMin` index constraint remove
   - `dropOverMin` result minimum use `Up0`
-  - `upTo` performs better
+  - `n1To` performs better
   - documentation improvements
 
 ## 25.0.0
@@ -126,7 +130,7 @@
   - `linear-direction` version → 7.0.0
   - `emptiness-typed` version → 7.0.0
   - `anyIs`, `allAre` name → `any`, `all`
-  - `ArraySized.until` name → `upTo`
+  - `ArraySized.until` name → `n1To`
   - `ArraySized.min`, `max`, `maxNo`, `min<action>` name → `minTo`, `maxTo`, `maxToInfinity`, `<action>Min`
       - to be consistent with `N`
   - `minFromValue`, `minToValue`, `maxFromValue`, `maxToValue` add
