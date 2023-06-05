@@ -8,7 +8,7 @@ import Element.Font as Font
 import Element.Input as UiInput
 import Linear exposing (Direction(..))
 import Maybe.Extra as Maybe
-import N exposing (Exactly, In, N, N0, N2, N3, On, n2, n3)
+import N exposing (Exactly, In, N, N0, N1, N2, N3, On, n2, n3)
 import RecordWithoutConstructorFunction exposing (RecordWithoutConstructorFunction)
 import Stack
 import Toop
@@ -67,8 +67,8 @@ main =
 
 type Event
     = FieldSetByPlayer
-        ( N (In (On N0) (On N2))
-        , N (In (On N0) (On N2))
+        ( N (In (On N1) (On N3))
+        , N (In (On N1) (On N3))
         )
         Player
     | ClearBoardClicked
@@ -129,7 +129,7 @@ isGameOver board =
                     Nothing
 
         rowWon =
-            ArraySized.n1To n2
+            ArraySized.n1To n3
                 |> ArraySized.map
                     (\i ->
                         board
@@ -138,7 +138,7 @@ isGameOver board =
                     )
 
         columnWon =
-            ArraySized.n1To n2
+            ArraySized.n1To n3
                 |> ArraySized.map
                     (\i ->
                         board
@@ -147,7 +147,7 @@ isGameOver board =
                     )
 
         diagonal xDirection =
-            ArraySized.n1To n2
+            ArraySized.n1To n3
                 |> ArraySized.map
                     (\i ->
                         board
@@ -312,10 +312,10 @@ viewBoard { gameStage } =
                         , Background.color (Ui.rgb 0 0 0)
                         ]
         in
-        ArraySized.n1To n2
+        ArraySized.n1To n3
             |> ArraySized.map
                 (\x ->
-                    ArraySized.n1To n2
+                    ArraySized.n1To n3
                         |> ArraySized.map (\y -> viewField ( x, y ))
                         |> ArraySized.toList
                         |> Ui.column
