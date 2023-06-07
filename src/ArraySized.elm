@@ -173,6 +173,7 @@ import Possibly exposing (Possibly)
 import Random
 import Stack exposing (Stacked)
 import Toop
+import Util exposing (filledToOk)
 
 
 {-| An `Array` that knows about the amount of elements it holds.
@@ -1506,7 +1507,7 @@ elementAlter ( direction, index ) elementAlter_ =
                 arraySized
 
 
-{-| Take every `filled value`, drop every `empty`
+{-| Take every `filled` value, drop every `empty`
 
     import Emptiable exposing (filled)
 
@@ -1516,7 +1517,7 @@ elementAlter ( direction, index ) elementAlter_ =
         |> ArraySized.toList
     --> [ "This", "fine" ]
 
-[`map |> fills` to get the same functionality as "filterMap"](https://github.com/lue-bird/elm-typesafe-array/blob/master/Q%20%26%20A.md#no-filtermap-only-fills)
+Use [`map |> fills` to get the same functionality as "filterMap"](https://github.com/lue-bird/elm-typesafe-array/blob/master/Q%20%26%20A.md#no-filtermap-only-fills)
 
     import Emptiable
 
@@ -1634,17 +1635,6 @@ allFill =
 
             Ok fillValues ->
                 fillValues |> Emptiable.filled
-
-
-filledToOk : Emptiable value error -> Result error value
-filledToOk =
-    \emptiable ->
-        case emptiable of
-            Emptiable.Filled fill ->
-                fill |> Ok
-
-            Emptiable.Empty possiblyOrNever ->
-                possiblyOrNever |> Err
 
 
 {-| If every `Result` is `Ok`, all of the values.
@@ -1885,17 +1875,17 @@ You'll often find this under the name "mapAccum"
 
 -}
 mapFoldFrom :
-    accumulationValue
+    folded
     -> Linear.Direction
     ->
-        ({ element : element, folded : accumulationValue }
-         -> { element : mappedElement, folded : accumulationValue }
+        ({ element : element, folded : folded }
+         -> { element : mappedElement, folded : folded }
         )
     ->
-        (ArraySized element length
+        (ArraySized element range
          ->
-            { mapped : ArraySized mappedElement length
-            , folded : accumulationValue
+            { mapped : ArraySized mappedElement range
+            , folded : folded
             }
         )
 mapFoldFrom accumulationValueInitial direction reduce =
@@ -1990,35 +1980,34 @@ Usually used to convert to a different non-empty structure
 
 -}
 foldFromOne :
-    (element -> accumulated)
+    (element -> folded)
     -> Linear.Direction
-    -> (element -> (accumulated -> accumulated))
+    -> (element -> (folded -> folded))
     ->
         (ArraySized
             element
             (In (On (Add1 minFrom1_)) max_)
-         -> accumulated
+         -> folded
         )
-foldFromOne startElementToInitialAccumulated direction reduce =
+foldFromOne startElementToInitialAccumulationValue direction reduce =
     \arraySized ->
         arraySized
             |> foldFrom
-                { index = 0
+                { isStart = True
                 , result =
                     arraySized
                         |> element ( direction, n1 )
-                        |> startElementToInitialAccumulated
+                        |> startElementToInitialAccumulationValue
                 }
                 direction
                 (\el soFar ->
-                    { soFar
-                        | result =
-                            if soFar.index == 0 then
-                                soFar.result
+                    { result =
+                        if soFar.isStart then
+                            soFar.result
 
-                            else
-                                soFar.result |> reduce el
-                        , index = soFar.index + 1
+                        else
+                            soFar.result |> reduce el
+                    , isStart = False
                     }
                 )
             |> .result
