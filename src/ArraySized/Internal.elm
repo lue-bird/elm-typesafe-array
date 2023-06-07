@@ -3,12 +3,11 @@ module ArraySized.Internal exposing
     , empty, fromArray, repeat, n1To, random, fuzz, inFuzz
     , element, length
     , has, hasAtLeast, hasAtMost, hasIn
-    , elementReplace, remove, removeMin, push, insert, reverse
+    , elementReplace, remove, removeMin, push, insert, reverse, toSize
     , map, mapFoldFrom
     , fills, allOk
     , and
     , attach, attachMin
-    , padToAtLeast
     , interweave, interweaveMin
     , take
     , drop, dropMin
@@ -45,7 +44,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # alter
 
-@docs elementReplace, remove, removeMin, push, insert, reverse
+@docs elementReplace, remove, removeMin, push, insert, reverse, toSize
 @docs map, mapFoldFrom
 
 
@@ -58,7 +57,6 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 @docs and
 @docs attach, attachMin
-@docs padToAtLeast
 @docs interweave, interweaveMin
 
 
@@ -575,6 +573,41 @@ reverse =
             }
 
 
+toSize :
+    Linear.Direction
+    -> N (In (Up newMinX To newMinPlusX) newMax)
+    -> (N (In (Up1 indexMin_) newMax) -> element)
+    ->
+        (ArraySized element range_
+         -> ArraySized element (In (Up newMinX To newMinPlusX) newMax)
+        )
+toSize direction newLength padding =
+    \arraySized ->
+        ArraySized
+            { array =
+                case compare (arraySized |> length |> N.toInt) (newLength |> N.toInt) of
+                    EQ ->
+                        arraySized |> toArray
+
+                    GT ->
+                        arraySized
+                            |> toArray
+                            |> Array.Linear.take direction (newLength |> N.toInt)
+
+                    LT ->
+                        arraySized
+                            |> toArray
+                            |> Array.Linear.attach direction
+                                (n1To newLength
+                                    |> toArray
+                                    |> Array.Linear.drop direction
+                                        (arraySized |> length |> N.toInt)
+                                    |> Array.map padding
+                                )
+            , length = newLength
+            }
+
+
 
 -- ## combine
 
@@ -710,42 +743,6 @@ attachMin direction extension =
                         (extension |> toArray)
             , length =
                 (arraySized |> length) |> N.addMin (extension |> length)
-            }
-
-
-padToAtLeast :
-    Linear.Direction
-    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
-    ->
-        (N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
-         ->
-            ArraySized
-                element
-                (In (On paddingMin) (Up maxX To paddingMaxPlusX))
-        )
-    ->
-        (ArraySized
-            element
-            (In (Up paddingMaxPlusX To paddedMaxPlusX) (Up paddingMin To paddedMin))
-         ->
-            ArraySized
-                element
-                (In (On paddedMin) (Up maxX To paddedMaxPlusX))
-        )
-padToAtLeast paddingDirection paddedLength paddingForLength =
-    \arraySized ->
-        let
-            paddingLength : N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
-            paddingLength =
-                paddedLength |> N.subtract (arraySized |> length)
-        in
-        ArraySized
-            { array =
-                arraySized
-                    |> toArray
-                    |> Array.Linear.attach paddingDirection
-                        (paddingLength |> paddingForLength |> toArray)
-            , length = paddedLength
             }
 
 

@@ -11,11 +11,10 @@ module ArraySized exposing
     , push, pushMin, insert, insertMin
     , remove, removeMin
     , fills, allFill, allOk
-    , take, drop, dropMin
+    , take, drop, dropMin, toSize
     , toChunksOf
     , and
     , attach, attachMin
-    , padToAtLeast
     , interweave, interweaveMin
     , foldFrom, fold, foldFromOne
     , toArray, toList, toEmptiable, toStack, toString
@@ -116,7 +115,7 @@ Searching for all, any? → [`allFill`](#allFill)
 
 ## part
 
-@docs take, drop, dropMin
+@docs take, drop, dropMin, toSize
 @docs toChunksOf
 
 
@@ -124,7 +123,6 @@ Searching for all, any? → [`allFill`](#allFill)
 
 @docs and
 @docs attach, attachMin
-@docs padToAtLeast
 @docs interweave, interweaveMin
 
 
@@ -2957,9 +2955,14 @@ attachMin direction extension =
             |> ArraySized.Internal.attachMin direction extension
 
 
-{-| Pad in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
-with a given [`ArraySized`](#ArraySized)
-to reach a given length
+{-| Reach a given length:
+
+  - If the current length is greater than a given length, [`take`](#take) the new length in a given direction
+
+  - If the current length is less than a given length, pad further in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+    based on the index in the final [`ArraySized`](#ArraySized)
+
+.
 
     import N exposing (n8)
     import Linear exposing (Direction(..))
@@ -2969,7 +2972,7 @@ to reach a given length
         | O
 
     ArraySized.l3 I O I
-        |> ArraySized.padToAtLeast Down n8 (ArraySized.repeat O)
+        |> ArraySized.toSize Down n8 (\_ -> O)
         --: ArraySized Bit (In (On N8) (Up8 x_))
         |> ArraySized.toList
     --> [ O, O, O, O, O, I, O, I ]
@@ -2980,7 +2983,7 @@ to reach a given length
         (ArraySized.l8 O I I I O I O O)
         (ArraySized.l8 O I I I O I O O)
         |> ArraySized.map
-            (ArraySized.padToAtLeast Down n8 (ArraySized.repeat O))
+            (ArraySized.toSize Down n8 (\_ -> O))
         |> ArraySized.map ArraySized.toList
         |> ArraySized.toList
     --> [ [ O, O, O, O, O, I, I, I ]
@@ -2990,38 +2993,18 @@ to reach a given length
     --> ]
 
 -}
-padToAtLeast :
+toSize :
     Linear.Direction
-    -> N (In (On paddedMin) (Up maxX To paddedMaxPlusX))
+    -> N (In (Up newMinX To newMinPlusX) newMax)
+    -> (N (In (Up1 indexMin_) newMax) -> element)
     ->
-        (N (In (On paddingMin) (Up maxX To paddingMaxPlusX))
-         ->
-            ArraySized
-                element
-                (In
-                    (On paddingMin)
-                    (Up maxX To paddingMaxPlusX)
-                )
+        (ArraySized element range_
+         -> ArraySized element (In (Up newMinX To newMinPlusX) newMax)
         )
-    ->
-        (ArraySized
-            element
-            (In
-                (Up paddingMaxPlusX To paddedMaxPlusX)
-                (Up paddingMin To paddedMin)
-            )
-         ->
-            ArraySized
-                element
-                (In
-                    (On paddedMin)
-                    (Up maxX To paddedMaxPlusX)
-                )
-        )
-padToAtLeast paddingDirection paddedLength paddingForLength =
+toSize direction newLength padding =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.padToAtLeast paddingDirection paddedLength paddingForLength
+            |> ArraySized.Internal.toSize direction newLength padding
 
 
 {-| Kick out the element at a given index
