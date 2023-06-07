@@ -1,5 +1,12 @@
 # change log
 
+## 32.0.0
+
+  - `padToAtLeast` remove
+      - was too confusing!
+      - in favor of the less strict `toSize`
+  - `toSize` add
+
 ## 31.0.0
 
   - indexes are now 1-based!
