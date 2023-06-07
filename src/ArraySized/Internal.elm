@@ -260,9 +260,9 @@ mapFoldFrom :
          -> { element : mappedElement, folded : accumulationValue }
         )
     ->
-        (ArraySized element length
+        (ArraySized element range
          ->
-            { mapped : ArraySized mappedElement length
+            { mapped : ArraySized mappedElement range
             , folded : accumulationValue
             }
         )
