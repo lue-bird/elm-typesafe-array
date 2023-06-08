@@ -1,5 +1,9 @@
 # change log
 
+## 33.0.0
+
+  - `toChunksOf`, `fills`, `dropMin` argument minimum less strict
+
 ## 32.0.0
 
   - `padToAtLeast` remove
