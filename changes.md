@@ -3,6 +3,7 @@
 ## 33.0.0
 
   - `toChunksOf`, `fills`, `dropMin` argument minimum less strict
+  - `bounded-nat` upgrade to >= 34.0.0
 
 ## 32.0.0
 
