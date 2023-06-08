@@ -1,5 +1,9 @@
 # change log
 
+### 33.1.0
+
+  - `minTo0` add
+
 ## 33.0.0
 
   - `toChunksOf`, `fills`, `dropMin` argument minimum less strict
