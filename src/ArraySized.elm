@@ -1276,7 +1276,7 @@ to16 =
         |> ArraySized.map (N.add n3)
     --: ArraySized
     --:    (N (In (Up5 nMinX_) (Up12 maxX)))
-    --:    (In (On (Up3 minX_)) (Up10 maxX))
+    --:    (In (Up3 minX_) (Up10 maxX))
 
 To add index info to your `ArraySized`, use [`andIndexes`](#andIndexes)
 
@@ -1392,11 +1392,7 @@ inFuzz :
                 lowerLimitMin
                 (Up lowerLimitMaxToUpperLimitMin_ To upperLimitMin)
             )
-        , N
-            (In
-                (On upperLimitMin)
-                upperLimitMax
-            )
+        , N (In (On upperLimitMin) upperLimitMax)
         )
     ->
         Fuzzer
@@ -1531,7 +1527,7 @@ Use [`map |> fills` to get the same functionality as "filterMap"](https://github
 fills :
     ArraySized
         (Emptiable fill possiblyOrNever_)
-        (In (On min_) max)
+        (In min_ max)
     -> ArraySized fill (In (Up0 minX_) max)
 fills =
     ArraySized.Internal.fills
@@ -1755,17 +1751,11 @@ drop :
     ->
         (ArraySized
             element
-            (In
-                (On min)
-                (Up maxX To maxPlusX)
-            )
+            (In (On min) (Up maxX To maxPlusX))
          ->
             ArraySized
                 element
-                (In
-                    (On takenMin)
-                    (Up maxX To takenMaxPlusX)
-                )
+                (In (On takenMin) (Up maxX To takenMaxPlusX))
         )
 drop direction droppedAmount =
     \arraySized ->
@@ -1790,7 +1780,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 -}
 dropMin :
     Linear.Direction
-    -> N (In (On droppedMin_) (Down min To takenMin))
+    -> N (In droppedMin_ (Down min To takenMin))
     ->
         (ArraySized element (In (On min) max)
          -> ArraySized element (In (On takenMin) max)
@@ -2175,7 +2165,7 @@ toChunksOf :
                 (Up chunkMaxX To (Add1 chunkMaxFrom1PlusX))
             )
     ->
-        (ArraySized element (In (On minLength_) max)
+        (ArraySized element (In minLength_ max)
          ->
             { chunks :
                 ArraySized

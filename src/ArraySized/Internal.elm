@@ -212,7 +212,7 @@ map alter =
 fills :
     ArraySized
         (Emptiable fill possiblyOrNever_)
-        (In (On min_) max)
+        (In min_ max)
     -> ArraySized fill (In (Up0 minX_) max)
 fills =
     \arraySizedOfEmptiable ->
@@ -227,8 +227,7 @@ fills =
             , length =
                 filtered
                     |> Array.length
-                    |> N.intToAtLeast n0
-                    |> N.toIn ( n0, arraySizedOfEmptiable |> length )
+                    |> N.intToIn ( n0, arraySizedOfEmptiable |> length |> N.minTo0 )
             }
 
 
@@ -789,16 +788,9 @@ drop direction droppedAmount =
 
 dropMin :
     Linear.Direction
+    -> N (In droppedMin_ (Down min To takenMin))
     ->
-        N
-            (In
-                (On droppedMin_)
-                (Down min To takenMin)
-            )
-    ->
-        (ArraySized
-            element
-            (In (On min) max)
+        (ArraySized element (In (On min) max)
          ->
             ArraySized
                 element
@@ -847,7 +839,7 @@ toChunksOf :
                 (Up chunkMaxX To (Add1 chunkMaxFrom1PlusX))
             )
     ->
-        (ArraySized element (In (On minLength_) max)
+        (ArraySized element (In minLength_ max)
          ->
             { chunks :
                 ArraySized
@@ -885,13 +877,17 @@ toChunksOf chunkingDirection chunkLength =
                             (\chunk ->
                                 ArraySized { array = chunk, length = chunkLength }
                             )
-                , length = arraySized |> length |> N.divideBy chunkLength
+                , length =
+                    arraySized
+                        |> length
+                        |> N.divideBy chunkLength
                 }
         , remainder =
             ArraySized
                 { array = chunked.remainder
                 , length =
-                    length arraySized
+                    arraySized
+                        |> length
                         |> N.remainderBy chunkLength
                 }
         }
