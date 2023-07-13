@@ -1,5 +1,11 @@
 # change log
 
+### 33.2.0
+
+  - `dropMax` add
+      - consistent with `N.subtractMax`
+  - `takeCurrentMin` add
+
 ### 33.1.0
 
   - `minTo0` add
