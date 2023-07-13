@@ -10,7 +10,7 @@ module ArraySized.Internal exposing
     , attach, attachMin
     , interweave, interweaveMin
     , take
-    , drop, dropMin
+    , drop, dropMin, dropMax
     , toChunksOf
     , toArray
     , minToNumber, minToOn
@@ -63,7 +63,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 ## part
 
 @docs take
-@docs drop, dropMin
+@docs drop, dropMin, dropMax
 @docs toChunksOf
 
 
@@ -810,15 +810,35 @@ dropMin direction droppedAmount =
             }
 
 
+dropMax :
+    Linear.Direction
+    -> N (In (Down max To differenceMax) toDropMax_)
+    ->
+        (ArraySized element (In min_ (On max))
+         -> ArraySized element (In (Up0 minX_) (On differenceMax))
+        )
+dropMax direction lengthToDrop =
+    \arraySized ->
+        ArraySized
+            { array =
+                arraySized
+                    |> toArray
+                    |> Array.Linear.drop direction
+                        (lengthToDrop |> N.toInt)
+            , length =
+                (arraySized |> length)
+                    |> N.subtractMax lengthToDrop
+            }
+
+
 take :
     Linear.Direction
-    -> { atLeast : N (In takenMin (Up takenMinToMin_ To min)) }
-    -> N (In takenMin takenMax)
+    -> N (In min takenMax)
     ->
-        (ArraySized element (In (On min) max_)
-         -> ArraySized element (In takenMin takenMax)
+        (ArraySized element (In min max_)
+         -> ArraySized element (In min takenMax)
         )
-take direction _ toTakeAmount =
+take direction toTakeAmount =
     \arraySized ->
         ArraySized
             { array =

@@ -11,7 +11,7 @@ module ArraySized exposing
     , push, pushMin, insert, insertMin
     , remove, removeMin
     , fills, allFill, allOk
-    , take, drop, dropMin, toSize
+    , take, takeCurrentMin, drop, dropMin, dropMax, toSize
     , toChunksOf
     , and
     , attach, attachMin
@@ -115,7 +115,7 @@ Searching for all, any? → [`allFill`](#allFill)
 
 ## part
 
-@docs take, drop, dropMin, toSize
+@docs take, takeCurrentMin, drop, dropMin, dropMax, toSize
 @docs toChunksOf
 
 
@@ -1700,7 +1700,16 @@ Is the amount taken greater than the `ArraySized`'s length minimum?
         -- its first four elements
         |> ArraySized.take Down { atLeast = n3 } (n4 |> N.minTo n3)
 
-Open for alternative API suggestions!
+If you're having trouble understanding the `atLeast` field, think of looking
+at the implementation of `take` will help:
+
+    take direction { atLeast } toTakeAmount =
+        minTo atLeast
+            >> takeCurrentMin direction toTakeAmount
+
+Open for alternative API suggestions! I'm actually close to removing
+`take` in favor of [`takeCurrentMin`](#takeCurrentMin)
+and renaming that to `take`. Let me know what you think!
 
 -}
 take :
@@ -1711,12 +1720,33 @@ take :
         (ArraySized element (In (On min) max_)
          -> ArraySized element (In takenMin takenMax)
         )
-take direction toTakeAmount =
+take direction atLeast toTakeAmount =
     \arraySized ->
         arraySized
-            |> ArraySized.Internal.take
-                direction
-                toTakeAmount
+            |> minTo atLeast.atLeast
+            |> takeCurrentMin direction toTakeAmount
+
+
+{-| Take a given number of elements
+in a given [direction](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+As the simpler version of [`take`](#take)
+you can only take at least the type's minimum amount.
+
+It's most of the time not what you want, since
+you usually want a shorter array minimum after taking.
+
+-}
+takeCurrentMin :
+    Linear.Direction
+    -> N (In min takenMax)
+    ->
+        (ArraySized element (In min max_)
+         -> ArraySized element (In min takenMax)
+        )
+takeCurrentMin direction toTakeAmount =
+    \arraySized ->
+        arraySized |> ArraySized.Internal.take direction toTakeAmount
 
 
 {-| Elements after a certain number of elements
@@ -1737,7 +1767,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
   - Don't know its length maximum? → [`dropMin`](#dropMin)
   - Can the dropped length's maximum be greater than its length's minimum?
-    → [`hasAtLeast`](#hasAtLeast), then [`drop`](#drop)
+    → [`dropMax`](#dropMax)
 
 -}
 drop :
@@ -1775,7 +1805,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 
   - Know its length maximum? → [`drop`](#drop)
   - Can the dropped length's maximum be greater than its length's minimum?
-    → [`sAtLeast`](#hasAtLeast), then [`drop`](#drop)
+    → [`dropMax`](#dropMax)
 
 -}
 dropMin :
@@ -1789,6 +1819,34 @@ dropMin direction lengthToDrop =
     \arraySized ->
         arraySized
             |> ArraySized.Internal.dropMin direction lengthToDrop
+
+
+{-| Elements after a certain number of elements
+in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
+
+    import Linear exposing (Direction(..))
+    import N exposing (n2, n5)
+
+    ArraySized.l4 0 1 2 3
+        |> ArraySized.dropMax Down (3 |> N.intToIn ( n2, n5 ))
+        --: ArraySized number_ (In (Up0 minX_) (On N2))
+        |> ArraySized.toList
+    --> [ 0, 1 ]
+
+  - Is the dropped length's maximum less than its length's minimum? → [`drop`](#drop)
+  - Don't know the array's length maximum? → [`dropMin`](#dropMin)
+
+-}
+dropMax :
+    Linear.Direction
+    -> N (In (Down max To differenceMax) toDropMax_)
+    ->
+        (ArraySized element (In min_ (On max))
+         -> ArraySized element (In (Up0 minX_) (On differenceMax))
+        )
+dropMax direction lengthToDrop =
+    \arraySized ->
+        arraySized |> ArraySized.Internal.dropMax direction lengthToDrop
 
 
 
