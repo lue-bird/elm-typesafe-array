@@ -1,8 +1,8 @@
 module ArraySized.Internal exposing
     ( ArraySized
-    , empty, fromArray, repeat, n1To, random, fuzz, inFuzz
+    , empty, fromArray, repeat, n1To
     , element, length
-    , has, hasAtLeast, hasAtMost, hasIn
+    , hasAtLeast, hasAtMost, hasIn
     , elementReplace, remove, removeMin, push, insert, reverse, toSize
     , map, mapFoldFrom
     , fills, allOk
@@ -29,7 +29,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 # create
 
-@docs empty, fromArray, repeat, n1To, random, fuzz, inFuzz
+@docs empty, fromArray, repeat, n1To
 
 
 # observe
@@ -39,7 +39,7 @@ Ideally, this module should be as small as possible and contain as little `Array
 
 ## observe length
 
-@docs has, hasAtLeast, hasAtMost, hasIn
+@docs hasAtLeast, hasAtMost, hasIn
 
 
 # alter
@@ -95,11 +95,9 @@ import Array.Extra as Array
 import Array.Linear
 import ArrayExtra as Array
 import Emptiable exposing (Emptiable)
-import Fuzz exposing (Fuzzer)
 import Linear
-import N exposing (Add1, Add2, Down, In, Min, N, N0OrAdd1, On, To, Up, Up0, Up1, n0, n1)
+import N exposing (Add1, Down, In, Min, N, N0OrAdd1, On, To, Up, Up0, Up1, n0, n1)
 import Possibly exposing (Possibly)
-import Random
 import Stack exposing (Stacked)
 
 
@@ -111,7 +109,7 @@ type ArraySized element lengthRange
 
 
 
--- ## scan
+-- # observe
 
 
 {-| Succeeds for every correctly typed `ArraySized`
@@ -362,75 +360,6 @@ stackUpToRecursive :
             Possibly
 stackUpToRecursive =
     stackUpTo
-
-
-random :
-    Random.Generator element
-    -> N range
-    -> Random.Generator (ArraySized element range)
-random elementRandomGenerator amount =
-    -- implement safely, recursively
-    Random.list (amount |> N.toInt) elementRandomGenerator
-        |> Random.map
-            (\list ->
-                ArraySized
-                    { array = list |> Array.fromList
-                    , length = amount
-                    }
-            )
-
-
-fuzz :
-    Fuzzer element
-    -> N range
-    -> Fuzzer (ArraySized element range)
-fuzz elementFuzz length_ =
-    -- implement safely
-    Fuzz.map
-        (\list ->
-            ArraySized
-                { array = list |> Array.fromList
-                , length = length_
-                }
-        )
-        (Fuzz.listOfLength (length_ |> N.toInt) elementFuzz)
-
-
-inFuzz :
-    Fuzzer element
-    ->
-        ( N
-            (In
-                lowerLimitMin
-                (Up lowerLimitMaxToUpperLimitMin_ To upperLimitMin)
-            )
-        , N
-            (In
-                (On upperLimitMin)
-                upperLimitMax
-            )
-        )
-    ->
-        Fuzzer
-            (ArraySized element (In lowerLimitMin upperLimitMax))
-inFuzz elementFuzz ( lowerLimit, upperLimit ) =
-    -- implement safely
-    Fuzz.andThen
-        (\list ->
-            case list |> Array.fromList |> fromArray |> hasIn ( lowerLimit |> N.maxAdd n1, upperLimit ) of
-                Err (N.Below below) ->
-                    Fuzz.invalid ("length too low: " ++ (below |> length |> N.toString))
-
-                Err (N.Above above) ->
-                    Fuzz.invalid ("length too high: " ++ (above |> length |> N.toString))
-
-                Ok inRange ->
-                    inRange |> Fuzz.constant
-        )
-        (Fuzz.listOfLengthBetween (lowerLimit |> N.toInt)
-            (upperLimit |> N.toInt)
-            elementFuzz
-        )
 
 
 
@@ -1087,58 +1016,6 @@ minTo lengthMinimumNew =
 
 
 -- ## length comparison
-
-
-has :
-    N
-        (In
-            (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
-            (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
-        )
-    ->
-        (ArraySized element (In min max)
-         ->
-            Result
-                (N.BelowOrAbove
-                    (ArraySized
-                        element
-                        (In
-                            min
-                            (Up maxX To comparedAgainstMaxPlusXFrom1)
-                        )
-                    )
-                    (ArraySized
-                        element
-                        (In
-                            (Up minX To (Add2 comparedAgainstMinPlusXFrom1))
-                            max
-                        )
-                    )
-                )
-                (ArraySized
-                    element
-                    (In
-                        (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
-                        (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
-                    )
-                )
-        )
-has lengthToCompareAgainst =
-    \arraySized ->
-        case arraySized |> length |> N.is lengthToCompareAgainst of
-            Err (N.Below less) ->
-                ArraySized { array = arraySized |> toArray, length = less }
-                    |> N.Below
-                    |> Err
-
-            Ok equal ->
-                ArraySized { array = arraySized |> toArray, length = equal }
-                    |> Ok
-
-            Err (N.Above greater) ->
-                ArraySized { array = arraySized |> toArray, length = greater }
-                    |> N.Above
-                    |> Err
 
 
 hasIn :

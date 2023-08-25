@@ -1337,10 +1337,38 @@ Pairs well with
 -}
 random :
     Random.Generator element
-    -> N range
-    -> Random.Generator (ArraySized element range)
+    -> N (In min (Up maxX To (Add1 maxFrom1PlusX)))
+    -> Random.Generator (ArraySized element (In min (Up maxX To (Add1 maxFrom1PlusX))))
 random elementRandomGenerator length_ =
-    ArraySized.Internal.random elementRandomGenerator length_
+    randomFrom (empty |> maxToInfinity) elementRandomGenerator length_
+
+
+{-| Keeps pushing a random element, one at a time, until the given amount is met
+-}
+randomFrom :
+    ArraySized element (Min (On N0))
+    -> Random.Generator element
+    -> N (In min (Up maxX To (Add1 maxFrom1PlusX)))
+    -> Random.Generator (ArraySized element (In min (Up maxX To (Add1 maxFrom1PlusX))))
+randomFrom generatedSoFar elementRandomGenerator length_ =
+    case generatedSoFar |> has (length_ |> N.minToOn) of
+        Ok doneGenerating ->
+            Random.constant (doneGenerating |> minToNumber)
+
+        Err (N.Below below) ->
+            Random.andThen
+                (\newElement ->
+                    randomFrom (below |> push newElement |> minTo n0 |> maxToInfinity)
+                        elementRandomGenerator
+                        length_
+                )
+                elementRandomGenerator
+
+        -- impossible but better be safe
+        Err (N.Above above) ->
+            randomFrom (above |> removeMin ( Linear.Down, n1 ) |> minTo n0 |> maxToInfinity)
+                elementRandomGenerator
+                length_
 
 
 {-| `Fuzzer` for an [`ArraySized`](#ArraySized) with a given length
@@ -1362,10 +1390,24 @@ To fuzz an [`ArraySized`](#ArraySized) with a length in a range, [`inFuzz`](#inF
 -}
 fuzz :
     Fuzzer element
-    -> N range
-    -> Fuzzer (ArraySized element range)
+    -> N (In min (Up maxX To (Add1 maxFrom1PlusX)))
+    -> Fuzzer (ArraySized element (In min (Up maxX To (Add1 maxFrom1PlusX))))
 fuzz elementFuzz length_ =
-    ArraySized.Internal.fuzz elementFuzz length_
+    Fuzz.andThen
+        (\list ->
+            case list |> Array.fromList |> fromArray |> has (length_ |> N.minToOn) of
+                Ok successful ->
+                    Fuzz.constant (successful |> minToNumber)
+
+                Err _ ->
+                    Fuzz.invalid
+                        (bugMessage
+                            { expected = "to have generated an ArraySized of length " ++ (length_ |> N.toString)
+                            , actual = "length " ++ (list |> List.length |> String.fromInt)
+                            }
+                        )
+        )
+        (Fuzz.listOfLength (length_ |> N.toInt) elementFuzz)
 
 
 {-| `Fuzzer` for an [`ArraySized`](#ArraySized) with a length in a given range.
@@ -1392,13 +1434,62 @@ inFuzz :
                 lowerLimitMin
                 (Up lowerLimitMaxToUpperLimitMin_ To upperLimitMin)
             )
-        , N (In (On upperLimitMin) upperLimitMax)
+        , N
+            (In
+                (On upperLimitMin)
+                upperLimitMax
+            )
         )
     ->
         Fuzzer
             (ArraySized element (In lowerLimitMin upperLimitMax))
 inFuzz elementFuzz ( lowerLimit, upperLimit ) =
-    ArraySized.Internal.inFuzz elementFuzz ( lowerLimit, upperLimit )
+    Fuzz.andThen
+        (\list ->
+            case list |> Array.fromList |> fromArray |> hasIn ( lowerLimit |> N.maxAdd n1, upperLimit ) of
+                Ok inRange ->
+                    inRange |> Fuzz.constant
+
+                Err error ->
+                    let
+                        actual =
+                            case error of
+                                N.Below below ->
+                                    "a length that's too low: " ++ (below |> length |> N.toString)
+
+                                N.Above above ->
+                                    "a length that's too high: " ++ (above |> length |> N.toString)
+                    in
+                    bugMessage
+                        { expected =
+                            [ "to have generated an ArraySized with length in range ["
+                            , lowerLimit |> N.toString
+                            , ", "
+                            , upperLimit |> N.toString
+                            , "]"
+                            ]
+                                |> String.concat
+                        , actual = actual
+                        }
+                        |> Fuzz.invalid
+        )
+        (Fuzz.listOfLengthBetween
+            (lowerLimit |> N.toInt)
+            (upperLimit |> N.toInt)
+            elementFuzz
+        )
+
+
+bugMessage : { expected : String, actual : String } -> String
+bugMessage situation =
+    [ "bug! I expected "
+    , situation.expected
+    , " but I found "
+    , situation.actual
+    , ". This probably means either Fuzz.listOfLength returned a list with incorrect length or ArraySized.hasIn detects length ranges incorrectly."
+    , " Please report an issue to lue-bird/typesafe-array with the fuzz seed. Thanks <3"
+    ]
+        |> String.concat
 
 
 
@@ -2586,7 +2677,9 @@ minTo lengthMinimumNew =
 {-| Equivalent to [`minTo n0`](#minTo),
 except that the current length minimum isn't required to be `On`.
 
-It can be used to make argument types to functions look nicer.
+It can be used to make argument types look nicer.
+
+See also [`N.minTo0`](https://dark.elm.dmy.fr/packages/lue-bird/elm-bounded-nat/latest/N#minTo0)
 
 -}
 minTo0 :
@@ -3154,7 +3247,7 @@ removeMin ( direction, index ) =
 has :
     N
         (In
-            (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
+            (Up minX To comparedAgainstMinPlusX)
             (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
         )
     ->
@@ -3172,7 +3265,7 @@ has :
                     (ArraySized
                         element
                         (In
-                            (Up minX To (Add2 comparedAgainstMinPlusXFrom1))
+                            (Up minX To (Add1 comparedAgainstMinPlusX))
                             max
                         )
                     )
@@ -3180,15 +3273,14 @@ has :
                 (ArraySized
                     element
                     (In
-                        (Up minX To (Add1 comparedAgainstMinPlusXFrom1))
+                        (Up minX To comparedAgainstMinPlusX)
                         (Up maxX To (Add1 comparedAgainstMaxPlusXFrom1))
                     )
                 )
         )
 has lengthToCompareAgainst =
     \arraySized ->
-        arraySized
-            |> ArraySized.Internal.has lengthToCompareAgainst
+        arraySized |> hasIn ( lengthToCompareAgainst, lengthToCompareAgainst )
 
 
 {-| Compared to a range from a lower to an upper bound, is its length in, `BelowOrAbove` range?
