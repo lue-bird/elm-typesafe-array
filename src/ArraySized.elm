@@ -1500,16 +1500,16 @@ bugMessage situation =
 in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-linear-direction/latest/)
 
     import Linear exposing (Direction(..))
-    import N exposing (n1, n2)
+    import N exposing (n2, n3)
 
     ArraySized.l3 "I" "am" "ok"
-        |> ArraySized.elementReplace ( Up, n2 )
+        |> ArraySized.elementReplace ( Up, n3 )
             (\() -> "confusion")
         |> ArraySized.toList
     --> [ "I", "am", "confusion" ]
 
     ArraySized.l3 "I" "am" "ok"
-        |> ArraySized.elementReplace ( Down, n1 )
+        |> ArraySized.elementReplace ( Down, n2 )
             (\() -> "feel")
         |> ArraySized.toList
     --> [ "I", "feel", "ok" ]
@@ -1518,10 +1518,10 @@ An index that's too high to point to an existing element is ignored
 and no element is replaced
 
     import Linear exposing (Direction(..))
-    import N exposing (n3)
+    import N exposing (n4)
 
     ArraySized.l3 "I" "am" "ok"
-        |> ArraySized.elementReplace ( Down, n3 )
+        |> ArraySized.elementReplace ( Down, n4 )
             (\() -> "feel")
         |> ArraySized.toList
     --> [ "I", "am", "ok" ]
@@ -1545,26 +1545,27 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
 based on its previous value
 
     import Linear exposing (Direction(..))
-    import N exposing (n0)
+    import N exposing (n1)
 
     ArraySized.l3 1 20 30
-        |> ArraySized.elementAlter ( Up, n0 ) (\x -> x * 10)
+        |> ArraySized.elementAlter ( Up, n1 ) (\x -> x * 10)
         |> ArraySized.toList
     --> [ 10, 20, 30 ]
 
     ArraySized.l3 1 20 30
-        |> ArraySized.elementAlter ( Down, n0 ) negate
+        |> ArraySized.elementAlter ( Down, n1 ) negate
         |> ArraySized.toList
     --> [ 1, 20, -30 ]
 
-An index that's too high to point to an existing element is ignored
+An index that's 0 or too high to point to an existing element is ignored
 and no element is altered
 
     import Linear exposing (Direction(..))
-    import N exposing (n3)
+    import N exposing (n0, n4)
 
     ArraySized.l3 1 20 30
-        |> ArraySized.elementAlter ( Up, n3 ) (\x -> x * 10)
+        |> ArraySized.elementAlter ( Up, n0 ) (\x -> x * 10)
+        |> ArraySized.elementAlter ( Up, n4 ) (\x -> x * 10)
         |> ArraySized.toList
     --> [ 1, 20, 30 ]
 
@@ -1583,7 +1584,7 @@ elementAlter ( direction, index ) elementAlter_ =
         case
             arraySized
                 |> toArray
-                |> Array.Linear.element ( direction, index |> N.toInt )
+                |> Array.Linear.element ( direction, (index |> N.toInt) - 1 )
         of
             Just elementFound ->
                 arraySized
@@ -1922,7 +1923,7 @@ in a given [`Direction`](https://package.elm-lang.org/packages/lue-bird/elm-line
         |> ArraySized.dropMax Down (3 |> N.intToIn ( n2, n5 ))
         --: ArraySized number_ (In (Up0 minX_) (On N2))
         |> ArraySized.toList
-    --> [ 0, 1 ]
+    --> [ 0 ]
 
   - Is the dropped length's maximum less than its length's minimum? → [`drop`](#drop)
   - Don't know the array's length maximum? → [`dropMin`](#dropMin)

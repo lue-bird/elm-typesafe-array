@@ -134,7 +134,7 @@ element ( direction, index ) =
         case
             arraySized
                 |> toArray
-                |> Array.Linear.element ( direction, (index |> N.toInt) - 1 )
+                |> Array.Linear.element ( direction, to0BasedIndex index )
         of
             Just elementFound ->
                 elementFound
@@ -147,6 +147,11 @@ element ( direction, index ) =
                         ]
                     , culprit = arraySized
                     }
+
+
+to0BasedIndex : N range_ -> Int
+to0BasedIndex =
+    \index -> (index |> N.toInt) - 1
 
 
 {-| The [mutual recursion prevents TCO](https://jfmengels.net/tail-call-optimization/#so-what-are-these-conditions),
@@ -382,7 +387,7 @@ elementReplace ( direction, index ) replacement =
                 arraySized
                     |> toArray
                     |> Array.Linear.elementReplace
-                        ( direction, index |> N.toInt )
+                        ( direction, to0BasedIndex index )
                         replacement
             , length = arraySized |> length
             }
