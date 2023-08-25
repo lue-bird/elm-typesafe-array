@@ -1,5 +1,9 @@
 # change log
 
+#### 34.0.1
+
+  - `elementReplace`, `elementAlter` were expecting 0-based indexes. Switched to 1-based like `element`
+
 ## 34.0.0
 
   - `elm-bounded-nat` → >= 35.0.0
