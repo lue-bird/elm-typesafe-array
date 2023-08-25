@@ -16,10 +16,11 @@
             "elm-community/maybe-extra": "5.3.0",
             "elm-explorations/test": "2.1.1",
             "lue-bird/elm-allowable-state": "1.0.2",
-            "lue-bird/elm-bounded-nat": "33.1.0",
-            "lue-bird/elm-emptiness-typed": "9.1.2",
-            "lue-bird/elm-linear-direction": "11.0.0",
+            "lue-bird/elm-bounded-nat": "35.0.0",
+            "lue-bird/elm-emptiness-typed": "9.2.1",
+            "lue-bird/elm-linear-direction": "11.2.0",
             "lue-bird/elm-no-record-type-alias-constructor-function": "1.0.8",
+            "lue-bird/elm-partial-or-complete": "1.0.2",
             "mdgriffith/elm-ui": "1.1.8"
         },
         "indirect": {
