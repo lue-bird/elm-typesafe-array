@@ -1,5 +1,11 @@
 # change log
 
+## 34.0.0
+
+  - `elm-bounded-nat` → >= 35.0.0
+  - `has` argument type more broad
+  - implement `random`, `fuzz`, `has` without using the internal, unsafe constructor
+
 ### 33.2.0
 
   - `dropMax` add
