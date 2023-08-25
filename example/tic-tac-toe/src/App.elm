@@ -129,13 +129,7 @@ isGameOver board =
                     Nothing
 
         rowWon =
-            ArraySized.n1To n3
-                |> ArraySized.map
-                    (\i ->
-                        board
-                            |> ArraySized.element ( Up, i )
-                            |> won
-                    )
+            board |> ArraySized.map won
 
         columnWon =
             ArraySized.n1To n3
@@ -156,10 +150,11 @@ isGameOver board =
                     )
 
         noEmptyFields =
-            ArraySized.map ArraySized.toList
-                >> ArraySized.toList
-                >> List.concat
-                >> List.all ((/=) FieldNotSet)
+            \fields ->
+                fields
+                    |> ArraySized.map ArraySized.toList
+                    |> ArraySized.toList
+                    |> List.all (List.all ((/=) FieldNotSet))
 
         wonPlayer =
             Maybe.orList
