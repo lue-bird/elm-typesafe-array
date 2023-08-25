@@ -3,7 +3,7 @@
     "name": "lue-bird/elm-typesafe-array",
     "summary": "array with a typed length range → safe access",
     "license": "MIT",
-    "version": "33.2.0",
+    "version": "34.0.0",
     "exposed-modules": [
         "ArraySized"
     ],
